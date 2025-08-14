@@ -2,4 +2,18 @@ Leo thang dac quyen
 
 
 
-LinPEAS
+LinPEAS -> linux 
+
+
+
+SeImpersonatePrivilege : https://docs.microsoft.com/en-us/troubleshoot/windows-server/windows-security/seimpersonateprivilege-secreateglobalprivilege
+  This is in windows. So it is will be clear in practice 
+
+
+ https://github.com/itm4n/PrintSpoofer
+
+Can use https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/certutil to download shell to victim 
+
+If cannot connect github , gg drive, dropbox.... We can check FTP 
+  But FTP can block by firewall 
+
