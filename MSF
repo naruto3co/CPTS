@@ -344,8 +344,128 @@ Dùng show target khi nào
 show targets chèn ngay sau khi chọn exploit, để xác định OS nào sẽ khai thác.
 Tại sao phải chọn target trong khi msfconsole có khả năng tự động tìm được. Giảm khá năng crash, giảm thời gian, phạm vi sử dụng metasploit 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Payload
+There are three different types of payload modules in the MSF : Single, Stagers and Stages 
 
+Singles (Payload đơn / Inline payload)
+  Chứa cả exploit + shellcode trong cùng một gói.
+  Ưu điểm: ổn định hơn, chỉ cần gửi một lần là chạy ngay (self-contained).
+  Nhược điểm: kích thước lớn, một số exploit không chịu được.
+  Ví dụ: tạo user mới, khởi chạy process.
+Stagers (Trình khởi tạo)
+  Nhiệm vụ: thiết lập kết nối giữa attacker ↔ victim.
+  Nhỏ gọn, đáng tin cậy.
+  Sau khi chạy, nó mở đường cho Stages tải xuống.
+Stages (Thành phần tải xuống)
+  Là phần mở rộng được tải về bởi Stager.
+  Không giới hạn kích thước, cung cấp tính năng nâng cao như Meterpreter, VNC Injection...
+  Quá trình: Stager tải “middle stager” → middle stager tải toàn bộ Stage.
+
+Ví dụ phân biệt
+  windows/shell_bind_tcp → payload đơn (single).
+  windows/shell/bind_tcp → gồm stager (bind_tcp) + stage (shell).
+
+👉 Tóm lại:
+  Single = tất cả trong một, chạy ngay.
+  Stager = mở kênh kết nối.
+  Stage = phần tải về với tính năng nâng cao.
+
+Staged Payload 
+
+Staged Payloads là gì
+  Là loại payload được chia nhỏ thành nhiều phần (stages), mỗi phần đảm nhiệm một nhiệm vụ riêng, sau đó kết hợp chuỗi lại thành toàn bộ cuộc tấn công.
+Mục tiêu: cuối cùng vẫn là có remote access (shell) vào máy nạn nhân.
+Ưu điểm
+  Nhỏ gọn, kín đáo → giúp né Antivirus (AV) / Intrusion Prevention System (IPS).
+  Dễ truyền qua mạng vì không phải gửi 1 payload quá lớn ngay từ đầu.
+Stage0 (giai đoạn đầu)
+  Là đoạn shellcode nhỏ gửi đầu tiên đến dịch vụ dễ bị tấn công.
+  Nhiệm vụ duy nhất: tạo kết nối ngược từ máy nạn nhân về attacker.
+  Đây chính là reverse connection.
+Ví dụ trong Metasploit
+  Payload thường thấy:
+    reverse_tcp
+    reverse_https
+    bind_tcp
+Có thể xem bằng lệnh: show payloads
+
+Tóm lại: Staged Payload = payload theo từng giai đoạn. Gửi trước 1 shellcode nhỏ để mở kết nối (Stage0), rồi lần lượt tải thêm phần lớn (Stage1, Stage2…) → vừa hiệu quả, vừa khó bị AV phát hiện.
+
+Reverse Connections (Kết nối ngược)
+  Ưu điểm: khi nạn nhân chủ động kết nối ra ngoài (về phía attacker) thì dễ qua mặt hệ thống phòng thủ, vì traffic thường được tin tưởng nếu đi từ bên trong (nội bộ) ra ngoài → gọi là security trust zone.
+  Nhược điểm: không phải lúc nào cũng qua mặt được, vẫn có thể bị thiết bị an ninh phát hiện. Attacker cần cẩn trọng.
+Stage0 và Stage1
+  Stage0: đoạn code nhỏ, nhiệm vụ:
+  Tạo kết nối ổn định giữa attacker ↔ victim.
+  Chuẩn bị sẵn để tải thêm payload khác vào bộ nhớ.
+  Stage1: payload lớn hơn, được gửi sau khi Stage0 thành công, thường cung cấp shell access cho attacker.
+Meterpreter Payload
+  Là payload đặc biệt trong Metasploit, dựa trên DLL injection.
+  Đặc tính:
+    Chạy hoàn toàn trong RAM (không ghi xuống ổ cứng).
+    Khó phát hiện bằng kỹ thuật forensics truyền thống.
+    Giữ kết nối ổn định, dai dẳng, kể cả khi hệ thống thay đổi hoặc reboot.
+  Sau khi chạy, tạo ra một Meterpreter session (giao diện riêng).
+  Chức năng nổi bật:
+    Keylogging (ghi lại phím bấm).
+    Dump password hashes.
+    Ghi âm qua micro.
+    Chụp màn hình.
+    Giả mạo token tiến trình.
+    Tải / gỡ plugin linh hoạt.
+  👉 Tóm lại:
+  Reverse connection giúp attacker dễ lọt qua firewall.
+  Stage0 → Stage1 là cơ chế staged payload điển hình: nhỏ gọn ban đầu, rồi mở rộng.
+  Meterpreter là payload “xịn” nhất của Metasploit: linh hoạt, stealth, chạy trong RAM, nhiều công cụ tấn công tích hợp.
+
+| Tiêu chí            | **Payload thường (Shell Payloads)**                                             | **Meterpreter Payload**                                                                 |
+| ------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Cách hoạt động**  | Thường chỉ mở **command shell** (cmd, sh) cơ bản sau khi khai thác thành công.  | Sử dụng **DLL injection**, chạy trực tiếp trong **RAM**, không ghi xuống ổ cứng.        |
+| **Chức năng**       | Hạn chế: chỉ gõ lệnh cơ bản trên máy nạn nhân.                                  | Rất phong phú: keylogger, chụp màn hình, dump hash, micro tapping, token impersonation… |
+| **Tính ẩn mình**    | Dễ bị phát hiện bởi AV/IPS hoặc forensic tools vì shellcode thường ghi dấu vết. | **Khó phát hiện**: không để lại file trên ổ cứng, tồn tại trong bộ nhớ.                 |
+| **Ổn định kết nối** | Dễ mất kết nối nếu mạng chập chờn hoặc victim reboot.                           | Kết nối ổn định, có thể tồn tại qua reboot, ít bị gián đoạn.                            |
+| **Mở rộng**         | Không hỗ trợ plugin, cố định chức năng.                                         | Có thể tải/gỡ **plugin** hoặc script động → linh hoạt.                                  |
+| **Kịch bản dùng**   | Phù hợp khi chỉ cần **quyền truy cập nhanh**, ít thao tác.                      | Phù hợp khi muốn **kiểm soát lâu dài** và thực hiện **post-exploitation nâng cao**.     |
+
+NOTE 
+  msfconsole chỉ là giao diện chính của Metasploit (CLI), bạn có thể chọn bất kỳ payload nào trong đó:
+    Payload thường (shell)
+    Hoặc Meterpreter
+  Payload thường (Shell payloads)
+    Ví dụ: windows/shell/reverse_tcp, linux/x86/shell_bind_tcp.
+    Sau khi exploit thành công → bạn nhận được command shell cơ bản (cmd.exe trên Windows, /bin/sh trên Linux).
+  Meterpreter payloads
+    Ví dụ: windows/meterpreter/reverse_tcp.
+    Sau khi exploit thành công → bạn nhận được Meterpreter session (giao diện riêng trong msfconsole).
+    Session này nhiều tính năng hơn hẳn so với shell payload.
+
+Tìm kiếm Payloads trong Metasploit
+  Khi chọn payload, cần xác định mục tiêu mình muốn làm gì trên máy nạn nhân.
+    Ví dụ: muốn duy trì quyền truy cập lâu dài (persistence) → nên chọn Meterpreter payload.
+⚡ Ưu điểm của Meterpreter
+  Cung cấp nhiều chức năng mạnh mẽ sẵn có.
+  Có thể tự động hóa và kết hợp với plugin (ví dụ plugin Mimikatz của GentilKiwi) để:
+    Trích xuất mật khẩu
+    Thực hiện post-exploitation nhanh chóng
+  Giúp pentest có tổ chức, tiết kiệm thời gian.
+📌 Cách xem payloads
+  Trong msfconsole, dùng lệnh: show payloads
+    → sẽ liệt kê toàn bộ payload có sẵn (bao gồm shell payloads và Meterpreter payloads).
+
+Tóm lại: Payload chọn tuỳ theo mục tiêu, nhưng nếu cần khả năng mở rộng, linh hoạt, post-exploitation chuyên sâu → chọn Meterpreter.
+
+Chọn Payload trong Metasploit
+  Metasploit có rất nhiều payload để chọn.
+  Ngoài payload có sẵn, ta còn có thể tự tạo payload bằng msfvenom (sẽ học sau).
+🔹 Thử nghiệm với target Windows 7 (x64)
+  Mặc định exploit sẽ dùng payload đơn giản: reverse_tcp_shell.
+  Nhưng ở đây ta thay thế bằng một Meterpreter payload dành cho Windows 7 (x64).
+🔹 Cách chọn
+  Trong danh sách payloads (show payloads), cuộn xuống sẽ thấy phần Meterpreter Payloads cho Windows (x64).
+  Từ đó ta chọn đúng payload phù hợp để dùng.
+👉 Ý chính: Thay vì dùng payload mặc định (reverse shell đơn giản), ta chọn Meterpreter x64 payload cho Windows 7 để có nhiều tính năng hơn.
 
 
 
