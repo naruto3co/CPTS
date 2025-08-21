@@ -1,0 +1,123 @@
+1. Mục đích
+  Database dùng để lưu và quản lý kết quả pentest: host, service, lỗ hổng, credential, loot.
+  Giúp tránh bị rối khi đánh giá nhiều máy hoặc cả mạng.
+  Có thể import/export dữ liệu từ tool khác (Nmap, Nessus…) để tích hợp kết quả.
+  Thông tin lưu trong DB có thể dùng trực tiếp để cấu hình tham số cho exploit. 
+
+2. Cài đặt & Kết nối
+  Metasploit dùng PostgreSQL làm backend.
+  Các bước cơ bản:
+  Kiểm tra và khởi động PostgreSQL (sudo systemctl start postgresql).
+  Khởi tạo DB: msfdb init.
+  Kết nối: msfdb run hoặc trong msfconsole gõ db_status để kiểm tra. 
+
+3. Lệnh cơ bản trong msfconsole
+  db_status → xem trạng thái kết nối.
+  db_import file.xml → import kết quả scan (ưu tiên Nmap XML).
+  db_nmap → chạy Nmap trực tiếp trong msfconsole và lưu kết quả.
+  db_export -f xml backup.xml → backup dữ liệu.
+  hosts, services, vulns, creds, loot, notes → quản lý thông tin tương ứng. 
+
+4. Workspaces
+  Giống như “thư mục dự án”, để phân tách dữ liệu theo mục tiêu (IP, subnet, domain…).
+  workspace -a Target_1 → tạo mới.
+  workspace Target_1 → chuyển sang workspace vừa tạo. 
+
+5. Quản lý dữ liệu
+  Hosts → danh sách IP, hostname, OS.
+  Services → cổng, service, trạng thái.
+  Creds → username/password/hash tìm thấy.
+  Loot → dữ liệu chiếm được (hashdump, passwd, shadow…).
+  Tất cả đều có thể thêm/sửa/xóa thủ công.
+
+
+
+
+
+Flow làm việc với Database trong Metasploit
+1. Chuẩn bị Database
+Khởi tạo và kết nối PostgreSQL với Metasploit:
+  msfdb init          # khởi tạo DB
+  msfdb run           # chạy msfconsole + kết nối DB
+Trong msfconsole:
+  db_status           # kiểm tra DB đã kết nối chưa
+
+2. Tổ chức Workspace
+Tạo và quản lý các workspace (dùng như thư mục dự án):
+  workspace               # liệt kê workspace
+  workspace -a Target_1   # tạo mới workspace Target_1
+  workspace Target_1      # chuyển sang workspace Target_1
+  workspace -d Target_1   # xóa workspace
+👉 Dùng để phân biệt khi pentest nhiều hệ thống.
+
+3. Import / Scan dữ liệu
+Import kết quả quét từ ngoài vào DB:
+  db_import scan.xml      # import file Nmap XML
+Quét trực tiếp trong msfconsole:
+  db_nmap -sV -sS 10.10.10.10   # scan host, lưu vào DB
+Backup dữ liệu:
+  db_export -f xml backup.xml
+
+4. Xem thông tin đã lưu
+Host:
+  hosts
+  hosts -u         # chỉ hiển thị host đang online
+  hosts -R         # set kết quả host làm RHOSTS
+Service:
+  services
+  services -p 80   # lọc theo port 80
+  services -s http # lọc theo tên dịch vụ http
+  services -R      # set dịch vụ tìm được làm RHOSTS
+Vulnerabilities:
+  vulns
+Credentials:
+  creds
+  creds -u admin   # lọc user admin
+  creds -s ssh     # lọc credential cho dịch vụ ssh
+  creds add user:admin password:123456   # thêm thủ công
+Loot (dữ liệu chiếm được như hashdump):
+  loot
+  loot -S hash     # lọc theo kiểu hash
+Notes (ghi chú cho host):
+  notes
+
+5. Sử dụng dữ liệu cho Exploit
+  Khi đã có host/service/creds → có thể set tự động:
+  hosts -R       # RHOSTS = danh sách host trong DB
+  services -R    # RHOSTS = host có service đã chọn
+  creds -R       # RHOSTS + login từ credential có sẵn
+
+
+
+| **Bước**                     | **Mục đích**                                 | **Câu lệnh chính**                    | **Ví dụ cụ thể**                                 | **Option quan trọng**                                   |
+| ---------------------------- | -------------------------------------------- | ------------------------------------- | ------------------------------------------------ | ------------------------------------------------------- |
+| 1. Khởi tạo DB               | Tạo & chạy database backend (PostgreSQL)     | `msfdb init` / `msfdb run`            | `msfdb init`                                     | –                                                       |
+| 2. Kiểm tra DB               | Xác nhận đã kết nối thành công               | `db_status`                           | `msf6 > db_status` → `[*] Connected to msf`      | –                                                       |
+| 3. Tạo workspace             | Quản lý dữ liệu theo từng mục tiêu           | `workspace -a <name>`                 | `workspace -a Target_1`                          | `-a` thêm, `-d` xóa, `-r` đổi tên                       |
+| 4. Chuyển workspace          | Làm việc trong đúng phạm vi                  | `workspace <name>`                    | `workspace Target_1`                             | `workspace` (không tham số) → liệt kê                   |
+| 5. Import kết quả quét       | Nạp dữ liệu từ công cụ ngoài (Nmap, Nessus…) | `db_import <file.xml>`                | `db_import scan.xml`                             | File `.xml` được ưu tiên                                |
+| 6. Scan trực tiếp trong MSF  | Quét mục tiêu & lưu kết quả vào DB           | `db_nmap <options> <target>`          | `db_nmap -sV -sS 10.10.10.40`                    | `-sV` (dịch vụ), `-sS` (SYN scan)                       |
+| 7. Xem host đã lưu           | Liệt kê tất cả host                          | `hosts`                               | `hosts`                                          | `-u` (chỉ host online), `-R` (set RHOSTS)               |
+| 8. Xem service đã lưu        | Liệt kê dịch vụ & port                       | `services`                            | `services`                                       | `-p 80` (lọc theo port), `-s http` (lọc theo tên), `-R` |
+| 9. Xem credential            | Quản lý username/password/hash               | `creds`                               | `creds` hoặc `creds -s ssh`                      | `-u admin`, `-s ssh`, `-R`, `add` để thêm               |
+| 10. Xem loot                 | Dữ liệu thu được (hashdump, passwd…)         | `loot`                                | `loot`                                           | `-S hash` lọc theo kiểu dữ liệu                         |
+| 11. Xem lỗ hổng              | Quản lý các vuln đã phát hiện                | `vulns`                               | `vulns`                                          | –                                                       |
+| 12. Backup dữ liệu           | Xuất DB ra file để lưu trữ                   | `db_export -f xml <file>`             | `db_export -f xml backup.xml`                    | Format: `xml`, `pwdump`                                 |
+| 13. Dùng dữ liệu cho exploit | Tự động set target & thông tin               | `hosts -R`, `services -R`, `creds -R` | `services -p 445 -R` (set RHOSTS là host có SMB) | `-R` = đưa kết quả vào RHOSTS                           |
+
+
+
+msfdb init
+msfdb run
+msf6 > db_status
+msf6 > workspace -a Target_1
+msf6 > workspace Target_1
+msf6 > db_import scan.xml
+msf6 > hosts
+msf6 > services
+msf6 > creds
+msf6 > services -p 445 -R
+msf6 > use exploit/windows/smb/ms17_010_eternalblue
+msf6 exploit(...) > run
+
+
