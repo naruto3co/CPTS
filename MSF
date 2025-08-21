@@ -600,5 +600,7 @@ Ok final
 
 
 
+Tip : tìm kiểm file trong metasploit dùng lệnh như ví dụ dưới . vì find k hoạt động đâu 
+  meterpreter > search -f flag.txt
 
 
