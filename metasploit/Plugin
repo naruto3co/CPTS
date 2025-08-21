@@ -1,0 +1,34 @@
+Plugin
+
+| **Mục đích**                  | **Câu lệnh**                                                 | **Ví dụ**                                                      | **Ghi chú / Option quan trọng**                         |
+| ----------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------------- |
+| Xem plugin có sẵn trên máy    | `ls /usr/share/metasploit-framework/plugins`                 | `ls /usr/share/metasploit-framework/plugins`                   | Plugin là file `.rb`                                    |
+| Load plugin                   | `load <plugin_name>`                                         | `load nessus`                                                  | Nếu load thành công sẽ có thông báo và thêm command mới |
+| Xem lệnh riêng của plugin     | `<plugin>_help`                                              | `nessus_help`                                                  | Liệt kê tất cả command của plugin                       |
+| Nếu plugin không tồn tại      | `load <wrong_plugin>`                                        | `load Plugin_That_Does_Not_Exist`                              | Báo lỗi “cannot load such file”                         |
+| Cài plugin mới từ repo        | `git clone <repo_url>`                                       | `git clone https://github.com/darkoperator/Metasploit-Plugins` | Tải plugin về máy                                       |
+| Copy plugin vào thư mục chính | `sudo cp <file>.rb /usr/share/metasploit-framework/plugins/` | `sudo cp pentest.rb /usr/share/metasploit-framework/plugins/`  | Phải có quyền root                                      |
+| Load plugin vừa cài           | `load <plugin_name>`                                         | `load pentest`                                                 | Sau khi load sẽ có thêm lệnh mới                        |
+| Xem command mới sau khi load  | `help`                                                       | `help`                                                         | Các lệnh được plugin mở rộng sẽ hiển thị tại đây        |
+
+
+Ví dụ plugin phổ biến và lệnh của nó
+  Nessus plugin: nessus_connect, nessus_policy_list, nessus_user_del, nessus_user_passwd.
+  Pentest plugin (DarkOperator): check_footprint, discover_db, network_discover, multi_post, sys_creds.
+
+🔹 Lưu ý quan trọng
+  Đường dẫn plugin mặc định: /usr/share/metasploit-framework/plugins.
+  Tên plugin khi load không có đuôi .rb, chỉ cần tên file.
+  Ví dụ: load pentest (không phải load pentest.rb).
+  Phiên bản Metasploit khác nhau có thể thay đổi số plugin mặc định.
+  Cẩn trọng với plugin bên thứ ba: chỉ tải từ repo uy tín (ví dụ DarkOperator), vì plugin chạy trực tiếp trong Metasploit → có thể thao túng hệ thống.
+  Sau khi cài plugin mới mà không thấy hoạt động → kiểm tra quyền file (chmod 644 plugin.rb).
+
+🔹 Plugin phổ biến
+  Nmap (pre-installed) → quét trực tiếp trong Metasploit.
+  Nexpose (pre-installed) → tích hợp Rapid7 Nexpose.
+  Nessus (pre-installed) → tích hợp Tenable Nessus.
+  Mimikatz (pre-installed) → dump credential.
+  Railgun, Priv Incognito, Stdapi → mở rộng Meterpreter.
+  DarkOperator Plugins → thêm tính năng pentest nâng cao.
+
