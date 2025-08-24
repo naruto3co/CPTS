@@ -1,0 +1,66 @@
+🔹 Sessions
+Khái niệm: Khi khai thác thành công, Metasploit tạo session để duy trì kênh giao tiếp với mục tiêu (thường là Meterpreter).
+Đặc điểm:
+  Có thể quản lý nhiều session cùng lúc.
+  Session có thể đưa vào background → vẫn giữ kết nối.
+  Nếu payload gặp lỗi → session có thể chết. 
+Các lệnh chính
+  background hoặc CTRL+Z → đưa session về background.
+  sessions → liệt kê session đang mở.
+  sessions -i <id> → tương tác với session cụ thể.
+  Trong module post-exploitation, có thể chọn SESSION=<id> để chạy trên session đó.
+
+🔹 Jobs
+Khái niệm: Một số exploit/auxiliary module có thể chạy dưới dạng job để tiếp tục hoạt động trong background.
+  Ví dụ: Handler lắng nghe kết nối reverse shell.
+Các lệnh chính
+  exploit -j → chạy exploit như job (background).
+  jobs -l → liệt kê job đang chạy.
+  jobs -i <id> → xem chi tiết job.
+  jobs -k <id> → kill job cụ thể.
+  jobs -K → kill tất cả job.
+  jobs -p <id> → giữ job tồn tại sau khi restart Metasploit.
+
+🔹 Tóm tắt Flow
+Chạy exploit → tạo session.
+background để giữ session, tiếp tục chạy module khác.
+Dùng sessions -i để quay lại session khi cần.
+Một số exploit nên chạy như job (exploit -j) để không chiếm terminal.
+Quản lý job bằng jobs -l, jobs -k.
+
+👉 Ngắn gọn:
+
+Session = kênh giao tiếp với mục tiêu (Meterpreter, shell…).
+Job = tác vụ chạy ngầm trong Metasploit (ví dụ handler).
+Dùng sessions để quản lý kết nối, jobs để quản lý tiến trình.
+
+
+
+| **Mục đích**                  | **Câu lệnh**               | **Ví dụ**                  | **Ghi chú / Option quan trọng**             |
+| ----------------------------- | -------------------------- | -------------------------- | ------------------------------------------- |
+| Đưa session về background     | `background` hoặc `CTRL+Z` | `meterpreter > background` | Giữ kết nối với target, quay lại msfconsole |
+| Liệt kê session đang có       | `sessions`                 | `sessions`                 | Hiển thị ID, type, thông tin session        |
+| Tương tác với session cụ thể  | `sessions -i <id>`         | `sessions -i 1`            | Mở lại session số 1                         |
+| Chạy module post trên session | `set SESSION <id>`         | `set SESSION 1`            | Dùng trong module post-exploitation         |
+| Liệt kê job đang chạy         | `jobs -l`                  | `jobs -l`                  | Hiện tất cả job active                      |
+| Xem chi tiết job              | `jobs -i <id>`             | `jobs -i 0`                | Thông tin chi tiết job                      |
+| Kill job cụ thể               | `jobs -k <id>`             | `jobs -k 0`                | Dừng job số 0                               |
+| Kill tất cả job               | `jobs -K`                  | `jobs -K`                  | Dừng mọi job background                     |
+| Giữ job sau khi restart       | `jobs -p <id>`             | `jobs -p 1`                | Persistence cho job                         |
+| Chạy exploit như job          | `exploit -j`               | `exploit -j`               | Exploit chạy ngầm, không chiếm terminal     |
+| Chạy exploit foreground       | `exploit -J`               | `exploit -J`               | Force chạy foreground dù passive            |
+
+
+📌 Nhớ ngắn gọn:
+  Quản lý Sessions → sessions, sessions -i, background.
+  Quản lý Jobs → jobs -l, jobs -k, exploit -j.
+
+
+
+
+
+
+
+
+
+
