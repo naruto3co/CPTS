@@ -100,9 +100,29 @@ Second-Order Attacks (Tấn công LFI bậc hai)
 
 
 
+Đối với cách ngăn chặn 
+$language = str_replace('../', '', $_GET['language']);
+  -> bypass bằng cách này  ....//
 
-
-
+Cơ chế Appended Extension
+ Giả sử code: include($_GET['file'] . ".php");
+  Một số web app tự động nối thêm đuôi file (ví dụ: .php) vào tham số user nhập.
+  Mục đích: đảm bảo chỉ include file .php.
+    Ví dụ:
+    ?language=english   →   english.php
+  
+  Hạn chế: ngăn attacker load file khác đuôi .php.
+  Nhưng: vẫn có thể hữu ích (đọc source code .php).
+    Các kỹ thuật bypass cũ (PHP < 5.3/5.4).
+        PHP cũ có giới hạn chuỗi 4096 ký tự. Chuỗi dài hơn → bị cắt bớt.
+        Input : non_existing_directory/../../../etc/passwd/././././...[4090 ký tự]....../test.php
+            naruto3co@htb[/htb]$ echo -n "non_existing_directory/../../../etc/passwd/" && for i in {1..2048}; do echo -n "./"; done
+            non_existing_directory/../../../etc/passwd/./././<SNIP>././././
+          Phần thừa /test.php sẽ bị cắt bỏ 
+    Các kỹ thuật bypass cũ (PHP < 5.5).
+      Dùng %00 chặn phần .php.
+      Payload: /etc/passwd%00 → thành /etc/passwd.
+  Trên PHP mới: không bypass được.
 
 
 
