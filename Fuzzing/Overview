@@ -53,4 +53,53 @@ Tìm subdomain
 ffuf -w /opt/useful/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://FUZZ.academy.htb/
 
 
+Tìm VHOST 
+
+Bối cảnh
+  Bạn tìm thấy một server có IP: 10.10.10.10
+  Khi truy cập http://10.10.10.10 trên trình duyệt → chỉ thấy trang mặc định (nghèo nàn, không hữu ích).
+  Bạn nghi ngờ server này có nhiều VHost ẩn.
+
+Chạy lệnh fuzzing
+  ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://10.10.10.10/ -H "Host: FUZZ.10.10.10.10"
+Hoặc nếu biết domain chính là example.com:
+  ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://10.10.10.10/ -H "Host: FUZZ.example.com"
+
+
+
+🔎 Quy trình tìm và truy cập VHost ẩn
+Xác định IP server
+  Từ DNS public của domain chính (academy.htb → 10.10.10.10)
+  Hoặc từ scan (nmap, dig, ping, recon khác).
+👉 Đây là IP duy nhất server đang chạy.
+Fuzz VHost trên IP đó
+  Dùng ffuf với -H "Host: FUZZ.academy.htb" gửi request đến http://10.10.10.10/.
+  Nếu header Host khớp với VHost tồn tại → server trả về nội dung khác biệt.
+Phát hiện domain ẩn
+  Ví dụ tìm thấy admin.academy.htb
+Thêm domain vào /etc/hosts
+  Bởi vì DNS public không biết admin.academy.htb là gì.
+  Ta buộc phải map thủ công:
+    10.10.10.10  admin.academy.htb
+Truy cập trực tiếp
+  Giờ chỉ cần gõ http://admin.academy.htb trên trình duyệt → request sẽ đi tới IP 10.10.10.10, với Host header đúng → server trả về site admin.
+👉 Tóm lại: Đầu tiên phải biết IP → fuzz VHost trên IP đó → phát hiện domain ẩn → thêm vào /etc/hosts → truy cập được.
+
+Cấu hình /etc/hosts với IP và domain
+
+Giả sử IP của server là 10.10.10.10, bạn sẽ thêm:
+  10.10.10.10   example.com
+  10.10.10.10   www.example.com
+  10.10.10.10   admin.example.com
+  10.10.10.10   intranet.example.com
+
+
+
+
+Filtering Results
+Filter size là 900
+  naruto3co@htb[/htb]$ ffuf -w /opt/useful/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://academy.htb:PORT/ -H 'Host: FUZZ.academy.htb' -fs 900
+
+
+
 
