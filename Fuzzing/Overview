@@ -12,8 +12,8 @@ Tóm tắt – Attacking Web Applications with Ffuf
   Nếu server trả về HTTP 200 (OK) → trang/tham số đó tồn tại và có thể kiểm tra thủ công.
 
 
-
-
+Web extensions 
+  ffuf -w /opt/useful/seclists/Discovery/Web-Content/web-extensions.txt:FUZZ -u http://SERVER_IP:PORT/blog/indexFUZZ
 
 
 locate directory-list-2.3-small.txt
