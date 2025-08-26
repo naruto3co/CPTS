@@ -1,0 +1,128 @@
+File Inclusion là gì?
+Nhiều ngôn ngữ backend như PHP, JavaScript (Node.js), Java cho phép dùng tham số HTTP (GET/POST parameter) để chỉ định nội dung hiển thị trên web.
+
+Mục đích:
+  Tạo trang web động (dynamic pages).
+  Giúp giảm kích thước code.
+  Tái sử dụng code, dễ bảo trì hơn.
+
+Ví dụ trong PHP:
+  <?php
+    $page = $_GET['page'];
+    include($page . ".php");
+  ?>
+    Ở đây, tham số page sẽ quyết định file nào được include.
+
+Ví dụ:
+  http://example.com/index.php?page=../../../../etc/passwd
+    → Hacker có thể đọc file /etc/passwd trên máy chủ.
+
+Khái niệm chung
+  File Inclusion: Khi ứng dụng web cho phép tải file động dựa trên tham số HTTP (GET/POST).
+  Nếu không kiểm soát, hacker có thể chỉ định file tùy ý → Local File Inclusion (LFI) hoặc Remote File Inclusion (RFI)
+
+
+Nguy cơ từ LFI
+  LFI có thể dẫn tới rò rỉ mã nguồn, lộ dữ liệu nhạy cảm, và thậm chí thực thi mã từ xa trong một số điều kiện nhất định.
+  Rò rỉ mã nguồn cho phép kẻ tấn công phân tích code để tìm ra các lỗ hổng khác, có thể là những lỗ hổng chưa từng được biết đến.
+  Rò rỉ dữ liệu nhạy cảm có thể giúp kẻ tấn công liệt kê thông tin về server từ xa, hoặc lộ ra thông tin đăng nhập và khóa để truy cập trực tiếp vào server.
+  Trong những điều kiện đặc biệt, LFI có thể bị lợi dụng để thực thi mã trên server, từ đó chiếm quyền kiểm soát toàn bộ hệ thống backend và cả các server liên kết với nó.
+
+
+Ví dụ code dễ dính LFI
+
+PHP:
+  if (isset($_GET['language'])) {
+      include($_GET['language']);
+  }
+  → Truyền giá trị tùy ý vào language sẽ load file đó.
+  → Các hàm nguy hiểm: include(), require(), file_get_contents(), …
+
+NodeJS:
+  fs.readFile(path.join(__dirname, req.query.language), ...);
+  → Tham số language đi thẳng vào hàm đọc file.
+
+Java (JSP):
+  <jsp:include file="<%= request.getParameter('language') %>" />
+hoặc
+  <c:import url= "<%= request.getParameter('language') %>"/>
+
+
+.NET:
+  Response.WriteFile(HttpContext.Request.Query["language"]);
+  @Html.Partial(HttpContext.Request.Query["language"]);
+  <!--#include file="<% HttpContext.Request.Query['language'] %>"-->
+
+Read vs Execute
+| Ngôn ngữ   | Hàm/Function                   | Read Content   | Execute  | Remote URL  |
+| ---------- | ------------------------------ | ------------   | -------  | ----------  |
+| **PHP**    | `include()` / `include_once()` | ✅            | ✅       | ✅          |
+|            | `require()` / `require_once()` | ✅            | ✅       | ❌          |
+|            | `file_get_contents()`          | ✅            | ❌       | ✅          |
+|            | `fopen()` / `file()`           | ✅            | ❌       | ❌          |
+| **NodeJS** | `fs.readFile()`                | ✅            | ❌       | ❌          |
+|            | `fs.sendFile()`                | ✅            | ❌       | ❌          |
+|            | `res.render()`                 | ✅            | ✅       | ❌          |
+| **Java**   | `include`                      | ✅            | ❌       | ❌          |
+|            | `import`                       | ✅            | ✅       | ✅          |
+| **.NET**   | `@Html.Partial()`              | ✅            | ❌       | ❌          |
+|            | `@Html.RemotePartial()`        | ✅            | ❌       | ✅          |
+|            | `Response.WriteFile()`         | ✅            | ❌       | ❌          |
+|            | `include`                      | ✅            | ✅       | ✅          |
+
+
+🗝️ Nhận xét
+  Read only: chỉ đọc nội dung file → lộ source code, config.
+  Execute: thực thi luôn file → nguy cơ RCE.
+  Remote URL: nếu hàm hỗ trợ, có thể bị Remote File Inclusion (RFI) (load file từ ngoài Internet).
+
+👉 Các hàm nguy hiểm nhất:
+  PHP: include, include_once, require, require_once.
+  Java: import.
+  .NET: include.
+
+
+
+Second-Order Attacks (Tấn công LFI bậc hai)
+  Định nghĩa: LFI gián tiếp, dữ liệu độc hại lưu vào DB rồi được dùng lại để load file.
+  
+  Ví dụ:
+  /profile/$username/avatar.png
+  username = ../../../etc/passwd
+  → tải nhầm /etc/passwd thay vì avatar.
+  
+  Cơ chế:
+  Poison DB (đăng ký username payload).
+  App dùng lại dữ liệu đó để load file.
+  Lý do nguy hiểm: Dev thường lọc input trực tiếp nhưng tin tưởng dữ liệu trong DB.
+
+    [User input] ---> [DB lưu payload] ---> [Chức năng khác load file] ---> [LFI]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
