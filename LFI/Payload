@@ -1,4 +1,6 @@
+Condition_regex + payload 
+
 /etc/passwd
 ../../../../etc/passwd
 
-Đối với 
+/....//....//....//....//etc/passwd
