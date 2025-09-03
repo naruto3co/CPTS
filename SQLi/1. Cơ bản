@@ -1,0 +1,33 @@
+
+
+
+                    +-----------------+
+                    |  SQL Injections |
+                    +-----------------+
+                       /      |       \
+                      /       |        \
+                     /        |         \
+          +---------+   +-----+-----+    +-------------+
+          | In-band |   |   Blind    |    | Out-of-band|
+          +---------+   +-----------+    +-------------+
+           /     \         /      \
+          /       \       /        \
+ +---------------+ +---------------+ +---------------+ +---------------+
+ | Union Based   | | Error Based   | | Boolean Based | | Time Based    |
+ +---------------+ +---------------+ +---------------+ +---------------+
+
+
+
+
+Query:
+SELECT * FROM logins 
+WHERE username='admin' OR '1'='1' AND password='something'
+
+Biểu diễn logic:
+   username='admin'  ---> True
+                               \
+                                OR ----> True
+                               /
+        '1'='1' ---> True ----AND----> False (password='something' sai)
+                                   \
+                                    False
