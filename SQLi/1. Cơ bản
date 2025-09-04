@@ -1,3 +1,14 @@
+Câu lệnh hay dùng cơ bản
+
+mysql -h 94.237.60.55 -P 33502 -u root -p
+show databases;
+USE school;    dùng table school 
+DESCRIBE students;  // xem cấu trúc của table 
+SHOW COLUMNS FROM students;
+SELECT * FROM students LIMIT 10;
+SELECT * FROM students WHERE student_id = 1;
+SELECT * FROM ten_bang WHERE name LIKE 'Bar%';
+
 
 
 
