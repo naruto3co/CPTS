@@ -1,0 +1,43 @@
+🔹 Mục tiêu của Host Discovery
+  Trong internal penetration test, bước đầu tiên là xác định máy nào đang online trong mạng để có thể khai thác tiếp.
+  Nmap cung cấp nhiều cách để kiểm tra host sống hay chết, phổ biến nhất là ICMP Echo Request (ping).
+
+🔹 Các cách quét Host Discovery
+1. Scan cả dải mạng
+  sudo nmap 10.129.2.0/24 -sn -oA tnet | grep for | cut -d" " -f5
+    -sn: chỉ quét host, không quét port.
+    -oA tnet: lưu kết quả ở nhiều định dạng với prefix “tnet”.
+    Kết quả trả về danh sách IP online.
+    Hữu ích để nhanh chóng có bản đồ host trong mạng.
+
+2. Scan từ file IP list
+  sudo nmap -sn -oA tnet -iL hosts.lst | grep for | cut -d" " -f5
+    -iL hosts.lst: quét danh sách IP trong file hosts.lst.
+    Ví dụ: có 7 IP trong danh sách nhưng chỉ 3 IP phản hồi → 3 host đang active.
+    Lưu ý: host không phản hồi có thể do firewall chặn ICMP.
+
+3. Scan nhiều IP riêng lẻ
+  sudo nmap -sn -oA tnet 10.129.2.18 10.129.2.19 10.129.2.20
+  sudo nmap -sn -oA tnet 10.129.2.18-20
+
+4. Scan một host
+  sudo nmap 10.129.2.18 -sn -oA host
+
+🔹 Phân tích sâu hơn với ICMP & ARP
+  Mặc định, trong LAN, Nmap sẽ dùng ARP ping thay vì ICMP Echo Request.
+  Nếu nhận được ARP reply → host sống.
+  Có thể kiểm chứng bằng:
+    sudo nmap 10.129.2.18 -sn -oA host -PE --packet-trace
+      -PE: ép dùng ICMP Echo Request.
+      --packet-trace: hiển thị gói tin gửi và nhận.
+      --reason: giải thích tại sao Nmap kết luận host sống (ví dụ “received arp-response”).
+      --disable-arp-ping: vô hiệu hóa ARP, chỉ dùng ICMP để test.
+
+
+Điểm cần nhớ
+  ARP ping nhanh và đáng tin cậy trong mạng LAN.
+  ICMP Echo hữu ích khi muốn kiểm tra xuyên qua nhiều hop (không cùng subnet).
+  Nếu firewall chặn ICMP, Nmap có nhiều kỹ thuật khác để kiểm tra host (sẽ học ở phần Firewall/IDS Evasion).
+  Luôn lưu lại kết quả quét (-oA) để so sánh, báo cáo sau này.
+
+
