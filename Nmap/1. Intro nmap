@@ -1,0 +1,61 @@
+🔹 Giới thiệu về Nmap
+
+Tên đầy đủ: Network Mapper.
+Ngôn ngữ viết: C, C++, Python, Lua.
+Mục đích:
+  Quét mạng, xác định host đang hoạt động.
+  Tìm dịch vụ và ứng dụng (kèm phiên bản).
+  Xác định hệ điều hành và version.
+  Kiểm tra firewall, packet filter, IDS.
+
+🔹 Các Use Cases
+Nmap thường được dùng để:
+  Audit bảo mật hệ thống mạng.
+  Mô phỏng pentest.
+  Kiểm tra cấu hình firewall và IDS.
+  Network mapping (xác định sơ đồ mạng).
+  Phân tích phản hồi.
+  Liệt kê cổng mở (open ports).
+  Đánh giá lỗ hổng (vulnerability assessment).
+
+🔹 Kiến trúc Nmap
+Các kỹ thuật quét chính:
+  Host discovery – phát hiện host đang sống.
+  Port scanning – quét cổng mở/đóng.
+  Service enumeration/detection – phát hiện service và version.
+  OS detection – xác định hệ điều hành.
+  NSE (Nmap Scripting Engine) – chạy script để khai thác sâu hơn.
+
+🔹 Cú pháp cơ bản
+  nmap <scan types> <options> <target>
+  sudo nmap -sS localhost
+
+🔹 Scan Techniques (kỹ thuật quét)
+Một số loại scan phổ biến:
+  -sS : TCP SYN scan (half-open, stealth scan).
+  -sT : TCP Connect scan (hoàn tất 3-way handshake).
+  -sA : TCP ACK scan.
+  -sU : UDP scan.
+  -sN, -sF, -sX : TCP Null/FIN/Xmas scan (bypass firewall).
+  -sI : Idle scan (dùng zombie host).
+  -sO : IP protocol scan.
+  -b : FTP bounce scan.
+
+🔹 Ví dụ với TCP SYN scan (-sS)
+  sudo nmap -sS localhost
+    PORT     STATE SERVICE
+    22/tcp   open  ssh
+    80/tcp   open  http
+    5432/tcp open  postgresql
+    5901/tcp open  vnc-1
+
+Cơ chế hoạt động:
+  Nếu nhận SYN-ACK → port open.
+  Nếu nhận RST → port closed.
+  Nếu không nhận gì → port filtered (bị firewall chặn).
+
+
+
+
+
+
