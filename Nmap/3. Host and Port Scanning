@@ -1,0 +1,102 @@
+1. Các trạng thái
+  6 trạng thái cổng & ý nghĩa thực tế
+    open – Có phiên kết nối/trao đổi thành công (TCP/UDP/SCTP).
+    closed – Nhận RST (TCP) ⇒ dịch vụ không lắng nghe; vẫn hữu ích để chứng minh host sống.
+    filtered – Không rõ open/closed vì không có phản hồi hoặc trả lỗi; thường do firewall.
+    unfiltered – Chỉ thấy ở ACK scan; cổng “thấy được” nhưng không xác định open/closed.
+    open|filtered – Không có phản hồi ⇒ có thể open nhưng bị lọc, điển hình ở UDP.
+    closed|filtered – Chỉ gặp ở IP ID idle scan; không phân định được.
+    Nhanh nhớ: RST = closed, im lặng = filtered, ICMP type 3 code 3 (Port Unreachable) = UDP closed.
+
+2. Quét TCP – chọn kỹ thuật cho đúng bối cảnh
+  SYN scan (-sS) – mặc định khi chạy với quyền root
+  Nhanh, “stealth” hơn (half-open, không hoàn tất 3-way handshake).
+  Diễn giải gói:
+    Gửi SYN → nhận SYN-ACK ⇒ open
+    Gửi SYN → nhận RST ⇒ closed
+  Không phản hồi ⇒ filtered
+  Dùng khi cần tốc độ/độ “êm”, ít log hơn -sT.
+  Connect scan (-sT) – mặc định nếu không có quyền raw socket
+  Hoàn tất handshake (giống client thật) ⇒ rất chính xác nhưng ít stealth, dễ log/IDS.
+  Hữu ích khi ưu tiên chính xác/mức ảnh hưởng thấp đến dịch vụ.
+  Lệnh mẫu & phân tích gói
+    # Quét top 10 TCP ports
+    sudo nmap 10.129.2.28 --top-ports=10
+    # Bắt vết gói & vô hiệu DNS/ICMP/ARP để thấy rõ logic SYN
+    sudo nmap 10.129.2.28 -p 21 --packet-trace -Pn -n --disable-arp-ping
+    # SENT ... S  (SYN)   | RCVD ... RA (RST, ACK) => closed
+
+3. Quét UDP – chậm, nhưng quan trọng
+  UDP không handshake ⇒ nhiều cổng sẽ không trả lời ⇒ open|filtered rất phổ biến.
+  Nhanh nhớ:
+    ICMP type 3/code 3 (Port Unreachable) ⇒ closed.
+    Có trả UDP (ví dụ NetBIOS, mDNS) ⇒ open.
+    Im lặng ⇒ open|filtered (có thể open nhưng bị lọc/không phản hồi).
+  Mẹo tăng chất lượng:
+    Nhắm các cổng UDP hay dùng: -p 53,67,68,69,123,137,138,161,500,514,5353
+    Kết hợp version detection: -sU -sV
+    Giới hạn phạm vi/top ports để giảm thời gian: -F, --top-ports=N.
+  Ví dụ
+    # UDP nhanh với top 100 + xem lý do
+    sudo nmap 10.129.2.28 -F -sU
+    sudo nmap 10.129.2.28 -sU -p 137 -Pn -n --disable-arp-ping --packet-trace --reason
+    # RCVD UDP trả lời => 137/udp open (netbios-ns)
+    # RCVD ICMP type3/code3 => closed
+    # Không phản hồi sau retry => open|filtered
+
+4. “Filtered” – phân biệt drop vs reject
+  Drop: Không trả lời ⇒ scan lâu (do retry).
+  Reject: Trả ICMP type 3/code 3 (TCP wrapped) hoặc TCP RST theo chính sách ⇒ scan nhanh.
+    # Port 139 bị drop (mất thời gian do retry)
+    sudo nmap 10.129.2.28 -p 139 --packet-trace -n --disable-arp-ping -Pn
+    # Port 445 bị reject (ICMP port unreachable trả về ngay)
+    sudo nmap 10.129.2.28 -p 445 --packet-trace -n --disable-arp-ping -Pn
+
+5. Chọn phạm vi cổng & chiến lược tốc độ
+  Phạm vi cổng:
+    Liệt kê cụ thể: -p 22,25,80,139,445
+    Theo dải: -p 1-1024
+    Tất cả cổng TCP: -p-
+    Top N: --top-ports=1000 (theo CSDL phổ biến của Nmap)
+    Nhanh: -F (top 100)
+  Tối ưu thời gian:
+    Giảm retry: --max-retries 2
+    Giảm timeout: --host-timeout 30s
+    Tăng song song: --min-rate 1000 (cẩn thận dễ gây noise)
+    Tắt DNS: -n; tắt ping: -Pn (khi biết chắc host sống)
+
+6. Version detection & OS detection
+  Service/Version: -sV (+ --version-all khi cần chi tiết, đánh đổi thời gian)
+  OS: -O (cần nhiều dấu hiệu, dễ bị firewall làm nhiễu)
+  Hữu ích cho lập hồ sơ dịch vụ & sơ bộ hệ thống mục tiêu:
+    sudo nmap 10.129.2.28 -p 445 -sV -Pn -n --disable-arp-ping --packet-trace --reason
+    # Ví dụ nhận ra: Samba smbd 3.X-4.X; workgroup: WORKGROUP; Host hint: Ubuntu
+
+7. Lưu kết quả & hậu xử lý
+  Lưu mọi scan để so sánh/báo cáo: -oA prefix (xuất ra .nmap, .gnmap, .xml)
+  Trích IP sống nhanh:
+    sudo nmap 10.129.2.0/24 -sn -oA tnet | grep 'for' | cut -d' ' -f5
+    
+8. Template lệnh “chuẩn bài” cho mạng nội bộ
+  Xây bản đồ host (LAN nhanh, chính xác)
+    sudo nmap 10.129.2.0/24 -sn -oA hosts_lan
+  Khảo sát cổng “nhanh mà sâu vừa đủ”
+    # TCP top 1000 + service version + OS guess (cẩn trọng thời gian)
+    sudo nmap -sS -Pn -n --top-ports 1000 -sV -O --reason --max-retries 2 -oA tcp_fast 10.129.2.28
+  Khi nghi firewall “nuốt” gói
+    # Bắt vết & xem lý do để phân biệt drop/reject
+    sudo nmap 10.129.2.28 -p 139,445 --packet-trace --reason -Pn -n --disable-arp-ping
+  UDP có mục tiêu
+    sudo nmap -sU -p 53,67,68,69,123,137,138,161,500,5353 -sV -Pn -n --max-retries 2 -oA udp_focus 10.129.2.28
+
+9. Pitfalls & mẹo nhanh
+  Không root ⇒ -sS không chạy, Nmap fallback sang -sT.
+  -Pn bỏ qua host discovery: dùng khi biết chắc host sống hoặc ICMP bị chặn.
+  --disable-arp-ping chỉ nên dùng khi bạn muốn quan sát ICMP; trong LAN ARP ping nhanh & chuẩn hơn.
+  UDP: chậm là bình thường; hãy giới hạn cổng và kết hợp -sV để tăng xác suất phản hồi.
+  Ghi log/IDS: -sT “lịch sự nhưng ồn”, -sS “êm hơn nhưng vẫn có thể bị phát hiện”.
+  Sau khi lập hồ sơ cổng/dịch vụ, chuyển sang NSE (-sC hoặc --script vuln) có kiểm soát (tránh gây ồn).
+
+
+
+
