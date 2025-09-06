@@ -1,0 +1,181 @@
+
+
+Target Specification (mục tiêu)
+
+| Tùy chọn                | Ý nghĩa                        | Ví dụ/nhắc nhanh                                                         |
+| ----------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| hostnames/IP/CIDR/range | Chỉ định mục tiêu              | `scanme.nmap.org`, `microsoft.com/24`, `192.168.0.1`, `10.0.0-255.1-254` |
+| `-iL <file>`            | Đọc danh sách mục tiêu từ file | `-iL hosts.txt`                                                          |
+| `-iR <num>`             | Chọn ngẫu nhiên N host         | `-iR 1000`                                                               |
+| `--exclude <list>`      | Loại trừ host/subnet           | `--exclude 10.0.0.1,10.0.0.2`                                            |
+| `--excludefile <file>`  | Loại trừ từ file               | `--excludefile skip.txt`                                                 |
+
+
+
+Host Discovery (phát hiện host sống)
+
+| Tùy chọn              | Ý nghĩa                                  | Dùng khi                       |
+| --------------------- | ---------------------------------------- | ------------------------------ |
+| `-sL`                 | List Scan (liệt kê mục tiêu, không quét) | Kiểm danh sách                 |
+| `-sn`                 | Ping scan (không quét port)              | Lập sơ đồ host sống            |
+| `-Pn`                 | Bỏ qua host discovery (coi như đều sống) | ICMP bị chặn/đã biết host sống |
+| `-PS/PA/PU/PY[ports]` | TCP SYN/ACK, UDP, SCTP ping              | Tùy firewall                   |
+| `-PE/PP/PM`           | ICMP echo/timestamp/netmask ping         | Nội bộ/qua router              |
+| `-PO[proto]`          | IP protocol ping                         | Môi trường hạn chế             |
+| `-n` / `-R`           | Tắt DNS / luôn resolve                   | Tăng tốc / cần FQDN            |
+| `--dns-servers x,y`   | Chỉ định DNS                             | Kiểm soát resolve              |
+| `--system-dns`        | Dùng resolver của OS                     | Tính tương thích               |
+| `--traceroute`        | Truy vết đường đi                        | Chẩn đoán mạng                 |
+
+
+
+Scan Techniques (kỹ thuật quét)
+
+| Tùy chọn                              | Kiểu quét                             | Ghi chú                                 |            |
+| ------------------------------------- | ------------------------------------- | --------------------------------------- | ---------- |
+| `-sS` / `-sT` / `-sA` / `-sW` / `-sM` | SYN / Connect / ACK / Window / Maimon | `-sS` stealth; `-sT` chính xác nhưng ồn |            |
+| `-sU`                                 | UDP scan                              | Chậm; nhiều \`open                      | filtered\` |
+| `-sN` `-sF` `-sX`                     | Null / FIN / Xmas                     | Né lọc đơn giản                         |            |
+| `--scanflags <flags>`                 | Tùy cờ TCP                            | Tinh chỉnh bypass                       |            |
+| `-sI <zombie[:port]>`                 | Idle scan                             | Ẩn nguồn quét                           |            |
+| `-sY` / `-sZ`                         | SCTP INIT / COOKIE-ECHO               | Mạng SCTP                               |            |
+| `-sO`                                 | IP protocol scan                      | Tìm proto mở                            |            |
+| `-b <ftp relay>`                      | FTP bounce                            | Hiếm dùng, lịch sử                      |            |
+
+
+
+
+Port Specification & Scan Order
+
+| Tùy chọn                   | Ý nghĩa                     | Ví dụ                                                          |
+| -------------------------- | --------------------------- | -------------------------------------------------------------- |
+| `-p <ranges>`              | Chỉ quét cổng chỉ định      | `-p22`, `-p1-65535`, `-p U:53,111,137,T:21-25,80,139,8080,S:9` |
+| `--exclude-ports <ranges>` | Loại trừ cổng               | `--exclude-ports 135-139`                                      |
+| `-F`                       | Nhanh (top 100)             | Khảo sát sơ bộ                                                 |
+| `-r`                       | Quét tuần tự (không random) | Chẩn đoán timing                                               |
+| `--top-ports <N>`          | Top N cổng phổ biến         | `--top-ports 2000`                                             |
+| `--port-ratio <r>`         | Cổng phổ biến hơn ngưỡng    | `--port-ratio 0.01`                                            |
+
+
+
+
+Service/Version Detection
+
+| Tùy chọn                  | Ý nghĩa                     | Khi nào dùng        |
+| ------------------------- | --------------------------- | ------------------- |
+| `-sV`                     | Nhận diện service/version   | Sau khi thấy open   |
+| `--version-intensity 0-9` | Mức độ dò (0 nhẹ, 9 tối đa) | Cân tốc độ/độ sâu   |
+| `--version-light`         | Giới hạn probe (≈2)         | Nhanh hơn           |
+| `--version-all`           | Thử mọi probe (9)           | Điều tra kỹ         |
+| `--version-trace`         | Log chi tiết version scan   | Debug phát hiện sai |
+
+
+
+Script Scan (NSE)
+
+| Tùy chọn                  | Ý nghĩa                            | Ví dụ                               |
+| ------------------------- | ---------------------------------- | ----------------------------------- |
+| `-sC`                     | Equivalent `--script=default`      | Kiểm tra mặc định                   |
+| `--script=<list>`         | Chạy script theo file/dir/category | `--script=vuln,http-*`              |
+| `--script-args=k=v,...`   | Tham số cho script                 | `--script-args=user=admin,pass=123` |
+| `--script-args-file=file` | Tham số từ file                    | Quản lý tham số                     |
+| `--script-trace`          | Hiển thị dữ liệu gửi/nhận          | Debug NSE                           |
+| `--script-updatedb`       | Cập nhật DB script                 | Sau khi thêm script                 |
+| `--script-help=<list>`    | Help script/cate                   | `--script-help=vuln`                |
+
+
+
+OS Detection
+
+| Tùy chọn         | Ý nghĩa                        | Ghi chú             |
+| ---------------- | ------------------------------ | ------------------- |
+| `-O`             | Phát hiện hệ điều hành         | Cần đủ dấu hiệu     |
+| `--osscan-limit` | Chỉ OS-scan mục tiêu “hứa hẹn” | Tiết kiệm thời gian |
+| `--osscan-guess` | Đoán OS mạnh tay hơn           | Tỷ lệ đoán          |
+
+
+
+Timing & Performance
+
+| Tùy chọn                        | Ý nghĩa                          | Gợi ý                                      |
+| ------------------------------- | -------------------------------- | ------------------------------------------ |
+| `-T0..5`                        | Mẫu tốc độ (cao hơn = nhanh hơn) | Pentest nội bộ: `-T4`; thận trọng: `-T2/3` |
+| `--min/max-hostgroup`           | Cỡ nhóm host song song           | Điều phối tải                              |
+| `--min/max-parallelism`         | Song song probe                  | Tăng/giảm concurrency                      |
+| `--min/max/initial-rtt-timeout` | Timeout RTT                      | Mạng trễ cao                               |
+| `--max-retries <n>`             | Giới hạn retry                   | Giảm thời gian chờ                         |
+| `--host-timeout <t>`            | Bỏ host sau t thời gian          | `--host-timeout 30s`                       |
+| `--scan-delay/--max-scan-delay` | Trễ giữa probe                   | Né IDS/tuning                              |
+| `--min-rate/--max-rate`         | Gói/giây tối thiểu/tối đa        | Kiểm soát băng thông                       |
+
+
+
+
+Firewall/IDS Evasion & Spoofing
+
+| Tùy chọn                             | Ý nghĩa                 | Dùng khi                |
+| ------------------------------------ | ----------------------- | ----------------------- |
+| `-f` / `--mtu <val>`                 | Phân mảnh gói / đặt MTU | Né lọc đơn giản         |
+| `-D x,y[,ME]`                        | Decoy (che nguồn)       | Giấu IP thực            |
+| `-S <IP>`                            | Spoof nguồn             | Kiểm tra rule/ACL       |
+| `-e <iface>`                         | Chọn interface          | Nhiều NIC               |
+| `-g/--source-port <p>`               | Source port tùy chọn    | Bypass rule “tin tưởng” |
+| `--proxies <urls>`                   | Qua HTTP/SOCKS4 proxy   | Dò từ xa                |
+| `--data/--data-string/--data-length` | Thêm payload tuỳ chỉnh  | Kiểm thử DPI/IDS        |
+| `--ip-options <opts>`                | Tùy chọn IP             | Lab đặc thù             |
+| `--ttl <val>`                        | Time-to-live            | Điều khiển hop          |
+| `--spoof-mac <mac/prefix/vendor>`    | Giả MAC                 | NAC/khớp vendor         |
+| `--badsum`                           | Checksum sai            | Kiểm thử stack/IDS      |
+
+
+Output (xuất kết quả)
+
+| Tùy chọn                                | Ý nghĩa                           | Gợi ý               |
+| --------------------------------------- | --------------------------------- | ------------------- |
+| `-oN/-oX/-oS/-oG <file>`                | Normal/XML/ScrIpt kiddie/Grepable | Chọn định dạng      |
+| `-oA <base>`                            | Xuất cả 3 định dạng               | Chuẩn để lưu trữ    |
+| `-v` / `-vv...`                         | Verbosity                         | Xem thêm chi tiết   |
+| `-d` / `-dd...`                         | Debug level                       | Chẩn đoán           |
+| `--reason`                              | Hiển thị lý do state              | Giải thích kết quả  |
+| `--open`                                | Chỉ hiển thị (có thể) open        | Lọc output          |
+| `--packet-trace`                        | Hiển thị gói gửi/nhận             | Học & debug         |
+| `--iflist`                              | In interface/route                | Kiểm tra môi trường |
+| `--append-output`                       | Ghi nối tiếp file                 | Chạy nhiều đợt      |
+| `--resume <file>`                       | Tiếp tục bản quét dở              | Lỡ dừng             |
+| `--noninteractive`                      | Tắt tương tác runtime             | Script hóa          |
+| `--stylesheet/--webxml/--no-stylesheet` | XSL cho XML → HTML                | Báo cáo             |
+
+
+
+
+Misc (khác)
+
+| Tùy chọn                          | Ý nghĩa                                                          |
+| --------------------------------- | ---------------------------------------------------------------- |
+| `-6`                              | Bật quét IPv6                                                    |
+| `-A`                              | Bật OS detect + version + script default + traceroute (tổng hợp) |
+| `--datadir <dir>`                 | Đường dẫn dữ liệu Nmap                                           |
+| `--send-eth/--send-ip`            | Gửi bằng frame Ethernet / IP                                     |
+| `--privileged` / `--unprivileged` | Giả định có/không quyền raw socket                               |
+| `-V`                              | In version                                                       |
+| `-h`                              | Help                                                             |
+
+
+
+Công thức nhanh (recipes)
+
+| Mục tiêu                    | Lệnh mẫu                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| Liệt kê host sống trong /24 | `sudo nmap 10.10.10.0/24 -sn -oA live`                                         |
+| TCP nhanh + version         | `sudo nmap -sS -Pn -n --top-ports 1000 -sV -oA tcpv 10.10.10.5`                |
+| Quét toàn bộ TCP            | `sudo nmap -sS -p- -T4 -oA fulltcp 10.10.10.5`                                 |
+| UDP trọng điểm              | `sudo nmap -sU -p 53,67,68,69,123,137,138,161,500,5353 -sV -oA udp 10.10.10.5` |
+| Tổng hợp (AIO)              | `sudo nmap -A -T4 -oA audit 10.10.10.5`                                        |
+| Bypass cơ bản (thử)         | `sudo nmap -sS -Pn -n --min-rate 1000 --max-retries 2 10.10.10.5`              |
+
+
+
+
+
+
+
