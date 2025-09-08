@@ -1,0 +1,60 @@
+| **Kỹ thuật**                       | **Tham số**                           | **Ví dụ lệnh**                             | **Kết quả / Ý nghĩa**                                                                           | **Nhược điểm / Lưu ý**                                                 |
+| ---------------------------------- | ------------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **ACK Scan**                       | `-sA`                                 | `nmap -p 21,22,25 -sA -Pn -n`              | Xác định rule firewall: port **unfiltered** trả về `RST`, port **filtered** thì không phản hồi. | Không xác định được open/closed, chỉ thấy filtered/unfiltered.         |
+| **SYN Scan (bình thường)**         | `-sS`                                 | `nmap -p 21,22,25 -sS -Pn -n`              | Port **open** trả về `SYN-ACK`, port **filtered** trả về ICMP unreachable.                      | Dễ bị firewall/IDS phát hiện.                                          |
+| **Decoy Scan**                     | `-D RND:5`                            | `nmap -p 80 -sS -Pn -n -D RND:5`           | Sinh thêm IP giả, chèn IP thật xen kẽ. Làm admin khó xác định nguồn tấn công.                   | Decoy phải là host thật đang online; dễ gây SYN-flood nếu không chuẩn. |
+| **Scan với IP giả (Spoof Source)** | `-S <ip> -e <iface>`                  | `nmap -p 445 -O -S 10.129.2.200 -e tun0`   | Giả mạo địa chỉ IP nguồn, có thể vượt qua rule firewall chặn subnet.                            | OS detection có thể thiếu chính xác; cần interface phù hợp.            |
+| **DNS Proxying**                   | `--dns-servers`<br>`--source-port 53` | `nmap -p 50000 -sS --source-port 53`       | Dùng port 53 (DNS) làm cổng nguồn → firewall dễ cho qua.                                        | Nếu IDS giám sát cả DNS traffic thì vẫn bị log.                        |
+| **Ncat Source Port**               | `ncat --source-port 53`               | `ncat -nv --source-port 53 <target> 50000` | Kết nối được vào port bị filter nếu firewall tin tưởng traffic từ DNS.                          | Chỉ hiệu quả nếu rule firewall sơ hở.                                  |
+
+Né tránh hiệu quả cần:
+  Chọn kiểu scan phù hợp (ACK scan để phát hiện rule).
+  Ngụy trang nguồn (Decoy, spoof IP, dùng DNS port).
+  Điều chỉnh tốc độ quét để không kích hoạt IDS.
+
+Bảng kỹ thuật né tránh IPS/IDS với Nmap
+| **Kỹ thuật**                      | **Tham số / Lệnh**                                | **Mục đích**                                                                 | **Ưu điểm**                                               | **Nhược điểm / Lưu ý**                            |
+| --------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------- |
+| **ACK Scan**                      | `nmap -sA -p 21,22,25 <target>`                   | Xác định port **filtered/unfiltered** bằng gói ACK (không khởi tạo kết nối). | Khó bị firewall chặn vì trông giống traffic đang tồn tại. | Không biết được port open/closed.                 |
+| **SYN Scan (Half-open)**          | `nmap -sS -p 22 <target>`                         | Quét stealth, chỉ gửi SYN rồi dừng lại.                                      | Ít gây log hơn full connect (`-sT`).                      | Vẫn có thể bị IDS phát hiện nếu quét nhanh.       |
+| **Decoy Scan**                    | `nmap -sS -p 80 -D RND:5 <target>`                | Tạo nhiều IP giả xen lẫn IP thật.                                            | Ẩn nguồn thật, khó truy vết.                              | Decoy phải online, dễ gây SYN flood nếu dùng sai. |
+| **IP Spoofing**                   | `nmap -p 445 -O -S 10.129.2.200 -e tun0 <target>` | Giả mạo IP nguồn để vượt rule firewall.                                      | Bypass subnet rule, che giấu nguồn.                       | OS detection không ổn định, cần interface hợp lệ. |
+| **DNS Proxying / Source Port 53** | `nmap -p 50000 -sS --source-port 53 <target>`     | Dùng port 53 (DNS) làm nguồn → firewall dễ cho qua.                          | Lợi dụng dịch vụ tin cậy.                                 | IDS vẫn có thể giám sát DNS traffic.              |
+| **Ncat Source Port**              | `ncat -nv --source-port 53 <target> 50000`        | Kết nối qua firewall nhờ port 53.                                            | Dùng kèm với Nmap để xác thực bypass.                     | Chỉ hiệu quả nếu firewall rule hở.                |
+| **Timing Templates**              | `-T0` (paranoid), `-T1` (sneaky), `-T2` (polite)  | Giảm tốc độ, hạn chế log/alert.                                              | Ít gây nghi ngờ hơn.                                      | Rất chậm, mất nhiều thời gian.                    |
+| **Fragmentation**                 | `nmap -f <target>`                                | Chia nhỏ gói tin để IDS khó tái hợp.                                         | Giảm khả năng bị phát hiện.                               | Có thể bị chặn ở router/firewall trung gian.      |
+
+
+Dò DNS bằng Nmap
+| **Mục tiêu**                            | **Lệnh Nmap**                                                                                 | **Tham số chính**                              | **Kết quả mong đợi**                                              | **Lưu ý / Khi dùng**                                                 |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **Kiểm tra dịch vụ DNS (chuẩn)**        | `nmap -sU -p 53 -sV <target>`                                                                 | `-sU`: quét UDP<br>`-sV`: dò phiên bản dịch vụ | Phát hiện DNS server, hiển thị version nếu trả lời.               | Dùng cho truy vấn DNS thông thường (UDP/53).                         |
+| **Dò phiên bản bằng script**            | `nmap -sU -p 53 --script=dns-version <target>`<br>`nmap -sU -p 53 --script=dns-nsid <target>` | `dns-version`, `dns-nsid`                      | Lấy được thông tin version qua `version.bind` hoặc NSID.          | Một số DNS server disable `version.bind`, sẽ không trả về.           |
+| **Scan TCP/53 khi UDP thất bại**        | `nmap -sT -p 53 -sV <target>`                                                                 | `-sT`: TCP connect<br>`-p 53`: TCP port 53     | Kiểm tra zone transfer hoặc truy vấn DNS lớn.                     | DNS TCP thường chỉ mở khi zone transfer hoặc dữ liệu > 512 bytes.    |
+| **Bypass firewall bằng source port 53** | `nmap -sT -p 53 -sV --source-port 53 <target>`                                                | `--source-port 53`                             | Firewall dễ cho qua vì traffic trông như DNS hợp lệ.              | Dùng khi thấy `53/tcp filtered`.                                     |
+| **Zone Transfer**                       | `nmap -p 53 --script=dns-zone-transfer <target>`                                              | `dns-zone-transfer`                            | Nếu cho phép AXFR → lộ danh sách zone + subdomain.                | Nhiều DNS server đã disable, nhưng nếu hở thì thông tin cực giá trị. |
+| **Brute force subdomain**               | `nmap -p 53 --script=dns-brute <target>`                                                      | `dns-brute`                                    | Dò subdomain bằng wordlist tích hợp của Nmap.                     | Chậm, có thể gây nhiều traffic.                                      |
+| **Check cache snooping**                | `nmap -p 53 --script=dns-cache-snoop <target>`                                                | `dns-cache-snoop`                              | Kiểm tra server có lưu cache truy vấn domain cụ thể.              | Hữu ích để xác định domain được truy cập nhiều.                      |
+| **Kiểm tra recursion**                  | `nmap -p 53 --script=dns-recursion <target>`                                                  | `dns-recursion`                                | Phát hiện server có bật recursion (cho phép query bất kỳ domain). | Nếu bật recursion → có thể bị lợi dụng cho DNS amplification.        |
+
+
+
+Các tham số Host Discovery trong Nmap
+| **Tham số**          | **Ý nghĩa**                                         | **Ví dụ**                              |
+| -------------------- | --------------------------------------------------- | -------------------------------------- |
+| `-Pn`                | Bỏ qua tất cả ping discovery, coi host luôn **up**. | `nmap -Pn 192.168.1.10`                |
+| `-sn`                | Chỉ ping discovery (không scan port).               | `nmap -sn 192.168.1.0/24`              |
+| `-n`                 | Không resolve DNS.                                  | `nmap -n 10.0.0.0/24`                  |
+| `--disable-arp-ping` | Tắt ARP ping (mặc định bật trong LAN).              | `nmap --disable-arp-ping 192.168.1.10` |
+| `-PR`                | Bật ARP ping (trong LAN).                           | `nmap -PR 192.168.1.0/24`              |
+| `-PE`                | ICMP Echo Request (ping truyền thống).              | `nmap -PE 192.168.1.0/24`              |
+| `-PP`                | ICMP Timestamp Request.                             | `nmap -PP 192.168.1.10`                |
+| `-PM`                | ICMP Netmask Request.                               | `nmap -PM 192.168.1.10`                |
+| `-PS[port]`          | TCP SYN ping đến cổng chỉ định (mặc định 80,443).   | `nmap -PS22,80,443 192.168.1.10`       |
+| `-PA[port]`          | TCP ACK ping đến cổng chỉ định.                     | `nmap -PA80,443 192.168.1.10`          |
+| `-PU[port]`          | UDP ping đến cổng chỉ định (mặc định 40125).        | `nmap -PU53 192.168.1.10`              |
+| `-PY[port]`          | SCTP INIT ping (ít dùng, cho SCTP protocol).        | `nmap -PY 192.168.1.10`                |
+| `-PO[protocol]`      | Ping bằng IP Protocol ping (ICMP, IGMP, v.v).       | `nmap -PO1,2,4 192.168.1.10`           |
+| `--traceroute`       | Kết hợp traceroute khi scan.                        | `nmap -Pn --traceroute 192.168.1.10`   |
+
+
