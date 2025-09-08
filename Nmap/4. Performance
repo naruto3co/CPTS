@@ -1,0 +1,37 @@
+
+| **Kỹ thuật**         | **Tham số**                                    | **Ví dụ lệnh**                                                             | **Ưu điểm**                                       | **Nhược điểm**                                    |
+| -------------------- | ---------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------- |
+| **Timeouts (RTT)**   | `--initial-rtt-timeout`<br>`--max-rtt-timeout` | `nmap 10.129.2.0/24 -F --initial-rtt-timeout 50ms --max-rtt-timeout 100ms` | Rút ngắn thời gian quét.                          | Timeout quá thấp → bỏ sót host chậm phản hồi.     |
+| **Retries**          | `--max-retries <số>`                           | `nmap 10.129.2.0/24 -F --max-retries 0`                                    | Giảm thời gian, bỏ qua port không phản hồi nhanh. | Có thể bỏ sót port quan trọng.                    |
+| **Packet Rate**      | `--min-rate <số>`                              | `nmap 10.129.2.0/24 -F --min-rate 300`                                     | Tăng tốc độ quét đáng kể.                         | Gây nhiều traffic, dễ bị phát hiện.               |
+| **Timing Templates** | `-T <0-5>`                                     | `nmap 10.129.2.0/24 -F -T4`                                                | Điều chỉnh nhanh/chậm quét theo môi trường.       | Quét quá nhanh (`-T5`) → dễ bị Firewall/IDS chặn. |
+
+
+Timing Templates chi tiết
+| **Mức** | **Tên**    | **Ý nghĩa**                            |
+| ------- | ---------- | -------------------------------------- |
+| `-T0`   | Paranoid   | Rất chậm, tránh bị IDS phát hiện.      |
+| `-T1`   | Sneaky     | Chậm, giảm nguy cơ bị log.             |
+| `-T2`   | Polite     | Lịch sự, giảm tải mạng.                |
+| `-T3`   | Normal     | Mặc định, cân bằng.                    |
+| `-T4`   | Aggressive | Nhanh, phù hợp khi mạng ổn định.       |
+| `-T5`   | Insane     | Cực nhanh, dễ bị chặn, bỏ sót dữ liệu. |
+
+
+Có thể thêm option lưu thành file để tiện grep kết quả 
+  [!bash!]$ cat tnet.default | grep "/tcp" | wc -l
+  [!bash!]$ cat tnet.T5 | grep "/tcp" | wc -l
+
+
+
+So sánh kết quả quét thực tế với Nmap
+| **Kỹ thuật**                        | **Lệnh ví dụ**                                                             | **Thời gian quét** | **Host tìm thấy** | **Port tìm thấy** | **Nhận xét**                                                  |
+| ----------------------------------- | -------------------------------------------------------------------------- | ------------------ | ----------------- | ----------------- | ------------------------------------------------------------- |
+| **Default Scan (Timeout mặc định)** | `nmap 10.129.2.0/24 -F`                                                    | \~39.44s           | 10                | 23                | Đầy đủ, nhưng chậm.                                           |
+| **Optimized RTT**                   | `nmap 10.129.2.0/24 -F --initial-rtt-timeout 50ms --max-rtt-timeout 100ms` | \~12.29s           | 8                 | 23                | Nhanh hơn 3 lần nhưng bỏ sót host.                            |
+| **Max Retries (Default = 10)**      | `nmap 10.129.2.0/24 -F`                                                    | –                  | –                 | 23                | Chuẩn xác.                                                    |
+| **Max Retries = 0**                 | `nmap 10.129.2.0/24 -F --max-retries 0`                                    | –                  | –                 | 21                | Bỏ sót port, tốc độ nhanh hơn.                                |
+| **Default Rate**                    | `nmap 10.129.2.0/24 -F -oN tnet.default`                                   | \~29.83s           | 10                | 23                | Bình thường.                                                  |
+| **Optimized Rate (min-rate 300)**   | `nmap 10.129.2.0/24 -F --min-rate 300`                                     | \~8.67s            | 10                | 23                | Nhanh gấp 3, không mất dữ liệu.                               |
+| **Default Timing (-T3)**            | `nmap 10.129.2.0/24 -F -T3`                                                | \~32.44s           | 10                | 23                | Cân bằng.                                                     |
+| **Insane Timing (-T5)**             | `nmap 10.129.2.0/24 -F -T5`                                                | \~18.07s           | 10                | 23                | Nhanh gấp đôi, vẫn đủ dữ liệu, nhưng dễ bị Firewall/IDS chặn. |
