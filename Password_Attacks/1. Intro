@@ -1,0 +1,27 @@
+1. Authentication và 4 Yếu tố Xác thực
+  Something you know – mật khẩu, PIN, passphrase.
+  Something you have – thẻ ID, token, key vật lý, thiết bị MFA.
+  Something you are – vân tay, khuôn mặt, giọng nói.
+  Somewhere you are – vị trí địa lý, địa chỉ IP.
+    Các hệ thống quan trọng có thể yêu cầu 2FA hoặc MFA (VD: CAC + PIN + password).
+
+2. Khái niệm Mật khẩu
+  Password / Passphrase: chuỗi ký tự gồm chữ, số, ký hiệu để xác thực danh tính.
+  Ví dụ: 8 ký tự chỉ gồm A-Z và 0-9 → có 36^8 ≈ 2.08×10^11 khả năng.
+  Có thể là một cụm từ dễ nhớ như TreeDogEvilElephant.
+
+3. Thực tế sử dụng mật khẩu
+  Convenience vs Security: phải cân bằng, tránh làm UX quá phức tạp.
+  Khảo sát Google + Harris Poll 2019:
+    24% dùng mật khẩu yếu như 123456, qwerty, password.
+    15% dùng password manager.
+    66% tái sử dụng mật khẩu ở nhiều nền tảng.
+  Panda Security 2025:
+    123456 vẫn phổ biến (4.5M lần xuất hiện trong data breach).
+    23% vẫn tái sử dụng mật khẩu ≥ 3 tài khoản.
+    36% người Mỹ đã dùng password manager (tăng gấp đôi sau 6 năm).
+  Chỉ 45% thay đổi mật khẩu sau khi bị lộ trong data breach.
+
+4. Công cụ kiểm tra rò rỉ mật khẩu
+  HaveIBeenPwned – kiểm tra email đã xuất hiện trong data breach nào.
+  Dùng để cảnh báo người dùng thay đổi mật khẩu.
