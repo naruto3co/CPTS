@@ -1,0 +1,40 @@
+1. Laudanum là một bộ sưu tập các file webshell đã được chuẩn bị sẵn (ready-made).
+  Hỗ trợ nhiều ngôn ngữ web: ASP, ASPX, JSP, PHP, v.v.
+  Mục đích:
+    Cho phép kẻ tấn công chèn file vào máy nạn nhân.
+    Nhận reverse shell.
+    Thực thi lệnh trực tiếp trên host từ trình duyệt.
+  Mặc định được cài trong Kali Linux và Parrot OS tại thư mục /usr/share/laudanum.
+  Nếu dùng distro khác → cần tự tải về từ repo chính thức: GitHub https://github.com/jbarcia/Web-Shells/tree/master/laudanum
+  
+2. Cấu trúc và Cách Sử Dụng
+  File Laudanum có thể dùng gần như nguyên bản: chỉ cần copy vào vị trí trên host mục tiêu để chạy.
+  Một số file đặc biệt (ví dụ shell) cần chỉnh sửa trước khi dùng:
+    Thêm địa chỉ IP của attacker vào biến cho phép (ví dụ allowedIps).
+    Khuyến nghị xóa ASCII art, comment để tránh bị AV/IDS phát hiện (chữ ký đã được signature sẵn).
+
+    Ví dụ thao tác trên Pwnbox:
+      cp /usr/share/laudanum/aspx/shell.aspx /home/tester/demo.aspx
+    → Sau đó chỉnh sửa dòng 59 (allowedIps) để thêm IP của bạn.
+
+3. Demo: Upload & Kích hoạt Shell
+  Chuẩn bị môi trường
+  Thêm hostname của mục tiêu vào file /etc/hosts:
+    <target-ip> status.inlanefreight.local
+    
+  Tận dụng chức năng upload của ứng dụng web:
+    Chọn file shell đã chỉnh sửa và upload.
+    Nếu upload thành công → ứng dụng in ra đường dẫn lưu file.
+    
+  Truy cập webshell:
+    Duyệt đến đường dẫn nơi file được lưu (ví dụ \\files\demo.aspx).
+    Trình duyệt sẽ tự chuẩn hóa đường dẫn thành URL hợp lệ (dùng /).
+    
+  Thực thi lệnh:
+    Có thể gõ lệnh hệ thống như systeminfo và nhận output trả về.
+
+Lưu ý Bảo Mật & Phòng Thủ
+  Nhiều hệ thống sẽ random tên file khi upload hoặc không cho truy cập trực tiếp thư mục upload → cần tìm cách bypass.
+  Việc sử dụng Laudanum có thể bị phát hiện nếu chữ ký payload chưa bị chỉnh sửa.
+  Khi pentest xong, nên xóa các file đã upload để tránh để lại backdoor.
+
