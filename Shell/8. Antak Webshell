@@ -1,7 +1,40 @@
-/usr/share/nishang/Antak-WebShell
+1. Giới thiệu về ASPX và Antak Webshell
+  ASPX (Active Server Page Extended):
+    Là dạng file thuộc ASP.NET Framework của Microsoft. Nó cho phép tạo các trang web form nhận dữ liệu từ người dùng và xử lý ở server.
+    Pentester có thể lợi dụng để triển khai web shell nhằm điều khiển hệ điều hành Windows phía sau.
+  Antak Webshell:
+    Nằm trong bộ công cụ Nishang – một tập hợp các công cụ PowerShell tấn công.
+    Giao diện giống PowerShell Console.
+    Có thể thực thi từng lệnh dưới dạng process mới, chạy script trong memory, encode lệnh gửi đi.
+    Hỗ trợ upload/download file, chạy one-liner để lấy shell ngược (callback).
 
-Sửa dòng 14 thêm user/passwd 
+2. Vị trí & Cách Sử Dụng Antak
+  Đường dẫn Antak trên Pwnbox:
+    /usr/share/nishang/Antak-WebShell/antak.aspx
+  
+  Thực hành:
+    Copy file về thư mục upload để chỉnh sửa:
+        cp /usr/share/nishang/Antak-WebShell/antak.aspx /home/administrator/Upload.aspx
+    Sửa dòng 14 để thêm username và password bảo vệ shell, giúp tránh người lạ sử dụng.      < Quan trọng >
+    Có thể xóa ASCII art/comment để giảm khả năng bị AV phát hiện.
+    Upload file lên ứng dụng web (ví dụ status portal) và truy cập qua trình duyệt để nhận prompt đăng nhập.
 
-làm như cái 7. 
+3. Thiết Lập & Thực Thi
+  Chuẩn bị: thêm mục trong /etc/hosts:
+    <target_ip> status.inlanefreight.local
+  Giúp trình duyệt truy cập bằng vHost chính xác.    < Quan trọng >
+  Khi truy cập: nhập user/pass đã thiết lập → sẽ thấy giao diện giống PowerShell.
+  Các thao tác hỗ trợ:
+    Chạy lệnh cơ bản: whoami, dir, ipconfig
+    Upload/download file trực tiếp
+    Encode/execute script trong memory
+    Sử dụng help trong shell để xem danh sách lệnh hỗ trợ.
 
-Mỗi tội mình làm bị lỗi 
+4. Ý Nghĩa trong Pentest
+  Antak giúp pentester nhanh chóng có quyền điều khiển máy Windows qua HTTP.
+  Lý tưởng để:
+    Thu thập thông tin hệ thống sau khi upload webshell.
+    Thực thi payload để tạo kết nối reverse shell về máy C2.
+    Tải và thực thi công cụ bổ sung (mimikatz, lateral movement script,…).
+
+
