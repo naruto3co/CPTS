@@ -1,0 +1,3 @@
+echo -n Soccer06! | md5sum
+echo -n Soccer06! | sha256sum
+echo -n Soccer06! | sha1sum
