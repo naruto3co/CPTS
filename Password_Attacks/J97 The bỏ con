@@ -1,0 +1,42 @@
+John The Ripper
+
+Crack mode 
+	Single crack mode
+		file passwd : r0lf:$6$ues25dIanlctrWxg$nZHVz2z4kCy1760Ee28M1xtHdGoy0C2cYzZ8l2sVa1kIa8K9gAcdBP.GI6ng/qA4oaMrgElZ1Cb9OeXO4Fvy3/:0:0:Rolf Sebastian:/home/r0lf:/bin/bash
+		
+		Chạy lệnh crack : naruto3co@htb[/htb]$ john --single passwd
+
+	Wordlist mode
+		naruto3co@htb[/htb]$ john --wordlist=<wordlist_file> <hash_file>
+	Incremental mode
+		naruto3co@htb[/htb]$ john --incremental <hash_file>
+
+Identifying hash formats
+	hashid -j 193069ceb0461e1d40d216e32c79c704
+	hashid sẽ so sánh mã hash với các regex của những loại hash phổ biến.
+	Vì chuỗi này có 32 ký tự hex (0-9a-f), nhiều thuật toán cùng cho ra kết quả 32 ký tự dạng hex → nó liệt kê ra hết.
+
+
+Cracking files
+
+| **Tool**                   | **Description**                                              |
+| -------------------------- | ------------------------------------------------------------ |
+| **pdf2john**               | Converts PDF documents for John                              |
+| **ssh2john**               | Converts SSH private keys for John                           |
+| **mscash2john**            | Converts MS Cash hashes for John                             |
+| **keychain2john**          | Converts macOS Keychain files for John                       |
+| **rar2john**               | Converts RAR archives for John                               |
+| **pfx2john**               | Converts PKCS#12 (PFX) files for John                        |
+| **truecrypt\_volume2john** | Converts TrueCrypt volumes for John                          |
+| **keepass2john**           | Converts KeePass password databases for John                 |
+| **vncpcap2john**           | Converts VNC PCAP network captures for John                  |
+| **putty2john**             | Converts PuTTY private keys for John                         |
+| **zip2john**               | Converts ZIP archives for John                               |
+| **hccap2john**             | Converts WPA/WPA2 handshake captures (hccap format) for John |
+| **office2john**            | Converts MS Office documents for John                        |
+| **wpa2john**               | Converts WPA/WPA2 handshakes for John                        |
+| **...SNIP...**             | ...SNIP...                                                   |
+
+
+
+
