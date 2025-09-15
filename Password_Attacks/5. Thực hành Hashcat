@@ -1,0 +1,44 @@
+Khá hay 
+
+What is Mark's password? 
+
+Có những manh mối sau 
+  He was born on August 5, 1998
+  He works at Nexura, Ltd.
+  The company's password policy requires passwords to be at least 12 characters long, to contain at least one uppercase letter, at least one lowercase letter, at least one symbol and at least one number
+  He lives in San Francisco, CA, USA
+  He has a pet cat named Bella
+  He has a wife named Maria
+  He has a son named Alex
+  He is a big fan of baseball
+  The password hash is: 97268a8ae45ac7d15c3cea4ce6ea550b. Use the techniques covered in this section to generate a custom wordlist and ruleset targeting Mark specifically, and crack the password.
+
+
+=========================================================== Giải ===========================================================
+
+| **Bước**                    | **Mô tả**                                                                                                     | **Công cụ/Lệnh sử dụng**                                                                                                | **Kết quả**                                    | **Ý nghĩa & Lưu ý**                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| **1. Tạo wordlist gốc**     | Thu thập OSINT, tạo file `mark.html` chứa dữ liệu cá nhân (ngày sinh, tên thú cưng, vợ, con, sở thích, nơi ở) | `python3 -m http.server 8000`<br>`cewl -d 1 -m 2 --with-numbers -w mark_initial.txt http://<tun0>:8000/mark.html`       | Tạo file `mark_initial.txt` với 27 từ khóa gốc | Loại bỏ thông tin không cần thiết (như mô tả policy) để giảm nhiễu  |
+| **2. Kết hợp từ khóa**      | Tạo tổ hợp 2 từ để tăng độ dài mật khẩu, phù hợp yêu cầu ≥ 12 ký tự                                           | `hashcat --stdout -a 1 mark_initial.txt mark_initial.txt > mark_pairs.txt`                                              | Tạo 729 cặp từ                                 | Tăng khả năng khớp mật khẩu dài; chuẩn bị cho bước lọc              |
+| **3. Lọc theo độ dài**      | Giữ lại chuỗi có độ dài ≥ 12 ký tự để tiết kiệm tài nguyên                                                    | `awk 'length($0) >= 12' mark_pairs.txt > pairs_length12.txt`                                                            | Còn 76 cặp                                     | Giảm số lượng candidate, tối ưu cho bước áp dụng rule               |
+| **4. Áp dụng custom rules** | Viết `custom.rule` chứa các phép biến đổi (capitalize, thay `a→@`, `o→0`, thêm `!`)                           | `hashcat --stdout -r custom.rule pairs_length12.txt > mut_mark_final.txt`                                               | Sinh ra 1140 mật khẩu biến thể                 | Đảm bảo tuân thủ policy (có chữ hoa, ký tự đặc biệt, số)            |
+| **5. Crack hash**           | Xác định loại hash → MD5 (mode 0), chạy tấn công bằng wordlist cuối                                           | `hashid -m 97268a8ae45ac7d15c3cea4ce6ea550b`<br>`hashcat -a 0 -m 0 97268a8ae45ac7d15c3cea4ce6ea550b mut_mark_final.txt` | Hashcat hiển thị mật khẩu khi tìm thấy         | Chứng minh hiệu quả của wordlist + rules được tối ưu dựa trên OSINT |
+
+
+mark.html
+<!DOCTYPE html>
+<html>
+<head><title>Mark White Bio</title></head>
+<body>
+  <h1>Mark White</h1>
+  <ul>
+    <li>Born: August 5, 1998</li>
+    <li>Works at Nexura, Ltd.</li>
+    <li>Lives in San Francisco, CA, USA</li>
+    <li>Pet: cat named Bella</li>
+    <li>Wife: Maria</li>
+    <li>Son: Alex</li>
+    <li>Fan of baseball</li>
+  </ul>
+</body>
+</html>
