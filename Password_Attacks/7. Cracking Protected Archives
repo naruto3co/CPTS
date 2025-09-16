@@ -46,3 +46,23 @@
   Mounting BitLocker-encrypted drives in Linux (or macOS) : Thực sự chương này mình không muốn làm tiếp vì chả mấy khi ứng dụng cả 
     https://academy.hackthebox.com/module/147/section/1323
 
+
+
+
+
+=======================================================================================================================================================================================
+
+Luồng bài tập 
+Nó có file .zip 
+  unzip cracking-protected-archives.zip
+    Ta được file Private.vhb 
+
+
+Trích xuất hash của BitLocker từ file VHD
+  bitlocker2john -i  Private.vhd > Private.hash
+    Lấy được file hash 
+
+Từ đọc tiếp nhé https://academy.hackthebox.com/module/147/section/1323
+
+
+
