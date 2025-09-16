@@ -1,1 +1,66 @@
+Tôi éo hiểu gì, quay lại sau 
+
+
+1. Các loại mã hoá file 
+
+  | Loại mã hoá             | Ví dụ file            | Thuật toán              | Tool trích xuất hash                  |
+  | ----------------------- | --------------------- | ----------------------- | ------------------------------------- |
+  | File-level (Office/PDF) | `.docx`, `.pdf`       | AES-256                 | `office2john.py`, `pdf2john.py`       |
+  | Archive                 | `.zip`, `.rar`, `.7z` | AES-256, ZipCrypto      | `zip2john`, `rar2john`, `7z2john.pl`  |
+  | SSH/GPG key             | `id_rsa`, `.gpg`      | AES-128-CBC, bcrypt KDF | `ssh2john.py`, `gpg2john`             |
+  | Full Disk               | BitLocker, LUKS       | AES-XTS                 | `bitlocker2john`, `luks2john`         |
+  | Password manager        | `.kdbx`, `.opvault`   | AES-256, ChaCha20       | `keepass2john`, script riêng          |
+  | Custom / App-specific   | backup, DB            | Tuỳ ứng dụng            | Phân tích thủ công / reverse-engineer |
+
+
+
+
+2. Tìm kiếm file mã hóa
+  Phát hiện file theo phần mở rộng:
+  Dùng vòng lặp để tìm .xls, .doc, .odt, .pdf, .ppt…
+    for ext in $(echo ".xls .xls* .xltx .od* .doc .doc* .pdf .pot .pot* .pp*"); do
+      find / -name "*$ext"
+    done
+  Tìm file không có phần mở rộng đặc trưng:
+  Dùng grep tìm header/footers đặc trưng (ví dụ SSH key):
+    grep -rnE '^\-{5}BEGIN [A-Z0-9]+ PRIVATE KEY\-{5}$' /* 2>/dev/null
+
+
+3. Kiểm tra và giải mã SSH key
+  Xác định key có mã hóa hay không:
+    Đọc file xem có dòng Proc-Type: 4,ENCRYPTED.
+    Thử dùng ssh-keygen -yf ~/.ssh/id_ed25519 – nếu bị yêu cầu passphrase thì key được mã hóa.
+  Trích xuất hash từ SSH key:
+    ssh2john.py SSH.private > ssh.hash
+    john --wordlist=rockyou.txt ssh.hash
+    john ssh.hash --show
+
+4. Cracking tài liệu được bảo vệ bằng mật khẩu
+  Microsoft Office:
+    office2john.py Protected.docx > protected-docx.hash
+    john --wordlist=rockyou.txt protected-docx.hash
+    john protected-docx.hash --show
+  
+  PDF:
+    pdf2john.py file.pdf > pdf.hash
+    john --wordlist=rockyou.txt pdf.hash
+    john pdf.hash --show
+  
+  Nguyên tắc:
+    Quy trình giống crack hash thông thường: trích xuất → dùng wordlist → hiển thị kết quả.
+    Khó khăn chính: cần wordlist tốt, mutation rules để tìm password phức tạp.
+
+5. Công cụ hỗ trợ (2john scripts)
+  Danh sách quan trọng:
+    ssh2john.py, office2john.py, pdf2john.py, zip2john, rar2john, keepass2john, bitlocker2john, gpg2john, v.v.
+  Mục đích: chuyển file được bảo vệ thành định dạng hash mà John the Ripper (hoặc Hashcat) có thể xử lý.
+
+
+
+
+
+
+
+
+
 
