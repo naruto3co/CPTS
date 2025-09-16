@@ -1,0 +1,48 @@
+1. Cracking ZIP files
+  The ZIP format is often heavily used in Windows environments to compress many files into one file. The process of cracking an encrypted ZIP file is similar to what we have seen already, except for using a different script to extract the hashes.
+    naruto3co@htb[/htb]$ zip2john ZIP.zip > zip.hash
+    naruto3co@htb[/htb]$ cat zip.hash 
+      ZIP.zip/customers.csv:$pkzip2$1*2*2*0*2a*1e*490e7510*0*42*0*2a*490e*409b*ef1e7feb7c1cf701a6ada7132e6a5c6c84c032401536faf7493df0294b0d5afc3464f14ec081cc0e18cb*$/pkzip2$:customers.csv:ZIP.zip::ZIP.zip
+  Ok giờ tôi lấy được zip.hash file rồi, nó hiện ra mã hash
+  Dùng JtR để khai thác mã hash   
+    naruto3co@htb[/htb]$ john --wordlist=rockyou.txt zip.hash
+    naruto3co@htb[/htb]$ john zip.hash --show
+      ZIP.zip/customers.csv:1234:customers.csv:ZIP.zip::ZIP.zip
+      1 password hash cracked, 0 left
+
+2. Cracking OpenSSL encrypted GZIP files
+  Trường hợp gặp file gzip nhưng thực tế đang được mã hoá bằng SSL . 
+  We can use the file command, which provides detailed information about its contents. For example: 
+    naruto3co@htb[/htb]$ file GZIP.gzip 
+      GZIP.gzip: openssl enc'd data with salted password    -> file được mã hoá ssl gồm passwd và salt 
+
+    | **Bước** | **Mục đích**                                          | **Lệnh / Hành động**                                                                                      | **Kết quả mong đợi**                                                                               |                                                                    |
+    | -------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+    | **1**    | Kiểm tra loại file để xác định có bị mã hóa hay không | `bash\nfile GZIP.gzip\n`                                                                                  | Hiện thông tin: `openssl enc'd data with salted password` → xác nhận file được mã hóa bằng OpenSSL |                                                                    |
+    | **2**    | Dùng brute-force thử mật khẩu bằng wordlist           | \`\`\`bash\nfor i in \$(cat rockyou.txt); do openssl enc -aes-256-cbc -d -in GZIP.gzip -k \$i 2>/dev/null | tar xz; done\n\`\`\`                                                                               | Chạy qua từng mật khẩu, nếu đúng sẽ giải mã và giải nén thành công |
+    | **3**    | Bỏ qua lỗi khi giải mã sai                            | (Tự động trong vòng lặp – nhờ `2>/dev/null`)                                                              | Thấy lỗi kiểu: `gzip: stdin: not in gzip format` → có thể bỏ qua                                   |                                                                    |
+    | **4**    | Kiểm tra kết quả sau khi thử hết mật khẩu             | `bash\nls\n`                                                                                              | Nếu mật khẩu đúng đã tìm thấy → file giải nén mới xuất hiện (vd: `customers.csv`)                  |                                                                    |
+      /usr/share/wordlists/rockyou.txt → wordlist phổ biến để brute-force.
+
+3. Cracking BitLocker-encrypted drives
+  Bối cảnh : 
+    Doanh nghiệp có thể dùng virtual drives (ổ đĩa ảo .vhd) để lưu tài liệu, nhằm ngăn truy cập trái phép.
+    Nếu cần khôi phục dữ liệu nhưng quên mật khẩu → có thể crack.
+  Trích xuất hash từ VHD
+    bitlocker2john -i Backup.vhd > backup.hashes
+    grep "bitlocker\$0" backup.hashes > backup.hash
+    cat backup.hash
+  Ý nghĩa:
+    bitlocker2john → phân tích file VHD và tạo ra 4 loại hash.
+    Chỉ hash có dạng $bitlocker$0$... là hash cho mật khẩu người dùng.
+    Lưu hash cần crack vào backup.hash.
+  
+  Crack hash bằng hashcat
+    hashcat -a 0 -m 22100 backup.hash /usr/share/wordlists/rockyou.txt
+      -a 0 → attack mode 0 (straight mode: thử từng mật khẩu trong wordlist).
+      -m 22100 → chế độ hash của BitLocker.
+
+4. Mounting BitLocker-encrypted drives in Windows
+  Mounting BitLocker-encrypted drives in Linux (or macOS) : Thực sự chương này mình không muốn làm tiếp vì chả mấy khi ứng dụng cả 
+    https://academy.hackthebox.com/module/147/section/1323
+
