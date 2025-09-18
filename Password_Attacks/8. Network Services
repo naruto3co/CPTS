@@ -1,0 +1,175 @@
+======================================================
+NETWORK SERVICES PASSWORD ATTACKS - FULL NOTES
+======================================================
+
+🎯 MỤC TIÊU TÀI LIỆU
+--------------------
+Khi thực hiện pentest, hầu như mọi hệ thống mạng đều cung cấp một số dịch vụ
+để quản lý, trao đổi dữ liệu hoặc điều khiển hệ thống từ xa. Những dịch vụ này
+thường được bảo vệ bằng username & password. Nếu các mật khẩu yếu hoặc mặc định,
+kẻ tấn công có thể brute-force hoặc dò quét để truy cập trái phép.
+
+Tài liệu này sẽ giúp bạn:
+1. Hiểu vai trò và cơ chế hoạt động của các dịch vụ mạng quan trọng.
+2. Nắm được port mặc định, công cụ phổ biến để brute-force.
+3. Biết cách xử lý sau khi đăng nhập thành công (hậu khai thác).
+4. Nhận biết rủi ro và đề xuất phòng thủ.
+
+Các dịch vụ phổ biến được nhắc đến:
+FTP, SMB, NFS, IMAP/POP3, SSH, MySQL/MSSQL, RDP, WinRM, VNC, Telnet, SMTP, LDAP.
+Trong phần này, chúng ta tập trung vào 4 dịch vụ quan trọng: WinRM, SSH, RDP, SMB.
+
+------------------------------------------------------
+1️⃣ WINRM (Windows Remote Management)
+------------------------------------------------------
+📝 Đặt vấn đề:
+WinRM là cơ chế quản lý Windows từ xa thông qua giao thức WS-Management
+(SOAP/XML). Nó giúp admin quản lý hệ thống, chạy lệnh từ xa bằng PowerShell.
+Nếu kẻ tấn công đoán được user/pass, hắn có thể kiểm soát hệ thống như một admin.
+
+🔌 Port: 5985 (HTTP), 5986 (HTTPS)
+📚 Cơ chế: Cho phép gọi WMI/DCOM qua SOAP, thực thi lệnh từ xa.
+
+🔧 Công cụ & Quy trình:
+  • NetExec
+    - Quét & brute-force:
+      netexec winrm <IP> -u user.list -p password.list
+    - Thêm --jitter để giảm tốc độ tránh lockout:
+      netexec winrm <IP> -u user.list -p password.list --jitter 2
+    - Dấu hiệu thành công:
+      [+] <host>\<user>:<pass> (Pwn3d!)
+    - Nếu thấy (Pwn3d!) nghĩa là chúng ta có thể mở shell từ xa.
+
+  • Evil-WinRM
+    - Dùng để kết nối và có shell PowerShell:
+      evil-winrm -i <IP> -u <user> -p <password>
+    - Có thể upload file, dump credential, chạy lệnh tùy ý.
+
+🎯 Hậu khai thác:
+- Dump thông tin hệ thống (whoami, hostname, ipconfig).
+- Leo thang đặc quyền với PowerShell script.
+- Duy trì persistence bằng cách thêm user hoặc implant.
+
+💡 Lưu ý:
+- WinRM mặc định tắt trên Windows 10/11, chỉ bật trong domain/lab.
+- Cần cẩn thận để tránh account lockout trong môi trường thật.
+
+------------------------------------------------------
+2️⃣ SSH (Secure Shell)
+------------------------------------------------------
+📝 Đặt vấn đề:
+SSH là dịch vụ kết nối an toàn đến hệ thống (thường là Linux).
+Nó dùng 3 lớp bảo mật: mã hóa đối xứng (AES, 3DES), bất đối xứng (RSA),
+và hashing để đảm bảo tính toàn vẹn. Nếu brute-force thành công,
+ta có thể điều khiển hệ thống với quyền user từ xa.
+
+🔌 Port: 22
+📚 Cơ chế: Mã hóa phiên kết nối, dùng key exchange (Diffie-Hellman) để sinh key bí mật.
+
+🔧 Công cụ & Quy trình:
+  • Hydra
+    hydra -L user.list -P password.list ssh://<IP> -t 4
+    (giảm thread để tránh bị chặn)
+  
+  • OpenSSH Client
+    - Kết nối:
+      ssh user@<IP>
+    - Hoặc dùng private key:
+      ssh -i id_rsa user@<IP>
+
+🎯 Hậu khai thác:
+- Kiểm tra quyền sudo.
+- Tải file /etc/passwd, /etc/shadow để offline cracking.
+- Thêm SSH key vào ~/.ssh/authorized_keys để backdoor.
+
+💡 Lưu ý:
+- SSH bảo mật cao, brute-force chậm.
+- Nếu có private key không được bảo vệ passphrase → đăng nhập trực tiếp.
+
+------------------------------------------------------
+3️⃣ RDP (Remote Desktop Protocol)
+------------------------------------------------------
+📝 Đặt vấn đề:
+RDP cho phép quản trị viên điều khiển Windows từ xa thông qua GUI.
+Kẻ tấn công brute-force thành công có thể xem màn hình, điều khiển chuột,
+gõ phím, copy file.
+
+🔌 Port: 3389
+📚 Cơ chế: Gửi dữ liệu hình ảnh, âm thanh, input giữa client-server.
+
+🔧 Công cụ & Quy trình:
+  • Hydra
+    hydra -L user.list -P password.list rdp://<IP> -t 1
+    (giảm threads để tránh lockout)
+  
+  • xfreerdp
+    xfreerdp /v:<IP> /u:<user> /p:<password>
+    (nhấn Y khi được hỏi về chứng chỉ tự ký)
+
+🎯 Hậu khai thác:
+- Mở Command Prompt/PowerShell trên phiên RDP.
+- Cài đặt backdoor, exfiltrate dữ liệu.
+
+💡 Lưu ý:
+- Một số tài khoản có password đúng nhưng chưa enable Remote Desktop → cần bật qua registry hoặc dùng WinRM/SMB trước.
+
+------------------------------------------------------
+4️⃣ SMB (Server Message Block)
+------------------------------------------------------
+📝 Đặt vấn đề:
+SMB dùng để chia sẻ file, thư mục, máy in trong mạng LAN.
+Nếu ta tìm được mật khẩu user, ta có thể truy cập share quan trọng,
+tải file nhạy cảm hoặc thậm chí thực thi code (nếu có quyền ghi).
+
+🔌 Port: 445
+📚 Cơ chế: Client-server, hỗ trợ xác thực NTLM/kerberos.
+
+🔧 Công cụ & Quy trình:
+  • Hydra
+    hydra -L user.list -P password.list smb://<IP>
+    (nếu lỗi SMBv3 → dùng Metasploit)
+
+  • Metasploit
+    use auxiliary/scanner/smb/smb_login
+    set USER_FILE user.list
+    set PASS_FILE password.list
+    set RHOSTS <IP>
+    run
+
+  • NetExec
+    netexec smb <IP> -u user -p password --shares
+    (liệt kê share & quyền truy cập)
+
+  • smbclient
+    smbclient -U user \\\\<IP>\\<SHARENAME>
+    ls, get <file>, put <file>
+
+🎯 Hậu khai thác:
+- Kiểm tra quyền ghi trên share → upload shell.
+- Dump SAM, SYSTEM nếu có quyền admin (qua ADMIN$).
+- Pivot sang các máy khác qua share.
+
+💡 Lưu ý:
+- Nếu lấy được NTLM hash → dùng kỹ thuật Pass-the-Hash.
+- SMB hay bị brute-force lockout → cẩn thận số lần thử.
+
+------------------------------------------------------
+📌 CHIẾN LƯỢC TỔNG QUAN
+------------------------------------------------------
+1. Thu thập thông tin dịch vụ & port mở (nmap -sV).
+2. Chuẩn bị user.list & password.list (seclists, cewl, custom).
+3. Dò quét từng dịch vụ theo cổng tương ứng.
+4. Sau khi có thông tin đăng nhập → kết nối bằng công cụ client.
+5. Thực hiện hậu khai thác (thu thập thông tin, leo thang đặc quyền).
+6. Báo cáo và đề xuất phòng thủ: disable account mặc định, enforce password policy, enable account lockout, bật MFA.
+
+------------------------------------------------------
+PHÒNG THỦ
+------------------------------------------------------
+- Đổi password mặc định, đặt password mạnh.
+- Giới hạn số lần đăng nhập thất bại (lockout policy).
+- Bật logging & alert với sự kiện đăng nhập thất bại.
+- Sử dụng MFA cho SSH, RDP, WinRM nếu có thể.
+- Giới hạn dịch vụ chỉ mở cho địa chỉ IP tin cậy (firewall).
+
+======================================================
