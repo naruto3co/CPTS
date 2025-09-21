@@ -1,0 +1,27 @@
+Company Hosted Servers
+
+naruto3co@htb[/htb]$ for i in $(cat subdomainlist);do host $i | grep "has address" | grep inlanefreight.com | cut -d" " -f1,4;done
+Ta thấy được kết quả 
+    blog.inlanefreight.com 10.129.24.93
+    inlanefreight.com 10.129.27.33
+    matomo.inlanefreight.com 10.129.127.22
+    www.inlanefreight.com 10.129.127.33
+    s3-website-us-west-2.amazonaws.com 10.129.95.250
+      Để ý nhé s3-website-us-west-2.amazonaws.com => ta thấy sự liên kết của nó với cloud -> sử dung Google Dorks inurl: and intext:
+
+Google Search for AWS
+  intext:{my_keyword} inurl:amazonaws.com
+
+Google Search for Azure
+  intext:{my_keyword} inurl:blob.core.windows.net
+
+Target Website - Source Code
+  Third-party providers such as domain.glass can also tell us a lot about the company's infrastructure. As a positive side effect, we can also see that Cloudflare's security assessment status has been classified as "Safe". This means we have already found a security measure that can be noted for the second layer (gateway).
+  -> domain.glass 
+  
+Domain.Glass Results
+  Another very useful provider is GrayHatWarfare. We can do many different searches, discover AWS, Azure, and GCP cloud storage, and even sort and filter by file format. Therefore, once we have found them through Google, we can also search for them on GrayHatWarefare and passively discover what files are stored on the given cloud storage.
+    -> GrayHatWarfare
+
+Private and Public SSH Keys Leaked
+  Maybe we can find it by GrayHatWarfare
