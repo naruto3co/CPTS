@@ -1,0 +1,303 @@
+  _____ _____ ____  
+ |  ___|_   _|  _ \ 
+ | |_    | | | |_) |
+ |  _|   | | |  __/ 
+ |_|     |_| |_|    
+                    
+
+FTP chạy trong lớp Application trong mô hình TCP/IP có -> vì vậy nên nó được sử dụng như HTTP hoặc POP 
+
+
+Khi ta muốn download file hoặc upload file qua FTP thì 2 channel sẽ được mở ( như hình dưới )
+           - Client tạo kết nối thông qua port 21 của server. Client gửi câu lệnh tới server và server trả về status code 
+                      Client (51514) <----TCP----> Server (21)           [ 51514 là port ngẫu nhiên của client để giao tiếp với server ]
+           - Khi làm bước trên xong thì sẽ truyền file qua cổng 20 nhé. Cổng 20 sẽ lo vai trò duy trì kết nối, dataloss, kết nối lại 
+           
+           
+           +----------------------+                     +----------------------+
+           |      FTP Client      |                     |      FTP Server      |
+           +----------------------+                     +----------------------+
+                      |                                          |
+                      |    (1) Control Channel - Port 21         |
+                      |----------------------------------------->|
+                      |  USER, PASS, LIST, RETR, STOR ...        |
+                      |<-----------------------------------------|
+                      |    Status codes (200, 220, 331, 550...)  |
+                      |                                          |
+                      |                                          |
+                      |    (2) Data Channel - Port 20            |
+                      |=========================================>|
+                      |       Truyền file / dữ liệu thực tế      |
+                      |<=========================================|
+                      |                                          |
+                      |  Khi xong: Data channel đóng             |
+                      |  Control channel vẫn duy trì             |
+                      |                                          |
+
+
+FTP chia thành 2 loại 
+Active FTP và Passive FTP
+
+🔹 Active FTP
+           Control channel: Client → Server (port 21).
+           Data channel: Server chủ động kết nối từ port 20 của nó đến một port ngẫu nhiên trên client.
+           Nhược điểm: Nếu client nằm sau firewall/NAT → kết nối từ ngoài (server → client) thường bị chặn ❌.
+                      Client (ephemeral port) ---> Server:21   [Control channel]
+                      Server:20 --------> Client (ephemeral)   [Data channel]
+
+
+🔹 Passive FTP
+           Control channel: Client → Server (port 21).
+           Data channel: Server báo cho client một port ngẫu nhiên >1023 của nó.
+           Client chủ động kết nối đến port đó trên server.
+           Ưu điểm: Vì tất cả kết nối đều do client khởi tạo → ít bị firewall chặn ✅.
+                      Client (ephemeral port) ---> Server:21       [Control channel]
+                      Client (ephemeral port) ---> Server:>1023    [Data channel]
+
+
+👉 Khác biệt chính:
+           Active: server “gọi về” client → dễ bị firewall chặn.
+           Passive: client “gọi đi” server → firewall cho phép dễ dàng hơn.
+
+
+
+Command list FTP : https://web.archive.org/web/20230326204635/https://www.smartfile.com/blog/the-ultimate-ftp-commands-list/
+
+Không phải toàn bộ câu lệnh FTP được dùng phía server. Có thể dùng từ client vaf response status code để thông báo có thành công hay không
+           Response status : https://en.wikipedia.org/wiki/List_of_FTP_server_return_codes
+
+
+
+
+
+
+
+
+████████╗███████╗████████╗██████╗░
+╚══██╔══╝██╔════╝╚══██╔══╝██╔══██╗
+░░░██║░░░█████╗░░░░░██║░░░██████╔╝
+░░░██║░░░██╔══╝░░░░░██║░░░██╔═══╝░
+░░░██║░░░██║░░░░░░░░██║░░░██║░░░░░
+░░░╚═╝░░░╚═╝░░░░░░░░╚═╝░░░╚═╝░░░░░
+
+
+Trivial File Transfer Protocol (TFTP) đơn giản hơn FTP. Nên sẽ không cung cấp xác thực và 1 số tính năng khác 
+TFTP dùng UDP thay vì TCP như của FTP 
+
+Một số lệnh TFTP thông dụng 
+| **Command** | **Description (Ý nghĩa)**                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------- |
+| `connect`   | Thiết lập kết nối tới host từ xa, có thể kèm cổng để truyền file.                                     |
+| `get`       | Tải 1 hoặc nhiều file **từ remote host → về local host**.                                             |
+| `put`       | Upload 1 hoặc nhiều file **từ local host → lên remote host**.                                         |
+| `quit`      | Thoát khỏi chương trình TFTP.                                                                         |
+| `status`    | Hiển thị trạng thái hiện tại của TFTP (chế độ truyền: ascii/binary, tình trạng kết nối, time-out...). |
+| `verbose`   | Bật/tắt chế độ hiển thị chi tiết (in thêm thông tin trong quá trình truyền file).                     |
+
+
+
+
+
+
+Default Configuration
+
+           Một trong nhưng máy chủ FTP được cài trên linux phổ biến là vsftpd ( có nhiều lựa chọn khác nữa ) 
+           Cấu hình trong file /etc/vsftpd.conf
+           
+           Install : naruto3co@htb[/htb]$ sudo apt install vsftpd 
+vsFTPd Config File
+           naruto3co@htb[/htb]$ cat /etc/vsftpd.conf | grep -v "#"
+
+           | **Setting**                                                   | **Description (Ý nghĩa)**                                                    |
+           | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+           | `listen=NO`                                                   | Chạy từ **inetd/xinetd** (NO) hay chạy dạng **standalone daemon** (YES).     |
+           | `listen_ipv6=YES`                                             | Cho phép lắng nghe kết nối **IPv6**.                                         |
+           | `anonymous_enable=NO`                                         | Có cho phép truy cập **anonymous FTP** không (NO = tắt).                     |
+           | `local_enable=YES`                                            | Cho phép **user local trong hệ thống** đăng nhập FTP.                        |
+           | `dirmessage_enable=YES`                                       | Hiển thị **message trong thư mục** (nếu có file `.message`) khi user cd vào. |
+           | `use_localtime=YES`                                           | Sử dụng **giờ local** thay vì UTC khi hiển thị file.                         |
+           | `xferlog_enable=YES`                                          | Bật **log** cho hoạt động upload/download.                                   |
+           | `connect_from_port_20=YES`                                    | Sử dụng **port 20** để kết nối dữ liệu (theo chuẩn FTP active mode).         |
+           | `secure_chroot_dir=/var/run/vsftpd/empty`                     | Thư mục trống để **chroot jail** khi vsftpd khởi động, nhằm tăng bảo mật.    |
+           | `pam_service_name=vsftpd`                                     | Tên dịch vụ PAM (Pluggable Authentication Module) để xác thực user.          |
+           | `rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem`          | Vị trí file **RSA certificate** dùng cho SSL/TLS.                            |
+           | `rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key` | Vị trí file **private key** cho SSL/TLS.                                     |
+           | `ssl_enable=NO`                                               | Bật/Tắt **SSL/TLS** cho FTP (NO = chưa bật).                                 |
+
+
+           👉 Hiểu nhanh:
+                      Các option *_enable → cho phép/tắt tính năng.
+                      Các option rsa_* → dùng cho FTPS (FTP Secure).
+                      listen + listen_ipv6 → quyết định cách vsftpd chạy (daemon, IPv4/IPv6).
+                      secure_chroot_dir → tăng bảo mật bằng sandbox.
+
+FTPUSERS
+           In addition, there is a file called /etc/ftpusers that we also need to pay attention to, as this file is used to deny certain users access to the FTP service. In the following example, the users guest, john, and kevin are not permitted to log in to the FTP service, even if they exist on the Linux system.
+           naruto3co@htb[/htb]$ cat /etc/ftpusers
+                      guest
+                      john
+                      kevin
+
+           -> từ chối 3 user không được sử dụng dịch vụ 
+
+Dangerous Settings
+           | **Setting**                    | **Description (Ý nghĩa)**                                                                                     |
+           | ------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+           | `anonymous_enable=YES`         | Cho phép **người dùng anonymous** đăng nhập (không cần tài khoản hệ thống).                                   |
+           | `anon_upload_enable=YES`       | Cho phép anonymous **upload file** vào thư mục đã được cấu hình cho phép ghi (nguy hiểm nếu không kiểm soát). |
+           | `anon_mkdir_write_enable=YES`  | Cho phép anonymous **tạo thư mục mới**.                                                                       |
+           | `no_anon_password=YES`         | Không yêu cầu password khi login với anonymous (chỉ cần nhập bất kỳ hoặc để trống).                           |
+           | `anon_root=/home/username/ftp` | Đặt thư mục gốc (root) cho người dùng anonymous. Khi login, họ chỉ thấy và thao tác trong thư mục này.        |
+           | `write_enable=YES`             | Cho phép các lệnh ghi/chỉnh sửa như:                                                                          |
+
+           STOR (upload file)
+           DELE (xóa file)
+           RNFR/RNTO (đổi tên file)
+           MKD (tạo thư mục)
+           RMD (xóa thư mục)
+           APPE (append dữ liệu vào file)
+           SITE (chạy một số lệnh site-specific) |
+
+           👉 Tóm gọn:
+           Nếu bật anonymous_enable=YES + write_enable=YES + anon_upload_enable=YES thì bất kỳ ai cũng có thể upload/xoá file trong thư mục anon_root.
+           Đây là rủi ro bảo mật lớn, thường chỉ dùng trong môi trường nội bộ hoặc public repository read-only.
+
+
+
+Anonymous Login
+           naruto3co@htb[/htb]$ ftp 10.129.14.136
+           
+           Connected to 10.129.14.136.
+           220 "Welcome to the HTB Academy vsFTP service."
+           Name (10.129.14.136:cry0l1t3): anonymous
+
+vsFTPd Status
+           ftp> status
+
+vsFTPd Detailed Output
+           ftp> debug
+           ftp> trace
+
+           Để nó hiện thêm đầy đủ thông tin hơn khi bật 2 mode này 
+
+Cấu hình liên quan đến directory & quyền người dùng
+           | **Setting**               | **Description (Ý nghĩa)**                                                                                                                                                    |
+           | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+           | `dirmessage_enable=YES`   | Khi user truy cập vào thư mục, nếu thư mục đó có file `.message` thì nội dung file sẽ được hiển thị (giống banner/notice).                                                   |
+           | `chown_uploads=YES`       | Tất cả file **anonymous upload** sẽ tự động đổi quyền sở hữu sang user xác định trong `chown_username`.                                                                      |
+           | `chown_username=username` | Xác định user hệ thống sẽ được gán làm chủ sở hữu các file anonymous upload.                                                                                                 |
+           | `local_enable=YES`        | Cho phép **local users** (các tài khoản có trong `/etc/passwd`) đăng nhập FTP.                                                                                               |
+           | `chroot_local_user=YES`   | Khi bật, **mọi local user** bị “chroot jail” trong thư mục home của họ → không thể truy cập ra ngoài (tăng bảo mật).                                                         |
+           | `chroot_list_enable=YES`  | Kích hoạt danh sách chroot. Sẽ có file `chroot_list_file` (mặc định `/etc/vsftpd.chroot_list`) để quy định **user nào bị/không bị chroot** tùy cấu hình `chroot_local_user`. |
+
+Các tùy chọn hiển thị & liệt kê
+           | **Setting**             | **Description (Ý nghĩa)**                                                                                   |
+           | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+           | `hide_ids=YES`          | Trong kết quả `ls -l`, tất cả UID/GID sẽ hiển thị là **ftp** thay vì tên thật → ẩn thông tin user hệ thống. |
+           | `ls_recurse_enable=YES` | Cho phép user dùng lệnh `ls -R` để liệt kê thư mục con đệ quy.                                              |
+
+Tóm gọn:
+           chroot_*: kiểm soát việc nhốt user trong home directory → ngăn rủi ro lộ dữ liệu ngoài phạm vi cho phép.
+           chown_*: kiểm soát quyền sở hữu file khi anonymous upload.
+           hide_ids: che giấu thông tin thật về user/group.
+           ls_recurse_enable: chỉ nên bật khi thực sự cần, vì có thể làm lộ cấu trúc thư mục.
+
+
+Hiding IDs - YES
+           ftp> ls
+
+           Tùy chọn như hide_ids=YES trong vsftpd giúp không hiển thị tên thật của user/group trong kết quả liệt kê thư mục (ls -l).
+           Nếu lộ username, kẻ tấn công có thể lợi dụng để thử brute-force vào các dịch vụ như FTP, SSH.
+           Các hệ thống thường kết hợp với fail2ban hoặc các giải pháp tương tự → tự động block IP sau nhiều lần đăng nhập sai, giảm nguy cơ brute-force.
+           👉  hide_ids = tăng bảo mật, tránh lộ username.
+
+ls_recurse_enable=YES
+           Cho phép người dùng chạy ls -R để liệt kê toàn bộ cây thư mục bên trong FTP.
+           Giúp có cái nhìn tổng quan nhanh hơn về cấu trúc thư mục, thấy được tất cả nội dung khả dụng một lần.
+           Lưu ý: 
+                      Tiện lợi cho quản trị, nhưng có thể khiến lộ nhiều thông tin về cấu trúc hệ thống cho attacker nếu server cho phép quá nhiều người dùng truy cập.
+                      Thường chỉ bật trong môi trường nội bộ hoặc cho nhóm user đáng tin cậy.
+
+           👉 Tóm gọn: ls_recurse_enable = tiện lợi để xem toàn bộ cấu trúc thư mục FTP, nhưng cần cân nhắc khi bật trong môi trường public.
+
+Download file
+           ftp> ls
+           200 PORT command successful. Consider using PASV.
+           150 Here comes the directory listing.
+           -rwxrwxrwx    1 ftp      ftp             0 Sep 16 17:24 Calendar.pptx
+           drwxrwxrwx    4 ftp      ftp          4096 Sep 16 17:57 Clients
+           drwxrwxrwx    2 ftp      ftp          4096 Sep 16 18:05 Documents
+           drwxrwxrwx    2 ftp      ftp          4096 Sep 16 17:24 Employees
+           -rwxrwxrwx    1 ftp      ftp            41 Sep 18 15:58 Important Notes.txt
+           226 Directory send OK.
+           
+           
+           ftp> get Important\ Notes.txt
+           local: Important Notes.txt remote: Important Notes.txt
+           200 PORT command successful. Consider using PASV.
+           150 Opening BINARY mode data connection for Important Notes.txt (41 bytes).
+           226 Transfer complete.
+           41 bytes received in 0.00 secs (606.6525 kB/s)
+           
+           ftp> exit
+           221 Goodbye.
+  
+           naruto3co@htb[/htb]$ ls | grep Notes.txt
+                      'Important Notes.txt'
+
+
+
+Download All Available Files
+           naruto3co@htb[/htb]$ wget -m --no-passive ftp://anonymous:anonymous@10.129.14.136
+
+
+
+
+██╗░░░██╗██████╗░██╗░░░░░░█████╗░░█████╗░██████╗░
+██║░░░██║██╔══██╗██║░░░░░██╔══██╗██╔══██╗██╔══██╗
+██║░░░██║██████╔╝██║░░░░░██║░░██║███████║██║░░██║
+██║░░░██║██╔═══╝░██║░░░░░██║░░██║██╔══██║██║░░██║
+╚██████╔╝██║░░░░░███████╗╚█████╔╝██║░░██║██████╔╝
+░╚═════╝░╚═╝░░░░░╚══════╝░╚════╝░╚═╝░░╚═╝╚═════╝░
+
+
+           Nếu FTP cho phép upload vào thư mục được webserver phục vụ, khả năng kẻ tấn công upload mã độc (webshell, script) và thực thi trên server là hiện hữu → rất nguy hiểm.
+           Nhiều lỗi là do config lỏng lẻo (anonymous upload, thư mục upload rơi vào webroot, quyền file thư mục sai, không chroot user, v.v.) hoặc do admin tin tưởng “mạng nội bộ an toàn” → bỏ qua hardening.
+
+           ftp> put testupload.txt 
+
+Footprinting the Service
+Nguyên tắc nhanh
+           Nếu FTP cho phép upload vào thư mục được webserver phục vụ, khả năng kẻ tấn công upload mã độc (webshell, script) và thực thi trên server là hiện hữu → rất nguy hiểm.
+           Nhiều lỗi là do config lỏng lẻo (anonymous upload, thư mục upload rơi vào webroot, quyền file thư mục sai, không chroot user, v.v.) hoặc do admin tin tưởng “mạng nội bộ an toàn” → bỏ qua hardening.
+
+
+╭━━━╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╭╮
+┃╭━━╯╱╱╱╱╭╯╰╮╱╱╱╱╱╱╱╭╯╰╮
+┃╰━━┳━━┳━┻╮╭╋━━┳━┳┳━╋╮╭╋┳━╮╭━━╮
+┃╭━━┫╭╮┃╭╮┃┃┃╭╮┃╭╋┫╭╮┫┃┣┫╭╮┫╭╮┃
+┃┃╱╱┃╰╯┃╰╯┃╰┫╰╯┃┃┃┃┃┃┃╰┫┃┃┃┃╰╯┃
+╰╯╱╱╰━━┻━━┻━┫╭━┻╯╰┻╯╰┻━┻┻╯╰┻━╮┃
+╱╱╱╱╱╱╱╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╱╱╱╱╭━╯┃
+╱╱╱╱╱╱╱╱╱╱╱╱╰╯╱╱╱╱╱╱╱╱╱╱╱╱╱╰━━╯...
+
+           naruto3co@htb[/htb]$ sudo nmap --script-updatedb
+           
+           naruto3co@htb[/htb]$ find / -type f -name ftp* 2>/dev/null | grep scripts
+                      Ta list được danh sách script 
+           
+           naruto3co@htb[/htb]$ sudo nmap -sV -p21 -sC -A 10.129.14.136
+
+
+Service Interaction
+
+naruto3co@htb[/htb]$ nc -nv 10.129.14.136 21
+naruto3co@htb[/htb]$ telnet 10.129.14.136 21
+
+
+
+
+
+
+
+
