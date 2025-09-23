@@ -291,13 +291,14 @@ Nguyên tắc nhanh
 
 Service Interaction
 
-naruto3co@htb[/htb]$ nc -nv 10.129.14.136 21
-naruto3co@htb[/htb]$ telnet 10.129.14.136 21
+          naruto3co@htb[/htb]$ nc -nv 10.129.14.136 21
+          naruto3co@htb[/htb]$ telnet 10.129.14.136 21
 
 
 
 
-
+It looks slightly different if the FTP server runs with TLS/SSL encryption. Because then we need a client that can handle TLS/SSL. For this, we can use the client openssl and communicate with the FTP server. The good thing about using openssl is that we can see the SSL certificate, which can also be helpful.
+          naruto3co@htb[/htb]$ openssl s_client -connect 10.129.14.136:21 -starttls ftp
 
 
 
