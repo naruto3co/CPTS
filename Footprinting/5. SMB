@@ -1,0 +1,207 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                  MỤC ĐÍCH SỬ DỤNG CỦA GIAO THỨC SMB THEO THỜI KỲ             ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║ 1. Khởi nguồn (1980s)                                                         ║
+║    - **Chia sẻ tài nguyên**: SMB được thiết kế để cho phép các máy tính chia   ║
+║      sẻ tài nguyên như tập tin và máy in trong các mạng LAN nhỏ.            ║
+║    - **Giao tiếp giữa các hệ thống**: Cung cấp khả năng giao tiếp giữa các    ║
+║      hệ thống máy tính khác nhau, tạo điều kiện cho việc chia sẻ dữ liệu.    ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║ 2. Sự phát triển của Microsoft (1987)                                         ║
+║    - **Tích hợp vào Windows**: Microsoft sử dụng SMB để tích hợp khả năng      ║
+║      chia sẻ tài nguyên vào hệ điều hành Windows, giúp người dùng dễ dàng     ║
+║      truy cập và chia sẻ tài nguyên trong môi trường văn phòng.              ║
+║    - **Hỗ trợ ứng dụng**: SMB trở thành giao thức chính cho các ứng dụng như   ║
+║      Microsoft Office trong việc chia sẻ tài liệu và in ấn.                  ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║ 3. SMB 1.0 (1990)                                                             ║
+║    - **Truy cập tập tin và thư mục**: Cho phép người dùng truy cập và quản    ║
+║      lý tập tin trên máy chủ từ xa, dễ dàng chia sẻ dữ liệu giữa các máy     ║
+║      tính trong mạng.                                                         ║
+║    - **In ấn từ xa**: Cung cấp khả năng in ấn từ xa, cho phép người dùng có   ║
+║      thể gửi lệnh in đến máy in kết nối với máy chủ.                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║ 4. Cải tiến qua các phiên bản (1996-2000s)                                   ║
+║    - **SMB 2.0 (2006)**:                                                     ║
+║      + **Hiệu suất cao hơn**: Giảm thiểu độ trễ và cải thiện tốc độ truyền     ║
+║        tải nhờ vào việc nén dữ liệu và giảm số lượng lệnh.                   ║
+║      + **Hỗ trợ cho kết nối lớn**: Cho phép chia sẻ tài nguyên hiệu quả hơn    ║
+║        trong các mạng lớn và phức tạp.                                       ║
+║    - **SMB 3.0 (2012)**:                                                     ║
+║      + **Mã hóa và bảo mật**: Cung cấp tính năng mã hóa mạnh mẽ, bảo vệ dữ    ║
+║        liệu trong quá trình truyền tải, đặc biệt quan trọng trong môi trường  ║
+║        điện toán đám mây.                                                    ║
+║      + **Hỗ trợ môi trường ảo hóa**: Tối ưu hóa cho các môi trường ảo hóa,    ║
+║        cho phép chia sẻ tài nguyên giữa các máy ảo.                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║ 5. Hiện tại và tương lai                                                      ║
+║    - **Chia sẻ trong môi trường doanh nghiệp**: SMB vẫn là giao thức chính     ║
+║      cho việc chia sẻ tài nguyên trong các tổ chức lớn, đặc biệt là với các    ║
+║      giải pháp máy chủ như Windows Server.                                    ║
+║    - **Tương tác với các dịch vụ đám mây**: Hỗ trợ tích hợp với các dịch vụ   ║
+║      đám mây như Azure, cho phép người dùng truy cập và chia sẻ tài nguyên    ║
+║      từ xa một cách dễ dàng.                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+SMB sử dụng giao thức TCP 
+SMB sử dụng bắt tay 3 bước 
+
+Có thể triển khai SMB trên máy chủ gọi là Samba
+Samba triển khai hệ thống Common Internet File System (CIFS). CIFS là một phiên bản cụ thể của SMB, với các tính năng và cải tiến nhằm hỗ trợ việc chia sẻ tập tin một cách hiệu quả hơn trong môi trường mạng hiện đại. Nó cho phép các máy tính giao tiếp và chia sẻ tài nguyên trên các nền tảng khác nhau, đảm bảo tính tương thích và khả năng mở rộng.
+  CIFS dùng trong SMB ver1 . Hiện được coi là lỗ thời 
+  
+╔══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                             TÓM TẮT CÁC PHIÊN BẢN SMB VÀ TÍNH NĂNG HỖ TRỢ                                   ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ **SMB Version**   ║ **Supported**                           ║ **Features**                                          ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ CIFS              ║ Windows NT 4.0                        ║ Communication via NetBIOS interface                  ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 1.0          ║ Windows 2000                          ║ Direct connection via TCP                             ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 2.0          ║ Windows Vista, Windows Server 2008    ║ Performance upgrades, improved message signing,      ║
+║                   ║                                        ║ caching feature                                      ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 2.1          ║ Windows 7, Windows Server 2008 R2     ║ Locking mechanisms                                   ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 3.0          ║ Windows 8, Windows Server 2012        ║ Multichannel connections, end-to-end encryption,     ║
+║                   ║                                        ║ remote storage access                                ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 3.0.2        ║ Windows 8.1, Windows Server 2012 R2    ║ Not specified                                        ║
+╠══════════════════════════════════════════════════════════════════════════════════════════════════════════════╣
+║ SMB 3.1.1        ║ Windows 10, Windows Server 2016       ║ Integrity checking, AES-128 encryption               ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+
+Samba là phần mềm cho phép các hệ thống Linux và Windows giao tiếp với nhau trong mạng SMB.
+Nó hỗ trợ chia sẻ tài nguyên như tập tin và máy in giữa các máy tính trong cùng một workgroup.
+Samba giúp đảm bảo tính tương thích và khả năng tương tác giữa các nền tảng khác nhau, tạo điều kiện thuận lợi cho việc quản lý và sử dụng tài nguyên mạng.
+
+
+
+█▀▄ █▀▀ █▀▀ ▄▀█ █░█ █░░ ▀█▀   █▀▀ █▀█ █▄░█ █▀▀ █ █▀▀ █░█ █▀█ ▄▀█ ▀█▀ █ █▀█ █▄░█
+█▄▀ ██▄ █▀░ █▀█ █▄█ █▄▄ ░█░   █▄▄ █▄█ █░▀█ █▀░ █ █▄█ █▄█ █▀▄ █▀█ ░█░ █ █▄█ █░▀█
+
+Default Configuration
+
+  naruto3co@htb[/htb]$ cat /etc/samba/smb.conf | grep -v "#\|\;" 
+
++---------------------------------+------------------------------------------------------------+
+| Cài đặt                         | Mô tả                                                     |
++---------------------------------+------------------------------------------------------------+
+| [sharename]                    | Tên của chia sẻ mạng.                                     |
++---------------------------------+------------------------------------------------------------+
+| workgroup = WORKGROUP/DOMAIN    | Workgroup sẽ hiển thị khi khách hàng truy vấn.          |
++---------------------------------+------------------------------------------------------------+
+| path = /path/here/             | Thư mục mà người dùng sẽ được cấp quyền truy cập.        |
++---------------------------------+------------------------------------------------------------+
+| server string = STRING          | Chuỗi sẽ hiển thị khi kết nối được khởi tạo.             |
++---------------------------------+------------------------------------------------------------+
+| unix password sync = yes        | Đồng bộ hóa mật khẩu UNIX với mật khẩu SMB?              |
++---------------------------------+------------------------------------------------------------+
+| usershare allow guests = yes    | Cho phép người dùng không xác thực truy cập vào chia sẻ? |
++---------------------------------+------------------------------------------------------------+
+| map to guest = bad user         | Hành động khi yêu cầu đăng nhập không khớp với người dùng UNIX hợp lệ? |
++---------------------------------+------------------------------------------------------------+
+| browseable = yes                | Chia sẻ này có nên hiển thị trong danh sách chia sẻ khả dụng không? |
++---------------------------------+------------------------------------------------------------+
+| guest ok = yes                  | Cho phép kết nối đến dịch vụ mà không cần mật khẩu?      |
++---------------------------------+------------------------------------------------------------+
+| read only = yes                 | Cho phép người dùng chỉ đọc các tệp tin?                 |
++---------------------------------+------------------------------------------------------------+
+| create mask = 0700              | Quyền cần được thiết lập cho các tệp tin mới được tạo ra?|
++---------------------------------+------------------------------------------------------------+
+
+
+Dangerous Settings
+
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| Cài đặt                     | Mô tả                                                     | Ưu điểm (Nhân viên)                                       | Nhược điểm (Kẻ tấn công)                                  |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| browseable = yes            | Cho phép liệt kê các chia sẻ có sẵn trong chia sẻ hiện tại? | Dễ dàng duyệt các thư mục và tài nguyên, cải thiện tổ chức. | Kẻ tấn công có thể tìm kiếm tài nguyên dễ dàng hơn.        |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| read only = no              | Cấm việc tạo và sửa đổi tệp tin?                          | Nhân viên có thể tạo và thay đổi tệp tin tùy ý.            | Tăng nguy cơ mất dữ liệu do sửa đổi không mong muốn.       |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| writable = yes              | Cho phép người dùng tạo và sửa đổi tệp tin?               | Linh hoạt trong việc làm việc và cộng tác.                  | Kẻ tấn công có thể tạo hoặc thay đổi tệp tin độc hại.     |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| guest ok = yes              | Cho phép kết nối đến dịch vụ mà không cần mật khẩu?        | Tiện lợi cho người dùng không cần thông tin đăng nhập.      | Dễ dàng cho kẻ tấn công truy cập vào hệ thống mà không cần xác thực. |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| enable privileges = yes      | Tôn trọng các quyền được gán cho SID cụ thể?              | Quản lý quyền truy cập tốt hơn, đảm bảo an toàn.            | Nếu SID bị xâm phạm, quyền truy cập có thể bị lạm dụng.    |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| create mask = 0777          | Quyền cần được thiết lập cho các tệp tin mới được tạo ra? | Tạo điều kiện cho quyền truy cập đầy đủ cho tệp tin.        | Tạo ra lỗ hổng bảo mật khi bất kỳ ai cũng có thể chỉnh sửa.  |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| directory mask = 0777       | Quyền cần được thiết lập cho các thư mục mới được tạo ra? | Tương tự như tệp tin, cung cấp quyền truy cập tối đa.       | Giúp kẻ tấn công kiểm soát thư mục dễ dàng hơn.            |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| logon script = script.sh    | Tập lệnh nào cần được thực thi khi người dùng đăng nhập?  | Tự động hóa các thiết lập và cấu hình cho người dùng.       | Nếu tập lệnh chứa mã độc, có thể lây nhiễm vào hệ thống.   |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| magic script = script.sh     | Tập lệnh nào sẽ được thực thi khi tập lệnh được đóng?     | Cung cấp khả năng thực hiện các hành động sau khi đăng xuất. | Có thể chạy mã độc khi người dùng kết thúc phiên.          |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+| magic output = script.out     | Nơi lưu trữ đầu ra của tập lệnh ma thuật?                   | Giúp theo dõi và ghi lại các hoạt động của tập lệnh.        | Kẻ tấn công có thể tìm kiếm đầu ra để khai thác lỗ hổng.    |
++-----------------------------+------------------------------------------------------------+------------------------------------------------------------+------------------------------------------------------------+
+
+
+Restart Samba
+  root@samba:~# sudo systemctl restart smbd
+
+Now we can display a list (-L) of the server's shares with the smbclient command from our host. We use the so-called null session (-N), which is anonymous access without the input of existing users or valid passwords.
+SMBclient - Connecting to the Share
+
+        naruto3co@htb[/htb]$ smbclient -N -L //10.129.14.128
+                Sharename       Type      Comment
+                ---------       ----      -------
+                print$          Disk      Printer Drivers
+                home            Disk      INFREIGHT Samba
+                dev             Disk      DEVenv
+                notes           Disk      CheckIT
+                IPC$            IPC       IPC Service (DEVSM)
+        SMB1 disabled -- no workgroup available
+
+          -> Ok dựa trên kết quả này. Ví dụ ta cần vào notes 
+  
+        naruto3co@htb[/htb]$ smbclient //10.129.14.128/notes
+
+          Sau khi vào notes rồi ta cứ ls như bình thường, nếu cần lấy file thì làm giống FTP là get file thôi 
+
+smbstatus
+
+  Kiểm tra xem có những ông nào kết nối ->  chạy lệnh smbstatus trên server để kiểm tra 
+
+
+╭━━━╮╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╭╮╱╱╱╱╱╱╱╱╱╭╮╭╮╱╱╱╱╱╭━━━╮
+┃╭━━╯╱╱╱╱╭╯╰╮╱╱╱╱╱╱╱╭╯╰╮╱╱╱╱╱╱╱╭╯╰┫┃╱╱╱╱╱┃╭━╮┃
+┃╰━━┳━━┳━┻╮╭╋━━┳━┳┳━╋╮╭╋┳━╮╭━━╮╰╮╭┫╰━┳━━╮┃╰━━┳━━┳━┳╮╭┳┳━━┳━━╮
+┃╭━━┫╭╮┃╭╮┃┃┃╭╮┃╭╋┫╭╮┫┃┣┫╭╮┫╭╮┃╱┃┃┃╭╮┃┃━┫╰━━╮┃┃━┫╭┫╰╯┣┫╭━┫┃━┫
+┃┃╱╱┃╰╯┃╰╯┃╰┫╰╯┃┃┃┃┃┃┃╰┫┃┃┃┃╰╯┃╱┃╰┫┃┃┃┃━┫┃╰━╯┃┃━┫┃╰╮╭┫┃╰━┫┃━┫
+╰╯╱╱╰━━┻━━┻━┫╭━┻╯╰┻╯╰┻━┻┻╯╰┻━╮┃╱╰━┻╯╰┻━━╯╰━━━┻━━┻╯╱╰╯╰┻━━┻━━╯
+╱╱╱╱╱╱╱╱╱╱╱╱┃┃╱╱╱╱╱╱╱╱╱╱╱╱╱╭━╯┃
+╱╱╱╱╱╱╱╱╱╱╱╱╰╯╱╱╱╱╱╱╱╱╱╱╱╱╱╰━━╯
+
+nmap
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -sV -sC -p139,445
+  
+  Cổng 139: Được sử dụng cho SMB qua NetBIOS. Đây là cổng truyền thống mà SMB đã sử dụng trong các phiên bản cũ hơn.
+  Cổng 445: Được sử dụng cho SMB qua TCP mà không cần NetBIOS. Đây là cổng được sử dụng trong các phiên bản mới hơn của Windows và là cổng chính cho SMB trong môi trường hiện đại.
+
+rpcclient
+  naruto3co@htb[/htb]$ rpcclient -U "" 10.129.14.128
+
+    rpcclient là bộ công cụ của samba 
+
+RPCclient - Enumeration
+Khi vào được trong serve đó bằng rpcclient rồi thì có những câu lệnh sau 
+  srvinfo
+  enumdomains
+  querydominfo
+  netshareenumall
+  netsharegetinfo notes  ( notes là tên thư mục khi dùng lệnh netshareenumall) 
+
+
+
+
+  
+
+
+
+
+
