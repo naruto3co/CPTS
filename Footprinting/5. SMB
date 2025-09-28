@@ -197,9 +197,64 @@ Khi vào được trong serve đó bằng rpcclient rồi thì có những câu 
   netsharegetinfo notes  ( notes là tên thư mục khi dùng lệnh netshareenumall) 
 
 
+Cấu hình 
+  Khi người dùng ẩn danh có quyền truy cập vào một dịch vụ mạng, chỉ cần một sai lầm cũng có thể cấp cho họ quá nhiều quyền hoặc quá nhiều khả năng hiển thị để khiến toàn bộ mạng gặp rủi ro đáng kể.
+  Most importantly, anonymous access to such services can also lead to the discovery of other users, who can be attacked with brute-forcing in the most aggressive case. Humans are more error-prone than properly configured computer processes, and the lack of security awareness and laziness often leads to weak passwords that can be easily cracked. Let us see how we can enumerate users using the rpcclient.
 
+Rpcclient - User Enumeration
 
+  rpcclient $> enumdomusers
+  user:[mrb3n] rid:[0x3e8]
+  user:[cry0l1t3] rid:[0x3e9]
+
+  rpcclient $> queryuser 0x3e9
+  rpcclient $> queryuser 0x3e8
+    group_rid:      0x201    ( để ý thông tin này để khai thác Group Information ) 
+
+Rpcclient - Group Information
+  rpcclient $> querygroup 0x201
   
+  Tuy nhiên, cũng có thể xảy ra trường hợp không phải tất cả các lệnh đều khả dụng và chúng ta có một số hạn chế nhất định tùy thuộc vào người dùng. Tuy nhiên, truy vấn queryuser <RID> hầu hết được phép dựa trên RID. Vì vậy, chúng ta có thể sử dụng rpcclient để tấn công brute force các RID nhằm lấy thông tin. Vì chúng ta có thể không biết ai đã được gán RID nào, chúng ta biết rằng mình sẽ nhận được thông tin về RID đó ngay khi truy vấn RID đã được gán. Có một số cách và công cụ chúng ta có thể sử dụng cho việc này. Để sử dụng công cụ, chúng ta có thể tạo một vòng lặp For bằng Bash, trong đó chúng ta gửi lệnh đến dịch vụ bằng rpcclient và lọc kết quả.
+
+
+Brute Forcing User RIDs
+  naruto3co@htb[/htb]$ for i in $(seq 500 1100);do rpcclient -N -U "" 10.129.14.128 -c "queryuser 0x$(printf '%x\n' $i)" | grep "User Name\|user_rid\|group_rid" && echo "";done
+
+        User Name   :   sambauser
+        user_rid :      0x1f5
+        group_rid:      0x201
+		
+        User Name   :   mrb3n
+        user_rid :      0x3e8
+        group_rid:      0x201
+		
+        User Name   :   cry0l1t3
+        user_rid :      0x3e9
+        group_rid:      0x201
+
+  An alternative to this would be a Python script from Impacket called samrdump.py.
+    https://github.com/fortra/impacket
+    https://github.com/SecureAuthCorp/impacket/blob/master/examples/samrdump.py
+
+      naruto3co@htb[/htb]$ samrdump.py 10.129.14.128
+
+
+Thông tin chúng ta đã thu thập được với rpcclient cũng có thể được lấy bằng các công cụ khác. Ví dụ, các công cụ SMBMap và CrackMapExec cũng được sử dụng rộng rãi và hữu ích cho việc liệt kê các dịch vụ SMB.
+SMBmap
+  naruto3co@htb[/htb]$ smbmap -H 10.129.14.128
+
+CrackMapExec
+  naruto3co@htb[/htb]$ crackmapexec smb 10.129.14.128 --shares -u '' -p ''
+
+Another tool worth mentioning is the so-called enum4linux-ng, which is based on an older tool, enum4linux. This tool automates many of the queries, but not all, and can return a large amount of information.
+Enum4Linux-ng - Installation
+  naruto3co@htb[/htb]$ git clone https://github.com/cddmp/enum4linux-ng.git
+  naruto3co@htb[/htb]$ cd enum4linux-ng
+  naruto3co@htb[/htb]$ pip3 install -r requirements.txt
+
+Enum4Linux-ng - Enumeration
+  naruto3co@htb[/htb]$ ./enum4linux-ng.py 10.129.14.128 -A
+
 
 
 
