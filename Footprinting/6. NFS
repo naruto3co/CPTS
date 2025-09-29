@@ -1,0 +1,213 @@
+NFS ( network file system )
+
+  - có cùng mục đích với SMB.
+  - Mục đích của nó là truy cập vào các hệ thống tệp qua mạng như thể chúng là ổ đĩa cục bộ. Tuy nhiên, NFS sử dụng một giao thức hoàn toàn khác.
+  - NFS thường được dùng giữa các hệ thống Linux và Unix. Điều này có nghĩa là các máy khách NFS không thể giao tiếp trực tiếp với các máy chủ SMB.
+  - NFS là một tiêu chuẩn Internet điều chỉnh các thủ tục trong hệ thống tệp phân tán.
+  - Trong khi NFS phiên bản 3.0 (NFSv3), vốn đã được sử dụng trong nhiều năm, xác thực máy tính khách (client computer), thì điều này thay đổi ở NFSv4. Ở đây, cũng giống như giao thức SMB của Windows, người dùng (user) phải được xác thực.
+  
+  Lưu ý : 
+    NFSv3 vs NFSv4
+      NFSv3: chỉ xác thực máy tính client → nghĩa là nếu một máy được tin tưởng, thì coi tất cả user trên máy đó đều được phép.
+      NFSv4: nâng cao bảo mật → giống SMB của Windows, yêu cầu xác thực từng user thay vì chỉ xác thực máy.
+    
+    Ứng dụng thực tế
+      Trong doanh nghiệp, NFS được dùng để chia sẻ thư mục giữa nhiều server Linux/Unix.
+      Nhưng nếu bạn có hệ thống hỗn hợp Windows ↔ Linux, thường phải cài thêm phần mềm hỗ trợ hoặc dùng Samba (chuyển đổi SMB).
+  
+  NFSv2: đơn giản, cổ điển, UDP.
+  NFSv3: file lớn hơn, báo lỗi tốt, nhưng vẫn stateless.
+  NFSv4: hiện đại, bảo mật (Kerberos), stateful, chỉ cần 1 cổng (2049).
+  NFSv4.1: mở rộng cho cluster, hỗ trợ song song (pNFS) và multipath.
+  
+  
+  - NFS được xây dựng dựa trên Open Network Computing Remote Procedure Call (ONC-RPC / SUN-RPC),
+  - giao thức này lộ ra trên các cổng TCP và UDP 111 và sử dụng External Data Representation (XDR) để trao đổi dữ liệu một cách độc lập hệ thống
+  - Giao thức NFS không có cơ chế xác thực (authentication) hay phân quyền (authorization).
+  - Việc xác thực hoàn toàn phụ thuộc vào các tùy chọn của giao thức RPC
+    - Đây là lý do vì sao NFS chỉ nên được dùng với phương thức xác thực này trong các mạng tin cậy (trusted networks).
+  - NFS truyền thống xác thực dựa trên UID/GID, nhưng đây là cơ chế yếu và dễ bị lợi dụng nếu client-server không đồng bộ hoặc bị giả mạo. Vì vậy chỉ nên áp dụng trong môi trường tin cậy.
+
+Default Configuration
+
+- The /etc/exports file contains a table of physical filesystems on an NFS server accessible by the clients. 
+
+
+| Tùy chọn             | Mô tả (dịch)                                                                                                                                                     |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **rw**               | Cho phép đọc và ghi.                                                                                                                                             |
+| **ro**               | Chỉ cho phép đọc (read only).                                                                                                                                    |
+| **sync**             | Truyền dữ liệu đồng bộ (mỗi thay đổi được ghi ngay lập tức vào đĩa). An toàn hơn nhưng **chậm hơn**.                                                             |
+| **async**            | Truyền dữ liệu bất đồng bộ (ghi vào bộ nhớ đệm trước, sau đó mới ghi ra đĩa). **Nhanh hơn** nhưng có rủi ro mất dữ liệu nếu hệ thống crash.                      |
+| **secure**           | Chỉ cho phép dùng các cổng **≤ 1024** (các cổng “đặc quyền” trên Unix).                                                                                          |
+| **insecure**         | Cho phép dùng các cổng **> 1024**.                                                                                                                               |
+| **no_subtree_check** | Vô hiệu hóa việc kiểm tra cây thư mục con (subtree check). Điều này giúp cải thiện hiệu năng khi mount một subdirectory, nhưng có thể giảm bảo mật.              |
+| **root_squash**      | Chuyển quyền root (UID/GID 0) trên client thành **anonymous UID/GID** trên server. Tức là root từ client **không có quyền root trên server**, để tránh lạm dụng. |
+
+
+
+sync vs async
+  sync: an toàn → dữ liệu chắc chắn được ghi ra disk ngay lập tức.
+  async: nhanh hơn nhưng nguy hiểm nếu mất điện hoặc crash.
+  → Trong môi trường production, thường khuyến nghị sync để tránh mất dữ liệu.
+
+secure vs insecure
+  secure: chỉ cho phép kết nối từ cổng thấp hơn 1024 → giảm nguy cơ bị giả mạo (vì chỉ root mới mở được port <1024).
+  insecure: ít an toàn hơn, nhưng có thể cần trong một số môi trường đặc biệt.
+
+root_squash (rất quan trọng trong bảo mật NFS)
+  Nếu không bật root_squash, root trên client có thể có toàn quyền root trên server qua NFS → cực kỳ nguy hiểm.
+  Do đó, trong hầu hết trường hợp, người ta luôn bật root_squash để chặn việc này.
+
+ExportFS
+  root@nfs:~# echo '/mnt/nfs  10.129.14.0/24(sync,no_subtree_check)' >> /etc/exports
+  root@nfs:~# systemctl restart nfs-kernel-server 
+  root@nfs:~# exportfs
+  
+  /mnt/nfs      	10.129.14.0/24
+
+  Chúng tôi đã chia sẻ thư mục /mnt/nfs với mạng con 10.129.14.0/24 với thiết lập được hiển thị ở trên. Điều này có nghĩa là tất cả các máy chủ trên mạng sẽ có thể gắn kết chia sẻ NFS này và kiểm tra nội dung của thư mục này.
+
+
+Các thiết lập nguy hiểm
+  Ngay cả với NFS, một số thiết lập cũng có thể nguy hiểm cho công ty và hạ tầng. Dưới đây là một số tùy chọn:
+
+  | Tùy chọn           | Mô tả                                                                                                                       |
+  | ------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+  | **rw**             | Cho phép đọc và ghi.                                                                                                        |
+  | **insecure**       | Cho phép sử dụng các cổng lớn hơn 1024.                                                                                     |
+  | **nohide**         | Nếu một hệ thống tệp khác được mount bên dưới một thư mục đã export, thư mục này cũng sẽ được export thông qua entry riêng. |
+  | **no_root_squash** | Mọi file do root tạo ra sẽ giữ nguyên UID/GID = 0 (tức root từ client vẫn là root trên server).                             |
+
+
+  👉 Tóm gọn:
+    rw → ai cũng ghi được.
+    insecure → bỏ cơ chế chỉ root mới được dùng port <1024.
+    nohide → lộ thêm filesystem con.
+    no_root_squash → root client thành root server → nguy hiểm nhất.
+
+
+Footprinting the Service
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -p111,2049 -sV -sC
+
+  naruto3co@htb[/htb]$ sudo nmap --script nfs* 10.129.14.128 -sV -p111,2049
+
+Show Available NFS Shares
+  naruto3co@htb[/htb]$ showmount -e 10.129.14.128
+  
+  Export list for 10.129.14.128:
+  /mnt/nfs 10.129.14.0/24
+
+Mounting NFS Share
+  naruto3co@htb[/htb]$ mkdir target-NFS
+  naruto3co@htb[/htb]$ sudo mount -t nfs 10.129.14.128:/ ./target-NFS/ -o nolock
+  naruto3co@htb[/htb]$ cd target-NFS
+  naruto3co@htb[/htb]$ tree .
+  
+  .
+  └── mnt
+      └── nfs
+          ├── id_rsa
+          ├── id_rsa.pub
+          └── nfs.share
+  
+  2 directories, 3 files
+
+
+List Contents with Usernames & Group Names
+    naruto3co@htb[/htb]$ ls -l mnt/nfs/
+    total 16
+    -rw-r--r-- 1 cry0l1t3 cry0l1t3 1872 Sep 25 00:55 cry0l1t3.priv
+    -rw-r--r-- 1 cry0l1t3 cry0l1t3  348 Sep 25 00:55 cry0l1t3.pub
+    -rw-r--r-- 1 root     root     1872 Sep 19 17:27 id_rsa
+    -rw-r--r-- 1 root     root      348 Sep 19 17:28 id_rsa.pub
+    -rw-r--r-- 1 root     root        0 Sep 19 17:22 nfs.share
+
+
+List Contents with UIDs & GUIDs
+
+    naruto3co@htb[/htb]$ ls -n mnt/nfs/
+    total 16
+    -rw-r--r-- 1 1000 1000 1872 Sep 25 00:55 cry0l1t3.priv
+    -rw-r--r-- 1 1000 1000  348 Sep 25 00:55 cry0l1t3.pub
+    -rw-r--r-- 1    0 1000 1221 Sep 19 18:21 backup.sh
+    -rw-r--r-- 1    0    0 1872 Sep 19 17:27 id_rsa
+    -rw-r--r-- 1    0    0  348 Sep 19 17:28 id_rsa.pub
+    -rw-r--r-- 1    0    0    0 Sep 19 17:22 nfs.share
+
+Điều quan trọng cần lưu ý là nếu tùy chọn root_squash được đặt, chúng ta không thể chỉnh sửa tệp backup.sh ngay cả khi dùng quyền root.
+Chúng ta cũng có thể sử dụng NFS để nâng cấp thêm. Ví dụ: nếu chúng ta có quyền truy cập vào hệ thống qua SSH và muốn đọc các tệp từ một thư mục khác mà một người dùng cụ thể có thể đọc, chúng ta cần tải một shell lên chia sẻ NFS có SUID của người dùng đó, sau đó chạy shell thông qua người dùng SSH.
+Sau khi thực hiện tất cả các bước cần thiết và có được thông tin cần thiết, chúng ta có thể ngắt kết nối chia sẻ NFS.
+                (Bắt đầu)
+                  |
+                  v
+                [Gắn (mount) share NFS lên máy attacker/SSH]
+                  |
+                  |  Ví dụ:
+                  |   mkdir /tmp/target-NFS
+                  |   sudo mount -t nfs 10.129.14.128:/export/path /tmp/target-NFS -o nolock
+                  v
+                [Kiểm tra file trong share]
+                  |
+                  |  Thấy file: backup.sh (chủ sở hữu: userX)
+                  v
+                [Kiểm tra thiết lập root_squash trên server]
+                  |
+                  |  - Nếu root_squash = enabled
+                  |      -> root trên client bị "squash" về anonymous
+                  |      => ngay cả root trên client CŨNG KHÔNG thể chỉnh sửa backup.sh
+                  |  - Nếu root_squash = disabled (no_root_squash)
+                  |      => root trên client có thể ghi / thay đổi file trên share
+                  v
+                +-----------------------------+
+                | Nhánh A: root_squash = ON   |
+                +-----------------------------+
+                  | 
+                  |  Kết quả: Không thể chỉnh sửa backup.sh dù là root
+                  |  → cần tìm vector khác (ví dụ: export khác có quyền ghi, misconfig)
+                  v
+                [Kết thúc nhánh A]
+                  ^
+                  |
+                +------------------------------+
+                | Nhánh B: root_squash = OFF   |
+                +------------------------------+
+                  |
+                  |  Nếu share cho phép ghi bởi attacker:
+                  |   1) Upload 1 file thực thi nhỏ (shell) lên share
+                  |      (ví dụ: scp mysuid -> /tmp/target-NFS/mysuid)
+                  |   2) Thiết owner/permission để đặt bit SUID cho user mục tiêu
+                  |      (yêu cầu khả năng set owner hoặc giữ nguyên quyền root)
+                  |      VD: sudo chown target_user:target_group mysuid
+                  |          sudo chmod u+s mysuid
+                  |
+                  v
+                [Chạy chương trình SUID đã upload qua SSH bằng user khác]
+                  |
+                  |  - SSH vào hệ thống với ssh_user (người có thể chạy binary SUID)
+                  |  - Chạy: /path/to/mysuid  → tiến trình chạy với quyền target_user
+                  |
+                  v
+                [Tăng quyền / đọc file bị bảo vệ]
+                  |
+                  |  - Đọc các file chỉ target_user mới đọc được (ví dụ: nội dung backup.sh)
+                  v
+                [Dọn dẹp (Cleanup)]
+                  |
+                  |  - Xóa file đã upload khỏi NFS share:
+                  |      rm /tmp/target-NFS/mysuid
+                  |  - Unmount NFS trên client:
+                  |      sudo umount /tmp/target-NFS
+                  |  - (Tùy chọn) xóa log / khôi phục nếu đang làm lab
+                  v
+                (Kết thúc)
+
+
+
+
+
+
+
+
+
+
