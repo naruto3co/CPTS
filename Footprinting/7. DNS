@@ -1,0 +1,14 @@
+DNS (Domain Name System)
+
+Phân dải domain name thành IP 
+Không có dữ liệu trung tâm 
+
+
+| Loại máy chủ                     | Mô tả                                                                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **DNS Root Server**              | Các máy chủ gốc của DNS chịu trách nhiệm cho các miền cấp cao (TLD). Chúng chỉ được truy vấn khi các nameserver thấp hơn không trả lời. ICANN điều phối hoạt động của các root server; toàn cầu có 13 root server. |
+| **Authoritative Nameserver**     | Máy chủ có thẩm quyền cho một zone cụ thể. Chỉ trả lời các truy vấn thuộc phạm vi của mình và thông tin từ chúng là “chính thức”. Nếu authoritative không trả được, quá trình phân giải sẽ tiếp tục lên root/TLD.  |
+| **Non-authoritative Nameserver** | Máy chủ không có thẩm quyền cho zone nào cả; nó thu thập thông tin bằng cách truy vấn các server khác (recursive/iterative) và thường trả lời dựa trên dữ liệu đã thu thập hoặc cache.                             |
+| **Caching DNS Server**           | Lưu tạm (cache) kết quả truy vấn từ các nameserver khác trong một khoảng thời gian do TTL quy định, giúp tăng tốc truy vấn tiếp theo và giảm tải cho authoritative server.                                         |
+| **Forwarding Server**            | Chỉ có nhiệm vụ chuyển tiếp (forward) các truy vấn DNS nhận được tới một DNS server khác (ví dụ resolver của ISP hoặc DNS công cộng).                                                                              |
+| **Resolver**                     | Thành phần thực hiện quá trình phân giải tên (thường nằm trên máy khách hoặc router). Resolver gửi truy vấn, theo dõi quá trình từ root → TLD → authoritative và trả kết quả về cho ứng dụng.                      |
