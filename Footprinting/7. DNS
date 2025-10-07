@@ -12,3 +12,108 @@ Không có dữ liệu trung tâm
 | **Caching DNS Server**           | Lưu tạm (cache) kết quả truy vấn từ các nameserver khác trong một khoảng thời gian do TTL quy định, giúp tăng tốc truy vấn tiếp theo và giảm tải cho authoritative server.                                         |
 | **Forwarding Server**            | Chỉ có nhiệm vụ chuyển tiếp (forward) các truy vấn DNS nhận được tới một DNS server khác (ví dụ resolver của ISP hoặc DNS công cộng).                                                                              |
 | **Resolver**                     | Thành phần thực hiện quá trình phân giải tên (thường nằm trên máy khách hoặc router). Resolver gửi truy vấn, theo dõi quá trình từ root → TLD → authoritative và trả kết quả về cho ứng dụng.                      |
+
+
+DNS không được mã hoá -> có thể bị giám sát nghe lén, Hiện có một số giải pháp mã hoá DNS 
+DNS không chỉ liên kết tên máy tính và địa chỉ IP. Nó còn lưu trữ và xuất thông tin bổ sung về các dịch vụ được liên kết với một tên miền. Do đó, truy vấn DNS cũng có thể được sử dụng, ví dụ, để xác định máy tính nào đóng vai trò là máy chủ email cho tên miền đang đề cập hoặc tên gọi của máy chủ tên miền.
+
+    (1) Ứng dụng (trình duyệt)
+          │  hỏi A/AAAA cho: www.inlanefreight.com
+          ▼
+    (2) Stub resolver (máy bạn) → gửi cho
+          ▼
+    (3) Recursive resolver (DNS của ISP/8.8.8.8/1.1.1.1)
+          │  (nếu có cache & TTL còn hạn → trả luôn IP → xong)
+          │  nếu KHÔNG có → đi truy vấn theo từng tầng (iterative):
+          ▼
+    (4) Root servers (.) 
+          └─> “NS cho .com là: …” (không trả IP website, chỉ trả máy chủ .com)
+          ▼
+    (5) TLD .com authoritative
+          └─> “NS cho inlanefreight.com là: ns1.example…, ns2.example… (+ glue IP nếu cần)”
+          ▼
+    (6) Authoritative của inlanefreight.com
+          └─> tra bản ghi cho host được hỏi:
+               - www.inlanefreight.com → A/AAAA (hoặc CNAME → tên khác)
+               - dev.inlanefreight.com → A/AAAA (hoặc CNAME)
+               - mail.inlanefreight.com → MX/CNAME/A/AAAA
+          ▼
+    (7) Recursive nhận bản ghi, LƯU CACHE theo TTL
+          ▼
+    (8) Trả lời về stub resolver → ứng dụng dùng IP để kết nối TCP/HTTPS
+
+
+| Loại bản ghi                 | Mô tả ngắn gọn                                                            | Giải thích chi tiết                                                                           | Ví dụ                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **A (Address)**              | Trả về địa chỉ **IPv4** của domain.                                       | Dùng để ánh xạ tên miền sang địa chỉ IPv4 tương ứng.                                          | `example.com → 192.168.1.10`                                            |
+| **AAAA (IPv6 Address)**      | Trả về địa chỉ **IPv6**.                                                  | Giống bản ghi A nhưng cho giao thức IPv6.                                                     | `example.com → 2001:0db8::1`                                            |
+| **MX (Mail Exchange)**       | Trả về **mail server** chịu trách nhiệm nhận email cho domain.            | Xác định máy chủ nhận thư (SMTP) cho domain, có thể có **độ ưu tiên (priority)**.             | `example.com → mail.example.com (priority 10)`                          |
+| **NS (Name Server)**         | Trả về danh sách **máy chủ DNS** (authoritative name servers) của domain. | Cho biết domain được quản lý bởi name server nào.                                             | `example.com → ns1.example.com, ns2.example.com`                        |
+| **TXT (Text)**               | Lưu trữ **chuỗi thông tin tùy ý**.                                        | Dùng để xác minh Google Search Console, SSL, hoặc chứa SPF/DKIM/DMARC chống spam email.       | `v=spf1 include:_spf.google.com ~all`                                   |
+| **CNAME (Canonical Name)**   | Tạo **bí danh (alias)** cho một domain khác.                              | Dùng khi muốn nhiều tên miền cùng trỏ về một đích.                                            | `www.example.com → example.com`                                         |
+| **PTR (Pointer)**            | Ngược lại với A record — ánh xạ **địa chỉ IP → tên miền**.                | Dùng trong **reverse DNS lookup**, giúp xác minh IP có hợp lệ không (thường cho mail server). | `192.168.1.10 → example.com`                                            |
+| **SOA (Start of Authority)** | Cung cấp **thông tin gốc** của zone DNS.                                  | Gồm tên máy chủ chính, email quản trị, serial number, TTL, refresh/retry time, v.v.           | `ns1.example.com hostmaster@example.com 2025100701 3600 600 86400 3600` |
+
+
+Local DNS Configuration
+  root@bind9:~# cat /etc/bind/named.conf.local
+
+Zone Files
+  root@bind9:~# cat /etc/bind/db.domain.com
+
+
+Reverse Name Resolution Zone Files
+  root@bind9:~# cat /etc/bind/db.10.129.14
+
+Dangerous Settings
+
+| Option              | Chức năng                                                                                           | Nguy cơ bảo mật                                                                                                      | Cấu hình an toàn đề xuất                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **allow-query**     | Xác định **máy nào được phép gửi truy vấn DNS** đến server.                                         | Nếu để `any;` → ai cũng có thể hỏi DNS của bạn → dễ bị **reconnaissance** hoặc **DoS attack**.                       | Chỉ cho phép mạng nội bộ hoặc dải IP tin cậy:<br>`allow-query { 10.0.0.0/8; 192.168.0.0/16; localhost; };` |
+| **allow-recursion** | Xác định **máy nào được phép gửi truy vấn đệ quy (recursive query)**.                               | Nếu để mở (public recursion) → kẻ tấn công có thể **dùng server của bạn làm DNS Amplifier** để tấn công DDoS.        | Chỉ cho phép mạng nội bộ:<br>`allow-recursion { 127.0.0.1; 192.168.0.0/16; };`                             |
+| **allow-transfer**  | Quy định **ai được phép thực hiện zone transfer (AXFR)** — tức là **tải toàn bộ dữ liệu DNS zone**. | Nếu mở cho tất cả (`any;`) → hacker có thể **tải toàn bộ danh sách domain, subdomain, IP nội bộ, mail server, v.v.** | Chỉ cho phép DNS dự phòng:<br>`allow-transfer { 192.168.1.2; };`                                           |
+| **zone-statistics** | Bật thu thập thống kê truy vấn theo zone.                                                           | Có thể **làm lộ thông tin lưu lượng nội bộ** hoặc **tăng tải CPU/I/O** nếu bật trên server lớn.                      | Tắt hoặc chỉ bật khi cần giám sát ngắn hạn:<br>`zone-statistics no;`                                       |
+
+
+
+DIG - NS Query
+  naruto3co@htb[/htb]$ dig ns inlanefreight.htb @10.129.14.128
+
+DIG - Version Query
+  naruto3co@htb[/htb]$ dig CH TXT version.bind 10.129.120.85
+
+DIG - ANY Query
+  naruto3co@htb[/htb]$ dig any inlanefreight.htb @10.129.14.128
+
+Zone transfer (AXFR): cơ chế đồng bộ zone giữa các DNS server (thường qua TCP port 53), truyền toàn bộ file/bản ghi hoặc phần khác (AXFR = full transfer).
+Mục đích: đảm bảo tính nhất quán, dự phòng, phân tải và bảo vệ primary khỏi quá tải/tấn công.
+Primary / Master: nơi chứa dữ liệu gốc của zone — tạo/sửa/xóa bản ghi ở đây.
+Secondary / Slave: lấy dữ liệu từ master để phục vụ truy vấn; thường là bản sao đọc-only. (Primary luôn là master; secondary thường là slave nhưng có thể được cấu hình để phục vụ tiếp cho các slave khác.)
+Đồng bộ hóa: slave định kỳ lấy SOA của master (theo refresh — thường ~1 giờ) và so sánh serial; nếu serial của master lớn hơn → slave thực hiện zone transfer để cập nhật.
+Bảo mật/ứng dụng: dùng rndc-key hoặc cơ chế xác thực để server chỉ trao đổi với master/slave hợp lệ; tránh lộ zone (allow-transfer chỉ cho IP đáng tin).
+Kết luận: zone transfer là cơ chế quan trọng để giữ các DNS server cùng dữ liệu; cần cấu hình an toàn (xác thực, giới hạn phép transfer) để tránh rò rỉ hạ tầng.
+
+DIG - AXFR Zone Transfer
+
+Vấn đề khi allow-transfer mở cho subnet hoặc any
+  Ai cũng có thể thực hiện AXFR → tải toàn bộ zone file (có thể lộ hostname, IP nội bộ, cấu trúc mạng).
+  Kẻ tấn công có thể dò thêm zone khác nếu server cho phép.
+  Làm lộ thông tin nội bộ → phục vụ reconnaissance, từ đó tấn công sâu hơn.
+
+DIG - AXFR Zone Transfer - Internal
+naruto3co@htb[/htb]$ dig axfr internal.inlanefreight.htb @10.129.14.128
+
+Subdomain Brute Forcing
+  Cài này học ở fuzzing rồi 
+  naruto3co@htb[/htb]$ for sub in $(cat /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt);do dig $sub.inlanefreight.htb @10.129.14.128 | grep -v ';\|SOA' | sed -r '/^\s*$/d' | grep $sub | tee -a subdomains.txt;done
+
+  https://github.com/danielmiessler/SecLists/blob/master/Discovery/DNS/subdomains-top1million-5000.txt
+
+
+Tool dnsenum 
+https://github.com/fwaeytens/dnsenum
+  dnsenum --dnsserver 10.129.14.128 --enum -p 0 -s 0 -o subdomains.txt -f /opt/useful/seclists/Discovery/DNS/subdomains-top1million-110000.txt inlanefreight.htb
+
+  dnsenum --dnsserver 10.129.147.7 --enum -p 0 -s 0 -o subdomains.txt -f /usr/share/wordlists/seclists/Discovery/DNS/fierce-hostlist.txt dev.inlanefreight.htb
+Fully-Qualified Domain Names (FQDN)
+
