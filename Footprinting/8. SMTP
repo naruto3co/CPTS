@@ -1,0 +1,173 @@
+SMTP (Simple Mail Transfer Protocol) là giao thức gửi email trong mạng IP.
+Dùng giữa client và mail server, hoặc giữa hai SMTP server.
+Thường kết hợp với IMAP hoặc POP3 để nhận và gửi email.
+Là giao thức dạng client-server, nhưng server cũng có thể đóng vai trò client khi chuyển tiếp email.
+Cổng mặc định: 25,
+Cổng hiện đại: 587 – hỗ trợ STARTTLS để mã hóa kết nối.
+Xác thực: Client gửi username và password để xác nhận danh tính.
+Sau khi xác thực, client gửi địa chỉ người gửi, người nhận, nội dung, và thông tin khác.
+Khi email được gửi xong, kết nối sẽ đóng, và mail server sẽ tiếp tục gửi email đó đến server đích tiếp theo.
+
+SMTP mặc định không mã hóa, toàn bộ lệnh, dữ liệu và thông tin xác thực được truyền dưới dạng văn bản thuần (plain text).
+Để ngăn chặn nghe lén, SMTP được dùng kèm với SSL/TLS (ví dụ port 465 cho kết nối mã hóa).
+SMTP server có cơ chế chống spam, chỉ cho người dùng được xác thực gửi mail.
+Các SMTP hiện đại hỗ trợ ESMTP với SMTP-Auth để xác thực.
+Quy trình gửi email:
+  MUA (Mail User Agent): client tạo email gồm header + body, gửi lên server.
+  MTA (Mail Transfer Agent): kiểm tra dung lượng, spam, lưu trữ và gửi email đi.
+  MSA (Mail Submission Agent) hay Relay Server: kiểm tra tính hợp lệ, nguồn gốc của email trước khi đến MTA.
+Sai cấu hình MSA/MTA có thể gây ra lỗ hổng Open Relay Attack (cho phép kẻ xấu dùng server để gửi spam).
+MTA truy vấn DNS để tìm địa chỉ IP của mail server đích.
+Khi đến nơi, SMTP server đích tái tạo email, sau đó MDA (Mail Delivery Agent) chuyển đến Mailbox (POP3/IMAP) của người nhận.
+
+Chuỗi xử lý tổng quát:
+    MUA     →            MSA                 →   MTA (có thể Open Relay)     →                     MDA             →     Mailbox (POP3/IMAP)
+[user agent]  [Submission Agent (validate)]      [Transfer Agent(validate)]      [Delivery Agent(người đưa thư)]      [Đến hòm mail người nhận]
+
+
+Nhược điểm của SMTP:
+  Không có xác nhận giao thư tin cậy: chỉ trả về lỗi chung bằng tiếng Anh nếu email không gửi được.
+  Không xác thực người dùng khi kết nối, nên địa chỉ người gửi không đáng tin cậy, dễ bị giả mạo (mail spoofing).
+  Open Relay dễ bị lợi dụng để gửi spam hàng loạt.
+Biện pháp bảo mật:
+  Dùng SSL/TLS để mã hóa dữ liệu (ví dụ port 465).
+  Dùng các giao thức SPF và DKIM để xác minh nguồn gửi.
+  Hệ thống có thể từ chối hoặc cách ly email nghi ngờ (spam/quarantine).
+ESMTP (Extended SMTP):
+  Là phiên bản mở rộng của SMTP, hầu hết hệ thống hiện nay đều dùng.
+  Hỗ trợ TLS sau lệnh EHLO → STARTTLS, giúp mã hóa toàn bộ kết nối.
+  Cho phép dùng lệnh AUTH PLAIN để xác thực an toàn.
+
+Check Default Configuration 
+  naruto3co@htb[/htb]$ cat /etc/postfix/main.cf | grep -v "#" | sed -r "/^\s*$/d"
+
+The sending and communication are also done by special commands that cause the SMTP server to do what the user requires.
+| Lệnh           | Mô tả ngắn gọn                                                           |
+| -------------- | ------------------------------------------------------------------------ |
+| **AUTH PLAIN** | Mở rộng dịch vụ dùng để **xác thực client** (đăng nhập).                 |
+| **HELO**       | Client **khởi tạo phiên làm việc** bằng cách gửi tên máy tính của mình.  |
+| **MAIL FROM**  | Khai báo **địa chỉ người gửi** email.                                    |
+| **RCPT TO**    | Khai báo **địa chỉ người nhận** email.                                   |
+| **DATA**       | Bắt đầu **truyền nội dung email** (bao gồm tiêu đề và nội dung).         |
+| **RSET**       | **Hủy bỏ tiến trình gửi hiện tại** nhưng vẫn **giữ kết nối** với server. |
+| **VRFY**       | **Kiểm tra xem hộp thư có tồn tại** hay không.                           |
+| **EXPN**       | Kiểm tra danh sách mail hoặc **mở rộng nhóm người nhận**.                |
+| **NOOP**       | Gửi yêu cầu “không làm gì” để **duy trì kết nối** (tránh timeout).       |
+| **QUIT**       | **Kết thúc phiên làm việc** giữa client và server.                       |
+
+
+Telnet - HELO/EHLO
+  naruto3co@htb[/htb]$ telnet 10.129.14.128 25
+      Trying 10.129.14.128...
+      Connected to 10.129.14.128.
+      Escape character is '^]'.
+      220 ESMTP Server 
+      
+      HELO mail1.inlanefreight.htb
+      
+      250 mail1.inlanefreight.htb
+      EHLO mail1
+      
+      250-mail1.inlanefreight.htb
+      250-PIPELINING
+      250-SIZE 10240000
+      250-ETRN
+      250-ENHANCEDSTATUSCODES
+      250-8BITMIME
+      250-DSN
+      250-SMTPUTF8
+      250 CHUNKING
+
+To interact with the SMTP server, we can use the telnet tool to initialize a TCP connection with the SMTP server. The actual initialization of the session is done with the command mentioned above, HELO or EHLO.
+  naruto3co@htb[/htb]$ telnet 10.129.14.128 25
+    or port 465 or 587 
+
+The command VRFY can be used to enumerate existing users on the system. However, this does not always work. Depending on how the SMTP server is configured, the SMTP server may issue code 252 and confirm the existence of a user that does not exist on the system. A list of all SMTP response codes can be found here. (https://serversmtp.com/smtp-error/)
+
+Telnet - VRFY
+  naruto3co@htb[/htb]$ telnet 10.129.14.128 25
+    220 ESMTP Server 
+    VRFY root
+    252 2.0.0 root
+    VRFY cry0l1t3
+    252 2.0.0 cry0l1t3
+    VRFY testuser
+    252 2.0.0 testuser
+    VRFY aaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    252 2.0.0 aaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+
+  
+  there will be a VRFY data field return in the listing result
+
+
+
+  
+Therefore, one should never entirely rely on the results of automatic tools. After all, they execute pre-configured commands, but none of the functions explicitly state how the administrator configures the tested server.
+
+Sometimes we may have to work through a web proxy. We can also make this web proxy connect to the SMTP server. The command that we would send would then look something like this: CONNECT 10.129.14.128:25 HTTP/1.0
+All the commands we enter in the command line to send an email we know from every email client program like Thunderbird, Gmail, Outlook, and many others. We specify the subject, to whom the email should go, CC, BCC, and the information we want to share with others. Of course, the same works from the command line.
+
+Send an Email
+  naruto3co@htb[/htb]$ telnet 10.129.14.128 25
+  
+    Trying 10.129.14.128...
+    Connected to 10.129.14.128.        // Để ý chỗ này nó bảo đã connected đến proxy 10.129.14.128 nhé  
+    Escape character is '^]'.
+    220 ESMTP Server        
+    ---
+
+Some of this information is mandatory, such as sender information and when the email was created. Other information is optional. However, the email header does not contain any information necessary for technical delivery. It is transmitted as part of the transmission protocol. Both sender and recipient can access the header of an email, although it is not visible at first glance. The structure of an email header is defined by RFC5322.'
+
+
+Dangerous Settings 
+
+To prevent the sent emails from being filtered by spam filters and not reaching the recipient, the sender can use a relay server that the recipient trusts. It is an SMTP server that is known and verified by all others. As a rule, the sender must authenticate himself to the relay server before using it.
+Often, administrators have no overview of which IP ranges they have to allow. This results in a misconfiguration of the SMTP server that we will still often find in external and internal penetration tests. Therefore, they allow all IP addresses not to cause errors in the email traffic and thus not to disturb or unintentionally interrupt the communication with potential and current customers.
+
+Open Relay Configuration
+  mynetworks = 0.0.0.0/0
+
+  With this setting, this SMTP server can send fake emails and thus initialize communication between multiple parties. Another attack possibility would be to spoof the email and read it.
+
+Footprinting the Service
+The default Nmap scripts include smtp-commands, which uses the EHLO command to list all possible commands that can be executed on the target SMTP server.
+
+Nmap 
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -sC -sV -p25
+
+However, we can also use the smtp-open-relay NSE script to identify the target SMTP server as an open relay using 16 different tests. If we also print out the output of the scan in detail, we will also be able to see which tests the script is running.
+Nmap - Open Replay 
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -p25 --script smtp-open-relay -v
+
+
+
+
+THỰC HÀNH 
+
+telnet 10.129.207.1236
+Dùng lệnh này 
+EHLO myhost.local
+// dưới đây là kết quả trả về
+  250-mail1
+  250-PIPELINING
+  250-SIZE 10240000
+  250-VRFY
+  250-ETRN
+  250-STARTTLS
+  250-ENHANCEDSTATUSCODES
+  250-8BITMIME
+  250-DSN
+  250-SMTPUTF8
+  250 CHUNKING
+// hết kết quả trả về của lệnh EHLO myhost.local  -> ta có 1 list lệnh có thể dùng trong telnet  
+
+Dùng wordlist của bro này 
+https://github.com/jeanphorn/wordlist
+smtp-user-enum -M VRFY -U usernames.txt -t 10.129.207.136 -p 25
+Khó vl . k có trong hướng dẫn 
+
+
+
+
+
