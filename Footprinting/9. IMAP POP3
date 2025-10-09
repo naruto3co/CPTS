@@ -1,1 +1,111 @@
-a
+IMAP
+
+IMAP (Internet Message Access Protocol) cho phép truy cập và quản lý email trực tiếp trên máy chủ.
+IMAP cho phép làm việc trực tiếp trên email ở máy chủ (giống như truy cập từ xa), trong khi POP3 chỉ tải và lưu cục bộ, không đồng bộ thay đổi giữa các thiết bị.
+Hỗ trợ cấu trúc thư mục và nhiều hộp thư trong cùng một phiên làm việc.
+Cho phép xem, sắp xếp, và đồng bộ email từ nhiều thiết bị khác nhau mà không mất dữ liệu.
+POP3 chỉ hỗ trợ các chức năng cơ bản như liệt kê, tải, và xóa email, không có khả năng quản lý trực tuyến như IMAP.
+
+Client truy cập hộp thư trực tuyến và có thể tạo bản sao cục bộ của email.
+Nhờ đó, nhiều client khác nhau vẫn có thể hiển thị cùng một trạng thái hộp thư thống nhất.
+Email vẫn nằm trên máy chủ cho đến khi người dùng xóa chúng.
+IMAP là giao thức dạng văn bản (text-based) và hỗ trợ nhiều chức năng mở rộng như duyệt email trực tiếp trên server.
+Nhiều người dùng có thể truy cập cùng lúc vào cùng một máy chủ email.
+Không có kết nối mạng, người dùng không thể quản lý email.
+Tuy nhiên, một số client có chế độ offline, cho phép làm việc với bản sao tạm thời; khi có mạng lại, các thay đổi được đồng bộ lên server.
+
+Client kết nối đến server qua cổng 143 (mặc định của IMAP).
+Giao tiếp sử dụng các lệnh dạng văn bản (text-based) theo định dạng ASCII.
+Nhiều lệnh có thể gửi liên tiếp mà không cần chờ phản hồi ngay từ server.
+Phản hồi của server sau đó sẽ được ghép nối đúng với từng lệnh nhờ mã định danh (identifier) đi kèm.
+Sau khi kết nối được thiết lập, người dùng phải xác thực bằng tên đăng nhập và mật khẩu.
+Chỉ sau khi xác thực thành công, client mới có thể truy cập vào hộp thư (mailbox) mong muốn.
+
+Mặc định, IMAP không mã hóa dữ liệu, nên toàn bộ lệnh, email, tên người dùng và mật khẩu đều được truyền dưới dạng văn bản thuần (plain text).
+Điều này khiến giao tiếp dễ bị nghe lén hoặc đánh cắp thông tin nếu không có biện pháp bảo mật bổ sung.
+Vì lý do an toàn, đa số máy chủ email yêu cầu sử dụng phiên IMAP được mã hóa.
+SSL/TLS là giao thức mã hóa phổ biến nhất được dùng để bảo vệ quá trình truyền tải email.
+Tùy cách triển khai, kết nối mã hóa có thể dùng lại cổng 143 (STARTTLS) hoặc chuyển sang cổng 993 (IMAPS — IMAP Secure).
+
+Default Configuration 
+
+  📨 IMAP Commands (Lệnh IMAP)
+  | Lệnh                          | Mô tả                                                      |
+  | ----------------------------- | ---------------------------------------------------------- |
+  | `LOGIN username password`     | Đăng nhập người dùng.                                      |
+  | `LIST "" *`                   | Liệt kê tất cả các thư mục (mailbox).                      |
+  | `CREATE "INBOX"`              | Tạo một hộp thư mới với tên được chỉ định.                 |
+  | `DELETE "INBOX"`              | Xóa hộp thư.                                               |
+  | `RENAME "ToRead" "Important"` | Đổi tên hộp thư.                                           |
+  | `LSUB "" *`                   | Liệt kê các hộp thư mà người dùng đã đăng ký (subscribed). |
+  | `SELECT INBOX`                | Chọn hộp thư để truy cập các email bên trong.              |
+  | `UNSELECT INBOX`              | Thoát khỏi hộp thư đang chọn.                              |
+  | `FETCH <ID> all`              | Truy xuất dữ liệu của email theo ID.                       |
+  | `CLOSE`                       | Xóa tất cả email đã được gắn cờ “Deleted”.                 |
+  | `LOGOUT`                      | Đóng kết nối với máy chủ IMAP.                             |
+  
+  📬 POP3 Commands (Lệnh POP3)
+  | Lệnh            | Mô tả                                            |
+  | --------------- | ------------------------------------------------ |
+  | `USER username` | Xác định tên người dùng.                         |
+  | `PASS password` | Xác thực mật khẩu của người dùng.                |
+  | `STAT`          | Yêu cầu số lượng email hiện có trên server.      |
+  | `LIST`          | Liệt kê số lượng và kích thước của tất cả email. |
+  | `RETR id`       | Tải email có ID được chỉ định.                   |
+  | `DELE id`       | Xóa email có ID được chỉ định.                   |
+  | `CAPA`          | Hiển thị các tính năng mà server hỗ trợ.         |
+  | `RSET`          | Đặt lại trạng thái email (hủy thao tác xóa).     |
+  | `QUIT`          | Đóng kết nối với máy chủ POP3.                   |
+
+
+Dangerous Settings
+  
+  Lỗi cấu hình sai có thể khiến lộ thông tin như: bật chế độ debug hiển thị lệnh, hoặc cho phép đăng nhập ẩn danh giống FTP.
+  Phần lớn doanh nghiệp hiện nay dùng dịch vụ email của bên thứ ba (Google, Microsoft, v.v.), nhưng một số vẫn duy trì máy chủ riêng để giữ quyền kiểm soát dữ liệu và bảo mật riêng tư.
+  Quản trị viên dễ mắc lỗi cấu hình, có thể khiến tin nhắn email bị truy cập trái phép, bao gồm thông tin nhạy cảm hoặc bí mật.
+  Một số tùy chọn cấu hình nguy hiểm cần chú ý:
+  | Cài đặt                     | Mô tả                                                                     |
+  | --------------------------- | ------------------------------------------------------------------------- |
+  | **auth_debug**              | Bật ghi log debug cho toàn bộ tiến trình xác thực.                        |
+  | **auth_debug_passwords**    | Ghi chi tiết mật khẩu đã nhập và phương thức xác thực vào log.            |
+  | **auth_verbose**            | Ghi lại các lần xác thực thất bại cùng lý do.                             |
+  | **auth_verbose_passwords**  | Ghi lại mật khẩu trong log (có thể cắt ngắn).                             |
+  | **auth_anonymous_username** | Đặt tên người dùng mặc định khi đăng nhập bằng cơ chế **ANONYMOUS SASL**. |
+
+  ➡️ Tóm lại: nếu các tùy chọn này bị bật trên môi trường thật, attacker có thể:
+  Xem được mật khẩu hoặc thông tin đăng nhập trong log.
+  Đăng nhập ẩn danh mà không cần tài khoản thật.
+  Theo dõi các lệnh thực thi trên server.
+  ✅ Khuyến nghị: tắt toàn bộ chế độ debug và anonymous trong môi trường production; chỉ dùng khi test cục bộ.
+
+Footprinting the Service
+By default, ports 110 and 995 are used for POP3, and ports 143 and 993 are used for IMAP. The higher ports (993 and 995) use TLS/SSL to encrypt the communication between the client and server. Using Nmap, we can scan the server for these ports. The scan will return the corresponding information (as seen below) if the server uses an embedded certificate.
+
+Nmap
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -sV -p110,143,993,995 -sC
+
+cURL
+  naruto3co@htb[/htb]$ curl -k 'imaps://10.129.14.128' --user user:p4ssw0rd
+
+If we also use the verbose (-v) option, we will see how the connection is made. From this, we can see the version of TLS used for encryption, further details of the SSL certificate, and even the banner, which will often contain the version of the mail server.
+  naruto3co@htb[/htb]$ curl -k 'imaps://10.129.14.128' --user cry0l1t3:1234 -v
+
+OpenSSL - TLS Encrypted Interaction POP3
+  naruto3co@htb[/htb]$ openssl s_client -connect 10.129.14.128:pop3s
+
+OpenSSL - TLS Encrypted Interaction IMAP
+  naruto3co@htb[/htb]$ openssl s_client -connect 10.129.14.128:imaps
+
+
+
+
+
+
+
+
+
+
+
+
+
+
