@@ -98,11 +98,19 @@ OpenSSL - TLS Encrypted Interaction IMAP
 
 
 
+OK khi dùng openssl thì ta có thể dùng những câu lệnh liên quan của nó như pop3 imap của nó 
+    https://www.atmail.com/blog/imap-commands/?utm_source=chatgpt.com
 
+Bài tập
+Khi dùng lệnh naruto3co@htb[/htb]$ openssl s_client -connect 10.129.14.128:imaps 
+Thì login : A1 LOGIN username password
+Liệt kê mailbox (folders) : a002 LIST "" "*"
+       Hoặc                 a003 LSUB "" "*"
 
-
-
-
+Ok giờ lệt kê được mailbox rồi thì sẽ vào những mailbox đó 
+                           a004 SELECT INBOX  
+Đọc nội dung :               a004 FETCH 1 (UID BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)])
+Lấy toàn bộ nội dung :       a007 FETCH 1 (BODY.PEEK[] )
 
 
 
