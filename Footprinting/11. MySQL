@@ -7,3 +7,186 @@ Hoạt động theo mô hình client-server: có MySQL server (hệ quản trị
 MySQL server chịu trách nhiệm lưu trữ và phân phối dữ liệu.
 Dữ liệu được tổ chức thành bảng (tables) gồm cột, hàng và các kiểu dữ liệu.
 Thường xuất/nhập cơ sở dữ liệu dưới dạng file .sql (ví dụ: wordpress.sql).
+
+MySQL Clients dùng các truy vấn có cấu trúc gửi tới engine để lấy và chỉnh sửa dữ liệu.
+Các thao tác chính: INSERT, DELETE, UPDATE, SELECT — đều thực hiện bằng SQL.
+Hỗ trợ nhiều client cùng truy vấn đồng thời, phù hợp cho môi trường đa người dùng.
+Truy cập cơ sở dữ liệu có thể qua mạng nội bộ (LAN) hoặc Internet công cộng, tùy cấu hình và quyền.
+MySQL phù hợp để quản lý nhiều database khác nhau, cho phép clients gửi nhiều truy vấn song song.
+Ví dụ phổ biến: WordPress lưu bài viết, tên đăng nhập và mật khẩu trong database; thường chỉ cho truy cập từ localhost.
+Ngoài ra còn có các kiến trúc database phân tán (distributed) chạy trên nhiều server — trường hợp này dữ liệu không nằm trên một máy duy nhất.
+
+MySQL phù hợp cho ứng dụng trang web động — cần cú pháp hiệu quả và tốc độ phản hồi cao.
+Thường kết hợp với Linux + Apache + PHP (LAMP) hoặc Linux + Nginx + PHP (LEMP).
+Trong hosting web, MySQL là thực thể trung tâm lưu trữ dữ liệu mà các script PHP cần truy xuất.
+Dữ liệu điển hình được lưu trong database (ví dụ WordPress) bao gồm:
+  bài viết / nội dung trang,
+  tài khoản người dùng (tên đăng nhập, mật khẩu đã băm),
+  cấu hình & thiết lập (site options),
+  metadata ảnh/tập tin (thông tin file, đường dẫn),
+  bình luận & tương tác người dùng,
+  phiên làm việc (sessions) hoặc token,
+  danh mục sản phẩm, đơn hàng (với site thương mại điện tử),
+  log truy cập / lịch sử thay đổi.
+MySQL thường chạy như một instance duy nhất trên server, nhưng có thể được mở rộng theo kiến trúc phân tán khi cần khả năng chịu tải hoặc HA.
+
+| Nhóm                       | Ví dụ                                                                        | Ghi chú (bảo mật / sử dụng)                                                |
+| -------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Nội dung & siêu dữ liệu    | Headers (HTTP/HTML), Texts (bài viết), Meta tags, Specific contents / Values | Dùng cho hiển thị, SEO; tối ưu chỉ lưu trường cần thiết                    |
+| Form & input người dùng    | Forms (contact, feedback), User information (họ tên, địa chỉ)                | Validate & sanitize trước khi lưu (ngăn XSS/SQLi)                          |
+| Người dùng & vai trò       | Customers, Usernames, Administrators, Moderators                             | Mapping roles, phân quyền, ghi audit khi thay đổi                          |
+| Liên hệ & xác thực         | Email addresses, Passwords                                                   | **Mật khẩu** phải băm + salt; emails là dữ liệu nhạy cảm — bảo vệ truy cập |
+| Liên kết & tài nguyên      | External/Internal links, Links to Files (media, attachments)                 | Lưu đường dẫn, không lưu file nhị phân lớn trong DB nếu có thể             |
+| Ghi chú vận hành & bảo mật | Logs, Headers, Session/token, Permissions                                    | Lưu log để audit; mã hoá token/phiên; hạn chế quyền truy cập DB            |
+
+Dữ liệu nhạy cảm như mật khẩu có thể được lưu trữ dưới dạng văn bản thuần túy bởi MySQL; tuy nhiên, chúng thường được mã hóa trước bằng các tập lệnh PHP bằng các phương pháp bảo mật như Mã hóa một chiều.
+MySQL dịch các câu lệnh SQL nội bộ thành mã thực thi và thực hiện hành động yêu cầu.
+Nếu xảy ra lỗi trong khi xử lý, ứng dụng web thường trả về mô tả lỗi — những mô tả này có thể tiết lộ thông tin quan trọng và bị lợi dụng bởi các kỹ thuật SQL injection.
+Khi xử lý thành công, ứng dụng trả về dữ liệu cho client (ví dụ: kết quả truy vấn dùng cho login, tìm kiếm, v.v.).
+Các tác vụ chính của SQL:
+Hiển thị / truy vấn dữ liệu (SELECT).
+Thêm / sửa / xóa bản ghi (INSERT, UPDATE, DELETE).
+Thay đổi cấu trúc cơ sở dữ liệu (ALTER TABLE, CREATE/DROP TABLE).
+Quản lý chỉ mục và quan hệ (CREATE/DROP INDEX, constraints, keys).
+Quản lý người dùng / quyền (CREATE USER, GRANT, REVOKE, DROP USER).
+Lưu ý bảo mật ngắn gọn: không xuất thông báo lỗi DB ra client, dùng prepared statements / parameterized queries, validate & sanitize input, và áp nguyên tắc least privilege cho tài khoản DB.
+MariaDB là một fok của MySQL — được phát triển khi một số nhà phát triển rời MySQL/Oracle và tiếp tục phát triển một hệ quản trị SQL mã nguồn mở dựa trên mã MySQL gốc.
+
+Quản lý cơ sở dữ liệu SQL là một lĩnh vực rất rộng — có nghề chuyên trách (DBA).
+Cấu trúc và kích thước cơ sở dữ liệu có thể phình to nhanh, khiến việc lập kế hoạch trở nên phức tạp.
+Quản trị DB là năng lực quan trọng cả với developer lẫn information security analyst.
+Nội dung đầy đủ về quản lý DB vượt quá phạm vi module này.
+Khuyến nghị thực hành: tự cài một MySQL/MariaDB instance để thử nghiệm các tùy chọn cấu hình và hiểu rõ chức năng.
+Bước tiếp theo trong nội dung: xem xét cấu hình mặc định của MySQL (để biết các tham số quan trọng cần chú ý).
+
+    | Thiết lập                                   | Mục đích / Ghi chú                                            |
+    | ------------------------------------------- | ------------------------------------------------------------- |
+    | `datadir`                                   | Thư mục lưu dữ liệu (vị trí file dữ liệu).                    |
+    | `port` / `socket`                           | Cổng TCP và socket Unix để client kết nối.                    |
+    | `bind-address`                              | Giới hạn kết nối (localhost hoặc mở ra mạng).                 |
+    | `user`                                      | User hệ thống chạy tiến trình MySQL.                          |
+    | `default_storage_engine`                    | Storage engine mặc định (thường `InnoDB`).                    |
+    | `innodb_buffer_pool_size`                   | Bộ nhớ cho InnoDB — ảnh hưởng hiệu năng I/O.                  |
+    | `max_connections`                           | Số kết nối đồng thời tối đa.                                  |
+    | `sql_mode`                                  | Thiết lập chế độ SQL (kiểm tra tính tương thích / an toàn).   |
+    | `character-set-server` / `collation-server` | Charset/collation mặc định (UTF-8 thường được khuyên dùng).   |
+    | `log_error`, `slow_query_log`               | Thiết lập logging và theo dõi truy vấn chậm.                  |
+    | `skip-name-resolve`                         | Tăng tốc xác thực bằng cách tránh DNS lookup (nếu bật).       |
+    | `secure_file_priv`                          | Hạn chế vị trí file khi dùng LOAD DATA / SELECT INTO OUTFILE. |
+
+Default Configuration
+  naruto3co@htb[/htb]$ sudo apt install mysql-server -y
+  naruto3co@htb[/htb]$ cat /etc/mysql/mysql.conf.d/mysqld.cnf | grep -v "#" | sed -r '/^\s*$/d'
+
+Cài đặt Nguy hiểm
+Nhiều thứ có thể bị cấu hình sai với MySQL. Chúng ta có thể xem chi tiết hơn tại tài liệu tham khảo MySQL để xác định những tùy chọn nào có thể được thực hiện trong cấu hình máy chủ. Các tùy chọn chính liên quan đến bảo mật là:
+
+| Setting            | Mô tả                                                                                                                                                 |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `user`             | Xác định user hệ thống (OS user) mà dịch vụ MySQL sẽ chạy dưới quyền đó.                                                                              |
+| `password`         | Thiết lập mật khẩu cho user MySQL (lưu ý: không lưu mật khẩu rõ ràng trong file cấu hình nếu có thể).                                                 |
+| `admin_address`    | Địa chỉ IP mà MySQL sẽ lắng nghe các kết nối TCP/IP trên giao diện quản trị.                                                                          |
+| `debug`            | Chỉ ra các thiết lập debug hiện tại (bật/tắt các chế độ gỡ lỗi và mức độ chi tiết).                                                                   |
+| `sql_warnings`     | Điều khiển việc các lệnh INSERT một hàng có tạo thông báo (warning) hay không khi có cảnh báo xảy ra.                                                 |
+| `secure_file_priv` | Hạn chế vị trí thư mục được phép dùng cho các thao tác import/export (ví dụ `LOAD DATA` / `SELECT ... INTO OUTFILE`) — dùng để tăng an toàn I/O file. |
+
+user, password, admin_address trong file cấu hình là nhạy cảm vì thường được lưu dưới dạng plain-text.
+Quyền truy cập file cấu hình (permission) thường không cấu hình đúng, mở đường cho kẻ tấn công đọc thông tin.
+Nếu kẻ tấn công đọc được file cấu hình hoặc chiếm quyền shell, họ có thể lấy username/password và truy cập toàn bộ database — xem/ sửa/ xóa dữ liệu khách hàng (email, mật khẩu, PII).
+debug và sql_warnings cho output chi tiết khi lỗi — hữu ích với admin nhưng tiết lộ thông tin nhạy cảm nếu hiển thị cho client; kẻ tấn công có thể tận dụng để dò lỗi và mở rộng tấn công (ví dụ dẫn đến SQL injection nâng cấp).
+Thông báo lỗi DB thường được trả về trực tiếp bởi ứng dụng web — cần phải không hiển thị chi tiết lỗi cho người dùng cuối.
+Kết quả: cấu hình lỏng + debug bật = rủi ro cao dẫn tới lộ dữ liệu, quyền thực thi lệnh hệ thống (trong một số trường hợp SQLi), và xâm phạm toàn bộ ứng dụng.
+
+
+Nhiều MySQL server có thể truy cập từ mạng bên ngoài (không phải best practice) — thường do cấu hình tạm thời bị quên, hoặc là workaround kỹ thuật.
+Việc mở MySQL ra public làm tăng rủi ro (lộ username/password, SQLi mở rộng, brute-force, v.v.).
+MySQL mặc định chạy trên TCP port 3306 — đó là cổng đầu tiên cần kiểm tra khi footprinting.
+Dùng scan (ví dụ Nmap) để xác định xem port 3306 có mở và thu thập thông tin thêm (phiên bản, banner, TLS, v.v.).
+Thông tin quan trọng có thể thu được khi scan: phiên bản MySQL/MariaDB, trạng thái SSL, banner, và đôi khi cấu hình hiển thị qua lỗi hoặc dịch vụ đi kèm.
+Những cấu hình tạm/không an toàn thường gặp: bind-address mở cho 0.0.0.0, account không dùng principle of least privilege, mật khẩu nằm trong file cấu hình với quyền file lỏng lẻo.
+Ví dụ lệnh Nmap hữu ích để footprinting:
+  nmap -sV -p 3306 --script=mysql-info <target>
+  (hoặc để dò mạnh hơn)
+  nmap -sV -p 3306 --script=mysql* <target>
+Khi scan, chú ý: thông tin trả về có thể giúp lên kế hoạch tấn công (exploit, brute force, SQLi nâng cao) — đồng thời cũng giúp defender biết điểm yếu cần khắc phục.
+Phòng tránh cơ bản: đóng port 3306 khỏi public, bind chỉ localhost/private net, firewall/VPN/SSH tunnel cho quản trị, dùng mật khẩu mạnh và secrets manager, giới hạn quyền DB.
+
+  naruto3co@htb[/htb]$ sudo nmap 10.129.14.128 -sV -sC -p3306 --script mysql*
+
+Như với tất cả các lần quét của chúng tôi, chúng tôi phải cẩn thận với kết quả và xác nhận thủ công thông tin thu được vì một số thông tin có thể là kết quả dương tính giả. Lần quét trên là một ví dụ điển hình về điều này, vì chúng tôi biết chắc chắn rằng máy chủ MySQL đích không sử dụng mật khẩu trống cho người dùng root, mà là mật khẩu cố định. Chúng tôi có thể kiểm tra điều này bằng lệnh sau:
+Interaction with the MySQL Server
+  naruto3co@htb[/htb]$ mysql -u root -h 10.129.14.132
+    ERROR 1045 (28000): Access denied for user 'root'@'10.129.14.1' (using password: NO)
+
+Ví dụ, nếu chúng ta sử dụng mật khẩu mà chúng ta đã đoán được hoặc tìm thấy thông qua quá trình nghiên cứu, chúng ta sẽ có thể đăng nhập vào máy chủ MySQL và thực hiện một số lệnh.
+
+  naruto3co@htb[/htb]$ mysql -u root -pP4SSw0rd -h 10.129.14.128
+    MySQL [(none)]> show databases; 
+    MySQL [(none)]> select version();
+    MySQL [(none)]> use mysql;
+    MySQL [mysql]> show tables;
+
+Nếu xem xét các cơ sở dữ liệu hiện có, chúng ta sẽ thấy một số đã tồn tại. Các cơ sở dữ liệu quan trọng nhất đối với máy chủ MySQL là lược đồ hệ thống (sys) và lược đồ thông tin (information_schema). Lược đồ hệ thống chứa các bảng, thông tin và siêu dữ liệu cần thiết cho việc quản lý. Bạn có thể tìm hiểu thêm về cơ sở dữ liệu này trong tài liệu tham khảo MySQL.
+
+  mysql> use sys;
+  mysql> show tables;  
+
+| Lệnh / Câu lệnh                                             |                                                                       Mô tả ngắn | Ví dụ                                                                         |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------: | ----------------------------------------------------------------------------- |
+| `mysql -u user -p`                                          |                                                 Kết nối tới server MySQL từ CLI. | `mysql -u root -p`                                                            |
+| `SHOW DATABASES;`                                           |                                                        Liệt kê tất cả databases. | `SHOW DATABASES;`                                                             |
+| `USE <db>;`                                                 |                                              Chọn database hiện tại để thao tác. | `USE wordpress;`                                                              |
+| `CREATE DATABASE <name>;`                                   |                                                                Tạo database mới. | `CREATE DATABASE shop;`                                                       |
+| `DROP DATABASE <name>;`                                     |                                                    Xóa database (rất nguy hiểm). | `DROP DATABASE testdb;`                                                       |
+| `SHOW TABLES;`                                              |                                          Hiện các bảng trong database đang dùng. | `SHOW TABLES;`                                                                |
+| `DESCRIBE <table>;` / `SHOW COLUMNS FROM <table>;`          |                                          Hiển thị cấu trúc (cột, kiểu) của bảng. | `DESCRIBE users;`                                                             |
+| `CREATE TABLE ...`                                          |                                         Tạo bảng mới với định nghĩa cột và kiểu. | `CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100));`                 |
+| `ALTER TABLE ...`                                           |                          Thay đổi cấu trúc bảng (thêm/đổi cột, drop cột, index). | `ALTER TABLE users ADD COLUMN email VARCHAR(255);`                            |
+| `DROP TABLE <table>;`                                       |                                                   Xóa bảng và dữ liệu bên trong. | `DROP TABLE temp_logs;`                                                       |
+| `SELECT ... FROM ... WHERE ...;`                            |                                                       Truy vấn/hiển thị dữ liệu. | `SELECT id,name FROM users WHERE id=1;`                                       |
+| `INSERT INTO ... VALUES (...);`                             |                                                                Thêm bản ghi mới. | `INSERT INTO users (id,name) VALUES (1,'Dat');`                               |
+| `UPDATE <table> SET ... WHERE ...;`                         |                                                                Cập nhật bản ghi. | `UPDATE users SET name='Dạt' WHERE id=1;`                                     |
+| `DELETE FROM <table> WHERE ...;`                            |                                         Xóa bản ghi (cẩn trọng nếu thiếu WHERE). | `DELETE FROM users WHERE id=1;`                                               |
+| `CREATE USER '<u>'@'<host>' IDENTIFIED BY 'pwd';`           |                                                                 Tạo user DB mới. | `CREATE USER 'app'@'127.0.0.1' IDENTIFIED BY 'S3cret';`                       |
+| `GRANT ... TO '<u>'@'<host>';`                              |                       Cấp quyền cho user (áp dụng principle of least privilege). | `GRANT SELECT,INSERT ON shop.* TO 'app'@'127.0.0.1';`                         |
+| `REVOKE ... FROM '<u>'@'<host>';`                           |                                                                   Thu hồi quyền. | `REVOKE INSERT ON shop.* FROM 'app'@'127.0.0.1';`                             |
+| `FLUSH PRIVILEGES;`                                         |                            Tải lại quyền từ bảng mysql nếu chỉnh trực tiếp file. | `FLUSH PRIVILEGES;`                                                           |
+| `SHOW GRANTS FOR '<u>'@'<host>';`                           |                                                     Xem quyền hiện tại của user. | `SHOW GRANTS FOR 'app'@'127.0.0.1';`                                          |
+| `SHOW VARIABLES;` / `SHOW GLOBAL VARIABLES LIKE 'innodb%';` |                                              Xem cấu hình MySQL (biến hệ thống). | `SHOW VARIABLES LIKE 'max_connections';`                                      |
+| `SHOW STATUS;` / `SHOW GLOBAL STATUS;`                      |                                                Thống kê trạng thái và hiệu năng. | `SHOW GLOBAL STATUS LIKE 'Threads_connected';`                                |
+| `SHOW PROCESSLIST;`                                         |                                             Xem các kết nối/ truy vấn đang chạy. | `SHOW FULL PROCESSLIST;`                                                      |
+| `EXPLAIN <SELECT ...>;`                                     |                                         Hiểu query plan — hữu ích để tối ưu hoá. | `EXPLAIN SELECT * FROM orders WHERE user_id=1;`                               |
+| `SHOW INDEX FROM <table>;` / `CREATE INDEX ...`             |                                      Kiểm tra/ tạo chỉ mục để tăng tốc truy vấn. | `CREATE INDEX idx_user ON orders(user_id);`                                   |
+| `INFORMATION_SCHEMA.<tables>`                               |          Truy vấn metadata (tables, columns, constraints) từ information_schema. | `SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='shop';` |
+| `mysqldump ...`                                             |                                    Xuất toàn bộ DB / bảng ra file .sql (backup). | `mysqldump -u root -p wordpress > wordpress.sql`                              |
+| `SOURCE file.sql;`                                          |                                                      Thực thi file SQL (import). | `SOURCE /tmp/dump.sql;`                                                       |
+| `LOAD DATA INFILE` / `SELECT ... INTO OUTFILE`              |           Import/Export dữ liệu dạng file (bị ảnh hưởng bởi `secure_file_priv`). | `LOAD DATA INFILE '/tmp/data.csv' INTO TABLE t ...;`                          |
+| `SET GLOBAL <var>=<value>;`                                 | Thay đổi biến cấu hình trong runtime (không bền qua restart trừ khi đổi my.cnf). | `SET GLOBAL max_connections = 500;`                                           |
+| `SHOW ENGINE INNODB STATUS;`                                |                         Thông tin chi tiết InnoDB (deadlock, buffer pool, v.v.). | `SHOW ENGINE INNODB STATUS\G`                                                 |
+| `RESET SLAVE;` / `START SLAVE;` / `STOP SLAVE;`             |                                 Lệnh quản lý replication (nếu dùng replication). | `STOP SLAVE; START SLAVE;`                                                    |
+
+
+
+
+
+Lược đồ thông tin cũng là một cơ sở dữ liệu chứa siêu dữ liệu. Tuy nhiên, siêu dữ liệu này chủ yếu được lấy từ cơ sở dữ liệu lược đồ hệ thống. Lý do cho sự tồn tại của hai loại này là tiêu chuẩn ANSI/ISO đã được thiết lập. Lược đồ hệ thống là một danh mục hệ thống của Microsoft dành cho máy chủ SQL và chứa nhiều thông tin hơn lược đồ thông tin.
+Một số lệnh chúng ta cần ghi nhớ và viết ra khi làm việc với cơ sở dữ liệu MySQL được mô tả trong bảng dưới đây.
+
+
+| Lệnh                                                 | Mô tả                                                                                                                                                                                                                                                       | Ví dụ                                                                    |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `mysql -u <user> -p<password> -h <IP address>`       | Kết nối tới MySQL server. Lưu ý: nếu bạn đặt mật khẩu ngay sau `-p` thì **không** có khoảng trắng (`-pMậtKhẩu`). Tuy nhiên **khuyến cáo** dùng `-p` (không theo sau mật khẩu) để nhập mật khẩu khi được nhắc, tránh lộ mật khẩu trong danh sách tiến trình. | `mysql -u root -p -h 192.168.1.10` (an toàn: nhập mật khẩu khi được hỏi) |
+| `show databases;`                                    | Hiển thị tất cả database trên server.                                                                                                                                                                                                                       | `SHOW DATABASES;`                                                        |
+| `use <database>;`                                    | Chọn database hiện tại để thao tác (scope cho các lệnh sau).                                                                                                                                                                                                | `USE wordpress;`                                                         |
+| `show tables;`                                       | Hiển thị tất cả bảng trong database đang chọn.                                                                                                                                                                                                              | `SHOW TABLES;`                                                           |
+| `show columns from <table>;`                         | Hiển thị các cột (tên, kiểu, NULL/KEY, mặc định) của bảng.                                                                                                                                                                                                  | `SHOW COLUMNS FROM users;`                                               |
+| `select * from <table>;`                             | Lấy tất cả các hàng/cột từ bảng (cẩn trọng với bảng lớn).                                                                                                                                                                                                   | `SELECT * FROM posts;`                                                   |
+| `select * from <table> where <column> = "<string>";` | Truy vấn có điều kiện: tìm hàng có giá trị cột bằng chuỗi cho trước.                                                                                                                                                                                        | `SELECT * FROM users WHERE username = "dat";`                            |
+
+
+
+
+
+
+
+
