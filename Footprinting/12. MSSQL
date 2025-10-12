@@ -1,0 +1,161 @@
+Microsoft SQL (MSSQL) là hệ quản trị cơ sở dữ liệu quan hệ do Microsoft phát triển.
+MSSQL là phần mềm đóng nguồn (closed source), khác với MySQL.
+Ban đầu MSSQL được thiết kế để chạy trên Windows và thường thấy trên các hệ thống Windows.
+Được ưa chuộng khi phát triển ứng dụng dùng .NET vì hỗ trợ gốc mạnh cho .NET.
+Hiện có phiên bản chạy trên Linux và macOS, nhưng thực tế vẫn hay gặp nhất trên Windows.
+
+SQL Server Management Studio (SSMS) là client quản lý MSSQL — có thể cài kèm lúc cài MSSQL hoặc tải cài riêng.
+Thường được cài trên server để cấu hình ban đầu và quản trị lâu dài bởi admin.
+Vì là ứng dụng phía client, SSMS có thể cài trên bất kỳ máy nào mà admin/dev dùng để quản lý database — không chỉ trên server.
+Điều này tạo rủi ro bảo mật: máy client có SSMS có thể chứa credentials đã lưu, cho phép kết nối trực tiếp tới DB nếu bị truy cập.
+Khi gặp một hệ thống có SSMS, cần kiểm tra khả năng lưu trữ thông tin đăng nhập (saved connections / registered servers) như một vector tấn công tiềm năng.
+Hình minh họa thường cho thấy giao diện SSMS khi đang kết nối/ quản trị database.
+
+Many other clients can be used to access a database running on MSSQL. Including but not limited to:
+  mssql-cli	                   https://learn.microsoft.com/en-us/sql/tools/mssql-cli?view=sql-server-ver15
+  SQL Server PowerShell	       https://docs.microsoft.com/en-us/sql/powershell/sql-server-powershell?view=sql-server-ver15
+  HeidiSQL	                   https://www.heidisql.com/
+  SQLPro	                     https://www.macsqlclient.com/
+  Impacket's mssqlclient.py    https://github.com/fortra/impacket/blob/master/examples/mssqlclient.py
+
+Of the MSSQL clients listed above, pentesters may find Impacket's mssqlclient.py to be the most useful due to SecureAuthCorp's Impacket project being present on many pentesting distributions at install. To find if and where the client is located on our host, we can use the following command:
+
+  naruto3co@htb[/htb]$ locate mssqlclient
+    /usr/bin/impacket-mssqlclient
+    /usr/share/doc/python3-impacket/examples/mssqlclient.py
+
+
+MSSQL Databases
+MSSQL has default system databases that can help us understand the structure of all the databases that may be hosted on a target server. Here are the default databases and a brief description of each:
+
+  | Cơ sở dữ liệu (mặc định) | Mô tả                                                                                                            |
+  | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+  | **master**               | Lưu trữ toàn bộ thông tin hệ thống cho một instance SQL Server.                                                  |
+  | **model**                | Cơ sở dữ liệu mẫu — làm khuôn cho mọi database mới; thay đổi ở model ảnh hưởng đến các database được tạo sau đó. |
+  | **msdb**                 | Được SQL Server Agent sử dụng để lên lịch các job và cảnh báo.                                                   |
+  | **tempdb**               | Lưu trữ các đối tượng tạm thời (temporary objects).                                                              |
+  | **resource**             | Cơ sở dữ liệu chỉ đọc chứa các đối tượng hệ thống được đóng gói kèm với SQL Server.                              |
+
+
+Default Configuration
+When an admin initially installs and configures MSSQL to be network accessible, the SQL service will likely run as NT SERVICE\MSSQLSERVER. Connecting from the client-side is possible through Windows Authentication, and by default, encryption is not enforced when attempting to connect. 
+
+Windows Authentication: Windows OS xử lý yêu cầu đăng nhập, dùng local SAM hoặc domain controller (Active Directory).
+Dùng Active Directory thuận lợi cho audit và quản lý truy cập tập trung trong môi trường Windows.
+Nếu một tài khoản AD bị xâm phạm, có thể dẫn tới tăng đặc quyền (privilege escalation) và di chuyển ngang (lateral movement) trong domain.
+Nên cài và cấu hình MSSQL trong máy ảo (VM) để hiểu cấu hình mặc định và phát hiện những sai sót cấu hình của quản trị viên.
+
+    | Khía cạnh      | Mô tả / Ảnh hưởng                                                                                              |
+    | -------------- | -------------------------------------------------------------------------------------------------------------- |
+    | Cách xác thực  | Windows Authentication → Windows (SAM hoặc AD) xử lý login                                                     |
+    | Lợi ích của AD | Quản lý truy cập tập trung, logging/audit tốt hơn                                                              |
+    | Rủi ro         | Tài khoản AD bị compromise → privilege escalation + lateral movement                                           |
+    | Khuyến nghị    | Thử nghiệm trên VM; cấu hình least privilege; bật logging/alerting; quản lý tài khoản dịch vụ; cập nhật bản vá |
+
+
+Dangerous Settings
+  Hãy nghĩ như admin: công việc bận, sai sót cấu hình dễ xảy ra — chỉ một cấu hình sai nhỏ có thể làm lộ server.
+  Một số cấu hình MSSQL thường nguy hiểm khi bị cấu hình sai: kết nối không mã hoá, dùng certificate tự ký, dùng named pipes, tài khoản sa mặc định/yếu.
+  Danh sách dưới đây là checklist ngắn để rà soát nhanh khi kiểm thử.
+
+  | Cấu hình nguy hiểm                                         |                                                                        Tại sao nguy hiểm | Cách phát hiện nhanh                                                                        | Biện pháp giảm thiểu                                                                                              |
+  | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------: | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+  | Kết nối client → server **không mã hoá**                   |                                           Dữ liệu/credentials có thể bị nghe lén (MITM). | Quan sát cài đặt connection string / SSMS options; dùng packet capture (TLS absent).        | Bắt buộc TLS, bật Force Encryption trên server, cấu hình client tin cậy.                                          |
+  | Dùng **self-signed certificate**                           |                        Dễ bị spoof, không đảm bảo tính toàn vẹn/đồng ý (no trust chain). | Kiểm tra cert dùng trong SQL Server Configuration Manager / certificate thumbprint.         | Dùng cert do CA tin cậy (internal PKI/AD CS hoặc public CA); cài chain trust trên client.                         |
+  | Bật **Named Pipes**                                        | Tạo vector truy cập mạng/IPC dễ bị lợi dụng trên Windows; phức tạp trong kiểm soát mạng. | Kiểm tra SQL Server Network Configuration — Named Pipes enabled.                            | Tắt nếu không dùng; ưu tiên TCP với firewall rules chặt.                                                          |
+  | **Weak / default `sa` credentials**                        |                             `sa` là account sysadmin — credential yếu = full compromise. | Quét user/password mặc định; thử brute/credential stuffing; kiểm tra policy password.       | Vô hiệu hóa `sa` nếu không cần; đổi mật khẩu mạnh; dùng Windows/AD auth; áp dụng account lockout & MFA cho admin. |
+  | Quyền chạy SQL Server dưới **tài khoản có nhiều quyền OS** |                                   Nếu DB bị compromise, attacker có quyền lớn trên host. | Kiểm tra service account của SQL Server (LocalSystem, Administrator, domain admin).         | Dùng least-privilege service accounts; tách quyền; dùng Managed Service Account nếu có.                           |
+  | Các tính năng nguy hiểm **(xp_cmdshell, CLR unsafe)**      |                                        Cho phép thực thi lệnh OS hoặc code tùy ý từ SQL. | Kiểm tra các tính năng mở trong server configuration.                                       | Vô hiệu hoá nếu không cần; theo dõi audit nếu phải bật.                                                           |
+  | Saved credentials trong **SSMS trên máy client**           |                                 Máy admin bị truy cập → credential dùng để nối DB bị lộ. | Tìm file đăng ký server / saved connection trên máy client; kiểm tra registry/profile SSMS. | Hướng dẫn admin không lưu credential, dùng Vault (Azure Key Vault, LAPS), mã hoá profile.                         |
+
+
+Dùng Nmap hướng tới cổng TCP mặc định 1433 (hoặc cổng tùy chỉnh nếu biết) để thu thập metadata dịch vụ.
+Các script MSSQL của Nmap (hoặc wildcard --script "ms-sql*") thường trả về: hostname, instance name, phiên bản SQL Server, và xem liệu Named Pipes có bật hay không.
+Ghi lại mọi phát hiện — hostname/instance/version/named-pipes — vì những thông tin này giúp chọn kỹ thuật tấn công tiếp theo (exploit, credential stuffing, lateral movement).
+Lưu output thô (nmap .nmap / .xml) làm bằng chứng/đầu vào cho bước phân tích tiếp the
+
+
+Những thông tin cần thu và ý nghĩa (bảng ngắn)
+  | Phát hiện                     | Tại sao quan trọng                                                                                            |
+  | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+  | Hostname                      | Giúp liên kết với host khác, tên domain, AD, hoặc mapping nội bộ                                              |
+  | Instance name                 | Xác định instance (named instance có thể dùng dynamic port)                                                   |
+  | Phiên bản MSSQL (version)     | Dùng để tra CVE/bug cụ thể, quyết định exploit/scan tiếp theo                                                 |
+  | Named Pipes: enabled/disabled | Named Pipes mở thêm vector truy cập trên Windows — có thể lợi dụng cục bộ hoặc qua mạng trong một số cấu hình |
+  | Encryption/TLS absent         | Nếu không mã hoá → có thể nghe lén/steal credentials                                                          |
+  | Port (1433 hoặc khác)         | Xác định profile scan/giải pháp firewall/IDS rules                                                            |
+  | Response banner / fingerprint | Dùng để correlate với bản vá, build, hoặc tên OEM                                                             |
+
+
+NMAP MSSQL Script Scan
+  naruto3co@htb[/htb]$ sudo nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 10.129.201.248
+
+Nếu đoán được hoặc có được credentials, ta có thể kết nối từ xa tới MSSQL.
+Xác thực cho phép tương tác trực tiếp với cơ sở dữ liệu bằng T-SQL (SQL Database Engine).
+Từ Pwnbox hoặc máy tấn công cá nhân có thể dùng Impacket mssqlclient.py để mở kết nối.
+Khi đã kết nối, nên khảo sát tổng quan: liệt kê các database có trên hệ thống.
+Ghi lại output/logs để làm bằng chứng và làm đầu vào cho các bước phân tích/triage tiếp theo.
+
+Connecting with Mssqlclient.py
+  naruto3co@htb[/htb]$ python3 mssqlclient.py Administrator@10.129.201.248 -windows-auth
+    SQL> select name from sys.databases
+
+
+| Bước | Công cụ / Context                                     | Lệnh mẫu                                                                                                                                                   | Mục đích / Ghi chú                                                                                                 |
+| ---: | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+|    1 | Impacket `mssqlclient.py` (SQL auth)                  | `python3 mssqlclient.py sa:Passw0rd@10.129.15.253:1433`                                                                                                    | Kết nối tương tác qua Impacket (T-SQL prompt). Dùng khi có username/password.                                      |
+|    2 | Impacket `mssqlclient.py` (Windows/NTLM)              | `python3 mssqlclient.py -windows-auth ILF\user:Pass@10.129.15.253`                                                                                         | Kết nối dùng NTLM/Domain credentials. Cú pháp có thể khác tuỳ phiên bản Impacket.                                  |
+|    3 | `sqlcmd` (Linux/Windows/mssql-tools) — SQL auth       | `sqlcmd -S 10.129.15.253,1433 -U sa -P 'Passw0rd'`                                                                                                         | Kết nối dòng lệnh (non-interactive hoặc interactive). Trên Windows `-S server\instance` hay `-E` cho Windows auth. |
+|    4 | `sqlcmd` (Windows auth)                               | `sqlcmd -S 10.129.15.253,1433 -E`                                                                                                                          | Dùng credentials Windows hiện tại (Integrated/Trusted).                                                            |
+|    5 | PowerShell `Invoke-Sqlcmd`                            | `Invoke-Sqlcmd -ServerInstance "10.129.15.253,1433" -Username "sa" -Password "Passw0rd"`                                                                   | Thích hợp khi dùng PowerShell để tự động hoá query. (Cần module SqlServer.)                                        |
+|    6 | SSMS (GUI)                                            | Server name: `10.129.15.253,1433` → Authentication: `SQL Server Authentication` / `Windows Authentication`                                                 | GUI để quản lý; lưu ý: SSMS có thể lưu credentials trên client.                                                    |
+|    7 | Kiểm tra phiên bản / info server                      | `SELECT @@VERSION;`  `SELECT SERVERPROPERTY('ProductVersion'), SERVERPROPERTY('ProductLevel'), SERVERPROPERTY('Edition'), SERVERPROPERTY('InstanceName');` | Xác định phiên bản, build, instance name để tra CVE/patch.                                                         |
+|    8 | Liệt kê tất cả databases                              | `SELECT name, database_id, state_desc FROM sys.databases;`  `EXEC sp_databases;`                                                                           | Lấy danh sách DB để chuyển sang khảo sát từng DB.                                                                  |
+|    9 | Chuyển database & liệt kê bảng                        | `USE target_db;`  `SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE';`                                          | Xem cấu trúc DB, bảng có sẵn.                                                                                      |
+|   10 | Liệt kê cột của bảng                                  | `SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='ten_bang';`                                                  | Kiểm tra kiểu dữ liệu, tìm cột có thể chứa credentials.                                                            |
+|   11 | Liệt kê stored procedures                             | `SELECT name FROM sys.procedures;`                                                                                                                         | Tìm SP nguy hiểm, SP chứa gọi xp_cmdshell hay file IO.                                                             |
+|   12 | Liệt kê logins / server principals                    | `SELECT name, type_desc, is_disabled FROM sys.server_principals WHERE principal_id > 0;`                                                                   | Xem tài khoản server (sa, SQL logins, domain accounts, nhóm).                                                      |
+|   13 | Kiểm tra trạng thái `sa`                              | `SELECT name, is_disabled FROM sys.server_principals WHERE name = 'sa';`                                                                                   | Xác định `sa` có bị disable hay dùng mật khẩu mặc định.                                                            |
+|   14 | Kiểm tra quyền sysadmin cho user hiện tại             | `SELECT IS_SRVROLEMEMBER('sysadmin');`  `SELECT SUSER_SNAME(), SYSTEM_USER;`                                                                               | Trả về 1 nếu current login là sysadmin.                                                                            |
+|   15 | Liệt kê thành viên role `sysadmin`                    | `EXEC sp_helpsrvrolemember 'sysadmin';`                                                                                                                    | Xem user nào có quyền cao nhất trên server.                                                                        |
+|   16 | Kiểm tra xp_cmdshell (đã bật chưa)                    | `SELECT name, value_in_use FROM sys.configurations WHERE name = 'xp_cmdshell';`                                                                            | Nếu value_in_use = 1 => xp_cmdshell bật (rủi ro cao).                                                              |
+|   17 | Kiểm tra linked servers                               | `EXEC sp_linkedservers;`  hoặc `SELECT * FROM sys.servers;`                                                                                                | Xem có linked servers (có thể là vector pivot sang host khác).                                                     |
+|   18 | Liệt kê jobs (SQL Agent)                              | `SELECT job_id, name, enabled FROM msdb.dbo.sysjobs;`                                                                                                      | Tìm jobs có chứa script hay credentials. (Cần quyền truy cập msdb)                                                 |
+|   19 | Kiểm tra kết nối/ma hoá (encryption)                  | `SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID;`                                                                            | Kiểm tra session hiện tại có dùng TLS hay không (`encrypt_option` = TRUE/FALSE).                                   |
+|   20 | Xem các session/connection đang hoạt động             | `SELECT session_id, login_name, host_name, program_name FROM sys.dm_exec_sessions WHERE is_user_process = 1;`                                              | Kiểm tra host, chương trình đang kết nối (ví dụ: SSMS, aplikasi).                                                  |
+|   21 | Xem service account của SQL Server                    | `SELECT servicename, service_account FROM sys.dm_server_services;`                                                                                         | Hiển thị account chạy service (cần quyền thích hợp).                                                               |
+|   22 | Tìm quyền hiện tại (server-level)                     | `SELECT * FROM fn_my_permissions(NULL, 'SERVER');`                                                                                                         | Xem permissions hiện tại của login.                                                                                |
+|   23 | Tìm schema/table chứa chuỗi 'password' (search nhanh) | `USE target_db; SELECT TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME LIKE '%pass%' OR COLUMN_NAME LIKE '%pwd%'`  | Tìm các cột có khả năng chứa mật khẩu — sau đó `SELECT TOP 10 ...` để kiểm tra (tuân thủ RoE).                     |
+|   24 | Thoát khỏi phiên tương tác                            | `exit` (hoặc Ctrl+D) trong `mssqlclient` / `QUIT` hoặc `EXIT` trong sqlcmd                                                                                 | Thoát an toàn khỏi shell client.                                                                                   |
+
+
+
+
+python3 /usr/share/doc/python3-impacket/examples/mssqlclient.py backdoor@10.129.251.134 -windows-auth
+    Phải thêm cái -windows-auth vào . cay vl 
+Password1
+
+| Mục tiêu                                    | Lệnh T-SQL                                                          | Ghi chú                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Liệt kê tất cả database                     | `sql SELECT name FROM sys.databases; `                              | Trả về tên tất cả database trên instance.                                |
+| Liệt kê kèm trạng thái / id                 | `sql SELECT name, database_id, state_desc FROM sys.databases; `     | Hiển thị trạng thái (ONLINE, OFFLINE...) và database_id.                 |
+| Dùng stored procedure cổ                    | `sql EXEC sp_databases; `                                           | Cách cũ nhưng vẫn hoạt động; trả về danh sách database.                  |
+| Chỉ liệt kê database user có quyền truy cập | `sql SELECT name FROM sys.databases WHERE HAS_DBACCESS(name) = 1; ` | Hiển thị những DB mà login hiện tại có quyền truy cập.                   |
+| Xem database hiện tại                       | `sql SELECT DB_NAME(); -- hoặc SELECT DB_NAME(DB_ID()); `           | Trả về tên database đang dùng trong session hiện tại.                    |
+| Chuyển sang database khác                   | `sql USE target_database; `                                         | Thay `target_database` bằng tên DB; các truy vấn sau sẽ chạy trên DB đó. |
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+  
