@@ -1,0 +1,138 @@
+SNMP (Simple Network Management Protocol) được tạo ra để giám sát các thiết bị mạng.
+Ngoài việc giám sát, SNMP còn có thể thực hiện cấu hình và thay đổi thiết lập từ xa.
+Thiết bị hỗ trợ SNMP gồm: router, switch, server, thiết bị IoT, và nhiều phần cứng mạng khác.
+Giao thức này cho phép truy vấn và điều khiển thiết bị từ xa thông qua chuẩn thống nhất.
+SNMPv3 là phiên bản hiện tại, cải thiện mạnh về bảo mật, nhưng cũng tăng độ phức tạp khi sử dụng.
+Tóm lại: SNMP là giao thức tiêu chuẩn cho việc giám sát và quản lý thiết bị mạng, đồng thời cho phép cấu hình từ xa.
+
+SNMP không chỉ trao đổi thông tin mà còn gửi lệnh điều khiển qua UDP port 161 thông qua các agent.
+Client có thể đặt giá trị, thay đổi tùy chọn và thiết lập trên thiết bị từ xa.
+Trong mô hình truyền thống, client chủ động yêu cầu thông tin từ server.
+Tuy nhiên, SNMP còn hỗ trợ trap qua UDP port 162 — đây là gói dữ liệu server gửi chủ động đến client khi có sự kiện nhất định xảy ra (không cần client yêu cầu).
+Để client và server có thể trao đổi dữ liệu SNMP, các đối tượng SNMP (SNMP objects) phải có địa chỉ duy nhất và được biết ở cả hai phía.
+Cơ chế định địa chỉ này là điều kiện bắt buộc để truyền dữ liệu và giám sát mạng thành công qua SNMP.
+
+MIB (Management Information Base) được tạo ra để đảm bảo SNMP hoạt động tương thích giữa các hãng sản xuất và thiết bị khác nhau.
+MIB là định dạng độc lập dùng để lưu trữ thông tin thiết bị.
+Một MIB file là tệp văn bản (text file) liệt kê toàn bộ các đối tượng SNMP (SNMP objects) của thiết bị theo cấu trúc cây phân cấp chuẩn hóa.
+Mỗi mục trong MIB có ít nhất một OID (Object Identifier) — gồm:
+  Địa chỉ duy nhất
+  Tên đối tượng
+  Loại dữ liệu
+  Quyền truy cập
+  Mô tả chức năng
+MIB được viết bằng ngôn ngữ ASN.1 (Abstract Syntax Notation One) ở định dạng ASCII text.
+MIB không chứa dữ liệu thực tế, mà mô tả vị trí, kiểu dữ liệu và giá trị trả về của từng OID — giúp SNMP biết cần lấy dữ liệu ở đâu và hiểu nó như thế nào
+
+OID (Object Identifier) là một nút trong không gian tên phân cấp (hierarchical namespace).
+Mỗi nút được xác định duy nhất bằng một chuỗi số, cho biết vị trí của nút trong cây.
+Chuỗi OID càng dài → thông tin càng chi tiết và cụ thể hơn.
+Nhiều nút trong cây OID chỉ đóng vai trò tham chiếu, không chứa dữ liệu, mà dẫn đến các nút con bên dưới.
+Cấu trúc OID bao gồm các số nguyên nối với nhau bằng dấu chấm (ví dụ: 1.3.6.1.2.1.1.5).
+Có thể tra cứu OID và MIB tương ứng trong Object Identifier Registry, nơi lưu trữ các định danh tiêu chuẩn hóa quốc tế.
+
+SNMPv1 là phiên bản đầu tiên của giao thức SNMP, được dùng để quản lý và giám sát mạng.
+Vẫn còn được sử dụng trong các mạng nhỏ do cấu hình đơn giản.
+Cho phép:
+  Truy xuất thông tin từ các thiết bị mạng.
+  Cấu hình thiết bị từ xa.
+  Gửi trap (thông báo sự kiện đến client).
+Hạn chế chính:
+  Không có cơ chế xác thực (authentication) → bất kỳ ai trong mạng cũng có thể đọc hoặc sửa dữ liệu mạng.
+  Không hỗ trợ mã hóa (encryption) → toàn bộ dữ liệu được gửi dưới dạng plain text, dễ bị chặn và xem trộm (intercepted).
+
+SNMPv2 có nhiều biến thể, trong đó phiên bản còn được dùng hiện nay là SNMPv2c.
+  Chữ “c” nghĩa là community-based SNMP (dựa trên chuỗi community để xác thực).
+Về bảo mật, SNMPv2 tương đương với SNMPv1, nhưng được mở rộng thêm một số chức năng từ phiên bản “party-based SNMP” (nay đã ngừng sử dụng).
+Nhược điểm chính:
+  Chuỗi community — dùng để kiểm soát quyền truy cập — vẫn được truyền ở dạng plain text,
+  Do đó không có mã hóa tích hợp, khiến dữ liệu dễ bị nghe lén hoặc đánh cắp.
+
+SNMPv3 được cải thiện mạnh mẽ về bảo mật so với các phiên bản trước.
+Bổ sung các tính năng bảo mật nâng cao gồm:
+  Xác thực (authentication) bằng tên người dùng và mật khẩu.
+  Mã hóa truyền dữ liệu (encryption) thông qua pre-shared key để bảo vệ nội dung trao đổi.
+Nhờ đó, SNMPv3 giúp ngăn chặn truy cập trái phép và bảo vệ dữ liệu mạng khỏi bị nghe lén.
+Tuy nhiên, độ phức tạp cấu hình tăng đáng kể, với nhiều tùy chọn và thiết lập bảo mật hơn so với SNMPv2c.
+
+Community strings giống như mật khẩu dùng để xác định quyền truy cập (đọc/ghi) dữ liệu SNMP.
+Nhiều tổ chức vẫn dùng SNMPv2 (v2c) vì chuyển sang SNMPv3 phức tạp, trong khi dịch vụ phải luôn hoạt động.
+Việc giữ lại v2c và community strings tạo mối lo ngại lớn cho quản trị viên vì:
+  Community string được gửi ở dạng plain text → có thể bị chặn (intercept) và đọc trên mạng.
+  Nếu bị lộ, kẻ tấn công có thể xem hoặc thay đổi cấu hình thiết bị (tùy quyền của chuỗi).
+Thiếu kiến thức về cách thông tin SNMP bị thu thập và khai thác khiến nhiều quản trị viên không nhận ra rủi ro hoặc hành xử có vẻ “không hợp lý”.
+Hậu quả: rò rỉ community strings dẫn tới mất an toàn thông tin, truy cập trái phép, và khả năng thao túng thiết bị mạng.
+Khuyến nghị ngắn: tránh dùng community mặc định (ví dụ public/private), chuyển sang SNMPv3 khi có thể, hoặc ít nhất cấu hình ACL, giám sát traffic SNMP và hạn chế nguồn gửi/nhận SNMP.
+
+Cấu hình mặc định của SNMP daemon quy định các thiết lập cơ bản cho dịch vụ SNMP.
+Bao gồm:
+  Địa chỉ IP mà SNMP sẽ lắng nghe và phản hồi.
+  Cổng (port) dùng để trao đổi dữ liệu (mặc định: UDP 161 cho request, UDP 162 cho trap).
+  MIB (Management Information Base) – cơ sở thông tin quản lý của thiết bị.
+  OID (Object Identifier) – định danh các đối tượng SNMP cụ thể.
+  Cấu hình xác thực (authentication) – nếu hỗ trợ (như ở SNMPv3).
+  Community strings – “mật khẩu” dùng để kiểm soát quyền truy cập (ở SNMPv1/v2c).
+ Đây là các tham số nền tảng quyết định cách SNMP daemon giao tiếp, truy cập và bảo vệ dữ liệu mạng.
+
+Cấu hình của dịch vụ SNMP có thể được thay đổi theo nhiều cách khác nhau, tùy vào nhu cầu quản trị.
+Để tránh ảnh hưởng đến hệ thống thật, nên thiết lập một máy ảo (VM) riêng để cài đặt và cấu hình SNMP server thử nghiệm.
+Tất cả các tùy chọn và tham số cấu hình cho SNMP daemon đều được mô tả chi tiết trong trang hướng dẫn (manpage) của hệ thống.
+Việc đọc và hiểu manpage giúp quản trị viên tùy chỉnh SNMP một cách an toàn, chính xác và phù hợp với môi trường mạng.
+
+  naruto3co@htb[/htb]$ cat /etc/snmp/snmpd.conf | grep -v "#" | sed -r '/^\s*$/d'
+
+  | **Lệnh cấu hình**                                | **Mô tả**                                                                                   | **Ghi chú**                                  |
+  | ------------------------------------------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+  | `rwuser noauth`                                  | Cho phép truy cập **toàn bộ cây OID** mà **không cần xác thực**                             | Rất nguy hiểm, không nên dùng trên mạng thật |
+  | `rwcommunity <community string> <IPv4 address>`  | Cho phép **đọc/ghi toàn bộ cây OID** bằng **community string** và **địa chỉ IPv4** xác định | Không mã hóa, nên giới hạn địa chỉ IP cụ thể |
+  | `rwcommunity6 <community string> <IPv6 address>` | Giống `rwcommunity` nhưng dùng **địa chỉ IPv6**                                             | Cũng cần giới hạn phạm vi truy cập           |
+
+  | **Công cụ**   |                                           **Mục đích** | **Ghi chú / Ví dụ ngắn**                                                     |
+  | ------------- | -----------------------------------------------------: | ---------------------------------------------------------------------------- |
+  | `snmpwalk`    | Truy vấn OID trên thiết bị, liệt kê cây OID và giá trị | Dùng để thu thập thông tin (ví dụ: `snmpwalk -v2c -c <community> <target>`). |
+  | `onesixtyone` |     Brute-force (đoán) community strings bằng wordlist | Tìm community name khi admin đặt tên tuỳ ý — có thể mất thời gian.           |
+  | `braa`        |  Quét nhanh các host SNMP và thử các community strings | Thích hợp quét diện rộng; kết hợp wordlist để phát hiện community.           |
+
+  naruto3co@htb[/htb]$ snmpwalk -v2c -c public 10.129.14.128
+        iso.3.6.1.2.1.1.1.0 = STRING: "Linux htb 5.11.0-34-generic #36~20.04.1-Ubuntu SMP Fri Aug 27 08:06:32 UTC 2021 x86_64"
+        iso.3.6.1.2.1.1.2.0 = OID: iso.3.6.1.4.1.8072.3.2.10
+        iso.3.6.1.2.1.1.3.0 = Timeticks: (5134) 0:00:51.34
+        iso.3.6.1.2.1.1.4.0 = STRING: "mrb3n@inlanefreight.htb"
+        iso.3.6.1.2.1.1.5.0 = STRING: "htb"
+        iso.3.6.1.2.1.1.6.0 = STRING: "Sitting on the Dock of the Bay"
+        iso.3.6.1.2.1.1.7.0 = INTEGER: 72
+        iso.3.6.1.2.1.25.1.7.0 = No more variables left in this MIB View (It is past the end of the MIB tree)
+        
+        ...SNIP...
+        
+        iso.3.6.1.2.1.25.6.3.1.2.1232 = STRING: "printer-driver-sag-gdi_0.1-7_all"
+        iso.3.6.1.2.1.25.6.3.1.2.1233 = STRING: "printer-driver-splix_2.0.0+svn315-7fakesync1build1_amd64"
+        iso.3.6.1.2.1.25.6.3.1.2.1234 = STRING: "procps_2:3.3.16-1ubuntu2.3_amd64"
+        iso.3.6.1.2.1.25.6.3.1.2.1235 = STRING: "proftpd-basic_1.3.6c-2_amd64"
+        iso.3.6.1.2.1.25.6.3.1.2.1236 = STRING: "proftpd-doc_1.3.6c-2_all"
+        iso.3.6.1.2.1.25.6.3.1.2.1237 = STRING: "psmisc_23.3-1_amd64"
+
+OneSixtyOne
+  naruto3co@htb[/htb]$ sudo apt install onesixtyone
+  naruto3co@htb[/htb]$ onesixtyone -c /opt/useful/seclists/Discovery/SNMP/snmp.txt 10.129.14.128
+
+Braa
+  naruto3co@htb[/htb]$ sudo apt install braa
+  naruto3co@htb[/htb]$ braa <community string>@<IP>:.1.3.6.*   # Syntax
+  naruto3co@htb[/htb]$ braa public@10.129.14.128:.1.3.6.*
+
+
+Làm bài tập 
+
+Câu lệnh
+  onesixtyone -c /opt/useful/seclists/Discovery/SNMP/snmp.txt 10.129.180.95
+    ra kết quả k hữu ích lắm 
+
+  snmpwalk -v2c -c public 10.129.180.95 > snmp_dump_10.129.180.95.txt
+    Lệnh này ok này . nó scan theo IP luôn 
+
+
+
+
+
+
