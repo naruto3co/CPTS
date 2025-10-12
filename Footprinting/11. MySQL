@@ -1,0 +1,9 @@
+MySQL là hệ quản trị cơ sở dữ liệu quan hệ (RDBMS) mã nguồn mở, được phát triển và hỗ trợ bởi Oracle.
+Cơ sở dữ liệu là tập hợp dữ liệu có cấu trúc, tổ chức để lưu trữ và truy xuất dễ dàng.
+MySQL xử lý khối lượng lớn dữ liệu với hiệu năng cao.
+Dữ liệu được lưu trữ tối ưu để tốn ít không gian nhất có thể.
+Điều khiển cơ sở dữ liệu bằng ngôn ngữ SQL.
+Hoạt động theo mô hình client-server: có MySQL server (hệ quản trị thực sự) và một hoặc nhiều MySQL client.
+MySQL server chịu trách nhiệm lưu trữ và phân phối dữ liệu.
+Dữ liệu được tổ chức thành bảng (tables) gồm cột, hàng và các kiểu dữ liệu.
+Thường xuất/nhập cơ sở dữ liệu dưới dạng file .sql (ví dụ: wordpress.sql).
