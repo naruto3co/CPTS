@@ -1,0 +1,169 @@
+Mục đích: quản lý máy chủ Linux từ xa khi nhân viên ở vị trí khác cần hỗ trợ.
+Tình huống điển hình: nhân viên đến khách hàng gặp lỗi không giải quyết được qua điện thoại.
+Lợi ích: tiết kiệm thời gian vì không phải có mặt trực tiếp tại máy chủ.
+Môi trường làm việc giữ nguyên: giao diện và môi trường trên server vẫn giống như khi trực tiếp thao tác.
+Các ứng dụng/giao thức quản lý từ xa rất phổ biến trên hầu hết server public.
+Những giao thức/ứng dụng này là mục tiêu hấp dẫn để tấn công (pentest) do tính tiện dụng và sự phổ biến.
+Rủi ro bảo mật: cấu hình sai có thể cho phép kẻ tấn công nhanh chóng chiếm quyền truy cập vào hệ thống.
+Vai trò của pentester: cần nắm rõ các giao thức, dịch vụ và ứng dụng quản lý từ xa để đánh giá an toàn.
+Hành động đề xuất: làm quen và kiểm tra cấu hình các giao thức/ứng dụng quản trị từ xa quan trọng.
+Kết luận: hiểu biết về quản lý từ xa vừa giúp khắc phục sự cố hiệu quả vừa là yếu tố then chốt trong kiểm thử bảo mật.
+
+SSH (Secure Shell): giao thức cho phép hai máy tính thiết lập kết nối trực tiếp và mã hóa qua mạng không an toàn (thường dùng TCP port 22).
+Mục đích bảo mật: ngăn chặn bên thứ ba nghe lén hoặc đánh cắp dữ liệu nhạy cảm trong luồng truyền.
+Tùy chỉnh truy cập: máy chủ SSH có thể được cấu hình chỉ cho phép kết nối từ các máy khách nhất định.
+Tính tương thích:
+  Hoạt động trên hầu hết các hệ điều hành phổ biến.
+  Là ứng dụng gốc của Unix → có sẵn trên Linux và macOS.
+  Có thể dùng trên Windows nếu cài đặt phần mềm hỗ trợ.
+OpenSSH: phiên bản mã nguồn mở của SSH, được phát triển từ bản thương mại của công ty SSH Communication Security.
+Hai phiên bản giao thức cạnh tranh:
+  SSH-1 (phiên bản cũ hơn)
+  SSH-2 (phiên bản mới hơn, an toàn hơn).
+SSH-2 (SSH version 2):
+  Cải thiện về mã hóa, tốc độ, độ ổn định, và bảo mật.
+  SSH-1 dễ bị tấn công MITM (Man-In-The-Middle), còn SSH-2 khắc phục được điểm yếu này.
+
+Mục tiêu: Quản lý một máy chủ từ xa có thể thực hiện qua dòng lệnh (CLI) hoặc giao diện đồ họa (GUI).
+SSH sử dụng để:
+  Gửi lệnh đến hệ thống mong muốn.
+  Truyền tệp giữa máy cục bộ và máy chủ từ xa.
+  Chuyển tiếp cổng (port forwarding) để truy cập dịch vụ qua kênh mã hóa.
+Yêu cầu: cần kết nối qua SSH và xác thực danh tính người dùng.
+OpenSSH hỗ trợ 6 phương thức xác thực khác nhau:
+  Password authentication – Xác thực bằng mật khẩu.
+  Public-key authentication – Xác thực bằng cặp khóa công khai/bí mật.
+  Host-based authentication – Dựa vào khóa và danh tính của máy chủ tin cậy.
+  Keyboard authentication – Xác thực bằng cách nhập dữ liệu từ bàn phím (từng bước).
+  Challenge-response authentication – Xác thực bằng câu hỏi và phản hồi (mã hóa).
+  GSSAPI authentication – Xác thực qua giao thức GSSAPI (ví dụ: Kerberos).
+Phương thức phổ biến nhất: Password và Public-key authentication (sẽ được phân tích kỹ hơn).
+Tham khảo thêm chi tiết cấu hình và các phương thức khác tại:
+🔗 GoLinuxCloud – OpenSSH authentication methods
+
+
+Default Configuration
+The sshd_config file, responsible for the OpenSSH server, has only a few of the settings configured by default. However, the default configuration includes X11 forwarding, which contained a command injection vulnerability in version 7.2p1 of OpenSSH in 2016. Nevertheless, we do not need a GUI to manage our servers.
+    naruto3co@htb[/htb]$ cat /etc/ssh/sshd_config  | grep -v "#" | sed -r '/^\s*$/d'
+      Include /etc/ssh/sshd_config.d/*.conf
+      ChallengeResponseAuthentication no
+      UsePAM yes
+      X11Forwarding yes
+      PrintMotd no
+      AcceptEnv LANG LC_*
+      Subsystem       sftp    /usr/lib/openssh/sftp-server
+    
+Dangerous Settings
+Despite the SSH protocol being one of the most secure protocols available today, some misconfigurations can still make the SSH server vulnerable to easy-to-execute attacks. Let us take a look at the following settings:
+
+  | **Setting**                  | **Description**                                         |
+  | ---------------------------- | ------------------------------------------------------- |
+  | `PasswordAuthentication yes` | Cho phép xác thực bằng mật khẩu.                        |
+  | `PermitEmptyPasswords yes`   | Cho phép sử dụng mật khẩu trống.                        |
+  | `PermitRootLogin yes`        | Cho phép đăng nhập với tài khoản **root**.              |
+  | `Protocol 1`                 | Sử dụng phiên bản mã hóa **cũ, không an toàn**.         |
+  | `X11Forwarding yes`          | Cho phép **chuyển tiếp X11** để chạy ứng dụng GUI.      |
+  | `AllowTcpForwarding yes`     | Cho phép **chuyển tiếp cổng TCP**.                      |
+  | `PermitTunnel`               | Cho phép **tạo đường hầm (tunneling)**.                 |
+  | `DebianBanner yes`           | Hiển thị **banner đặc trưng của Debian** khi đăng nhập. |
+
+Allowing password authentication allows us to brute-force a known username for possible passwords. Many different methods can be used to guess the passwords of users. For this purpose, specific patterns are usually used to mutate the most commonly used passwords and, frighteningly, correct them. This is because we humans are lazy and do not want to remember complex and complicated passwords. Therefore, we create passwords that we can easily remember, and this leads to the fact that, for example, numbers or characters are added only at the end of the password. Believing that the password is secure, the mentioned patterns are used to guess precisely such "adjustments" of these passwords. However, some instructions and hardening guides can be used to harden our SSH servers.
+
+Footprinting the Service
+
+One of the tools we can use to fingerprint the SSH server is ssh-audit. It checks the client-side and server-side configuration and shows some general information and which encryption algorithms are still used by the client and server. Of course, this could be exploited by attacking the server or client at the cryptic level later.
+
+SSH-Audit
+  naruto3co@htb[/htb]$ git clone https://github.com/jtesta/ssh-audit.git && cd ssh-audit
+  naruto3co@htb[/htb]$ ./ssh-audit.py 10.129.14.132
+  
+The first thing we can see in the first few lines of the output is the banner that reveals the version of the OpenSSH server. The previous versions had some vulnerabilities, such as CVE-2020-14145, which allowed the attacker the capability to Man-In-The-Middle and attack the initial connection attempt. The detailed output of the connection setup with the OpenSSH server can also often provide important information, such as which authentication methods the server can use.
+
+Change Authentication Method
+  naruto3co@htb[/htb]$ ssh -v cry0l1t3@10.129.14.132
+
+For potential brute-force attacks, we can specify the authentication method with the SSH client option PreferredAuthentications.
+  naruto3co@htb[/htb]$ ssh -v cry0l1t3@10.129.14.132 -o PreferredAuthentications=password
+
+Rsync là công cụ sao chép tệp nhanh và hiệu quả, dùng được cho cả local và remote host.
+Có thể sao chép:
+  Tệp trên cùng một máy (local).
+  Tệp giữa máy cục bộ và máy chủ từ xa.
+Đặc điểm nổi bật: sử dụng thuật toán truyền delta (delta-transfer algorithm).
+  Giúp giảm lượng dữ liệu truyền qua mạng khi đích đã có phiên bản cũ của file.
+  Chỉ gửi phần khác biệt giữa file nguồn và file đích.
+Ứng dụng phổ biến: dùng cho backup và mirror dữ liệu.
+Cách xác định file cần truyền: dựa trên thay đổi kích thước hoặc thời gian chỉnh sửa gần nhất.
+Cổng mặc định: TCP 873.
+Bảo mật truyền tải: có thể cấu hình chạy qua SSH (piggyback trên kết nối SSH hiện có).
+Ưu điểm: nhanh, linh hoạt, và tiết kiệm băng thông, đặc biệt hữu ích trong môi trường quản trị hệ thống và sao lưu từ xa.
+
+Scanning for Rsync
+  naruto3co@htb[/htb]$ sudo nmap -sV -p 873 127.0.0.1
+
+Probing for Accessible Shares
+  naruto3co@htb[/htb]$ nc -nv 127.0.0.1 873
+
+Enumerating an Open Share
+Here we can see a share called dev, and we can enumerate it further.
+  naruto3co@htb[/htb]$ rsync -av --list-only rsync://127.0.0.1/dev
+
+Từ kết quả đầu ra ở trên, chúng ta có thể thấy một vài tệp thú vị có thể đáng để tìm hiểu thêm. Chúng ta cũng có thể thấy một thư mục có khả năng chứa khóa SSH có thể truy cập được. Từ đây, chúng ta có thể đồng bộ hóa tất cả các tệp với máy chủ tấn công bằng lệnh rsync -av rsync://127.0.0.1/dev. Nếu Rsync được cấu hình để sử dụng SSH để truyền tệp, chúng ta có thể sửa đổi các lệnh để bao gồm cờ -e ssh, hoặc -e "ssh -p2222" nếu cổng không chuẩn đang được sử dụng cho SSH. Hướng dẫn này hữu ích để hiểu cú pháp sử dụng Rsync qua SSH.
+
+
+R-Services
+
+R-Services: tập hợp các dịch vụ cho phép truy cập từ xa và thực thi lệnh giữa các hệ Unix qua TCP/IP.
+Nguồn gốc: phát triển bởi Computer Systems Research Group (CSRG) — UC Berkeley.
+Cách hoạt động: giống telnet — truyền dữ liệu không mã hóa giữa client và server.
+Rủi ro bảo mật: dễ bị MITM (man-in-the-middle) — kẻ tấn công có thể chặn mật khẩu và thông tin đăng nhập.
+Cổng sử dụng: TCP 512, 513, 514.
+Giao diện/ chương trình: truy cập thông qua bộ lệnh gọi là r-commands (ví dụ: rlogin, rsh, rcp).
+Hệ điều hành thường gặp: từng phổ biến trên Unix thương mại như Solaris, HP-UX, AIX.
+Hiện trạng: ngày nay đã bị thay thế bởi SSH do các lỗ hổng bảo mật của r-services.
+Ý nghĩa trong pentest: vẫn có thể gặp trong môi trường cũ/legacy — cần nhận diện, phá sóng (exploit) hoặc báo cáo cấu hình không an toàn.
+Hành động khuyến nghị: tắt r-services trên host, thay bằng SSH với cấu hình bảo mật chặt chẽ; nếu bắt buộc phải giữ, cách ly mạng và giám sát lưu lượng.
+
+The R-commands suite consists of the following programs:
+  rcp (remote copy)
+  rexec (remote execution)
+  rlogin (remote login)
+  rsh (remote shell)
+  rstat
+  ruptime
+  rwho (remote who)
+
+
+Mỗi lệnh đều có chức năng riêng; tuy nhiên, chúng tôi sẽ chỉ đề cập đến những lệnh r-command thường bị lạm dụng nhất. Bảng dưới đây sẽ cung cấp tổng quan nhanh về các lệnh bị lạm dụng thường xuyên nhất, bao gồm dịch vụ daemon mà chúng tương tác, cổng và phương thức vận chuyển mà chúng có thể được truy cập, và mô tả ngắn gọn về từng lệnh.
+| **Command** | **Service daemon** | **Port** | **Transport protocol** | **Description**                                                                                                                                                      |
+| ----------- | ------------------ | -------: | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rcp`       | `rshd`             |      514 | TCP                    | Sao chép tệp hoặc thư mục hai chiều giữa máy local và máy remote (hoặc giữa hai máy remote). Hoạt động giống `cp` nhưng **không cảnh báo khi ghi đè**.               |
+| `rsh`       | `rshd`             |      514 | TCP                    | Mở một shell trên máy từ xa **không qua quá trình đăng nhập**. Dựa vào các mục tin cậy trong ` /etc/hosts.equiv` và `~/.rhosts` để xác thực.                         |
+| `rexec`     | `rexecd`           |      512 | TCP                    | Cho phép chạy lệnh shell trên máy từ xa bằng username và password gửi **không mã hóa** qua socket. Xác thực có thể bị ghi đè bởi ` /etc/hosts.equiv` và `~/.rhosts`. |
+| `rlogin`    | `rlogind`          |      513 | TCP                    | Cho phép đăng nhập vào host từ xa (tương tự `telnet`, chỉ cho Unix-like). Xác thực có thể bị ghi đè bởi ` /etc/hosts.equiv` và `~/.rhosts`.                          |
+
+
+The /etc/hosts.equiv file contains a list of trusted hosts and is used to grant access to other systems on the network. When users on one of these hosts attempt to access the system, they are automatically granted access without further authentication.
+
+/etc/hosts.equiv
+  naruto3co@htb[/htb]$ cat /etc/hosts.equiv
+  
+  # <hostname> <local username>
+  pwnbox cry0l1t3
+
+
+Scanning for R-Services
+    naruto3co@htb[/htb]$ sudo nmap -sV -p 512,513,514 10.0.17.2
+      Starting Nmap 7.80 ( https://nmap.org ) at 2022-12-02 15:02 EST
+      Nmap scan report for 10.0.17.2
+      Host is up (0.11s latency).
+      PORT    STATE SERVICE    VERSION
+      512/tcp open  exec?
+      513/tcp open  login?
+      514/tcp open  tcpwrapped
+
+Thôi phần nếu gặp case này tự chatgpt đi , nhìn muốn làm biếng quá 
+
+
+
+
