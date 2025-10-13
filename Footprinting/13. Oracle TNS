@@ -227,3 +227,95 @@ Cuối cùng, chúng ta có thể kiểm tra xem phương pháp tải tệp lên
 
 
 
+
+🧭 Nhóm 1 – Kết nối & điều hướng
+| Lệnh                                        | Mô tả                  | Ví dụ                                   |
+| ------------------------------------------- | ---------------------- | --------------------------------------- |
+| `CONNECT user/password@//host:port/service` | Kết nối đến CSDL       | `CONNECT scott/tiger@10.129.204.235/XE` |
+| `DISCONNECT`                                | Ngắt kết nối khỏi CSDL | `DISCONNECT`                            |
+| `EXIT` / `QUIT`                             | Thoát khỏi SQL*Plus    | `EXIT`                                  |
+
+📊 Nhóm 2 – Câu lệnh SQL cơ bản
+| Lệnh                            | Mô tả             | Ví dụ                                    |
+| ------------------------------- | ----------------- | ---------------------------------------- |
+| `SELECT ... FROM ...;`          | Truy vấn dữ liệu  | `SELECT * FROM emp;`                     |
+| `DESC table_name`               | Xem cấu trúc bảng | `DESC emp`                               |
+| `INSERT INTO ... VALUES (...);` | Thêm dữ liệu      | `INSERT INTO emp VALUES (...);`          |
+| `UPDATE ... SET ... WHERE ...;` | Cập nhật dữ liệu  | `UPDATE emp SET sal=1000 WHERE empno=1;` |
+| `DELETE FROM ... WHERE ...;`    | Xóa dữ liệu       | `DELETE FROM emp WHERE empno=1;`         |
+| `CREATE / ALTER / DROP TABLE`   | Quản lý bảng      | `CREATE TABLE test(id NUMBER);`          |
+
+SELECT username FROM all_users ORDER BY username;    // dùng trong mọi case 
+
+
+🔄 Nhóm 3 – Transaction
+| Lệnh                | Mô tả             | Ví dụ            |
+| ------------------- | ----------------- | ---------------- |
+| `COMMIT;`           | Xác nhận thay đổi | `COMMIT;`        |
+| `ROLLBACK;`         | Hủy thay đổi      | `ROLLBACK;`      |
+| `SAVEPOINT name;`   | Tạo điểm lưu      | `SAVEPOINT A;`   |
+| `ROLLBACK TO name;` | Quay lại điểm lưu | `ROLLBACK TO A;` |
+
+⚙️ Nhóm 4 – PL/SQL & thủ tục
+| Lệnh                   | Mô tả                  | Ví dụ                  |
+| ---------------------- | ---------------------- | ---------------------- |
+| `BEGIN ... END; /`     | Chạy khối PL/SQL       | `BEGIN NULL; END; /`   |
+| `EXEC procedure_name;` | Gọi thủ tục            | `EXEC update_salary;`  |
+| `SET SERVEROUTPUT ON;` | Hiển thị `DBMS_OUTPUT` | `SET SERVEROUTPUT ON;` |
+
+
+📁 Nhóm 5 – Script & file
+| Lệnh             | Mô tả               | Ví dụ                   |
+| ---------------- | ------------------- | ----------------------- |
+| `@script.sql`    | Chạy file SQL       | `@/home/dat/test.sql`   |
+| `SPOOL filename` | Ghi kết quả ra file | `SPOOL /tmp/output.txt` |
+| `SPOOL OFF`      | Dừng ghi file       | `SPOOL OFF`             |
+
+
+🧮 Nhóm 6 – Biến và tham số
+| Lệnh                      | Mô tả                    | Ví dụ                                   |
+| ------------------------- | ------------------------ | --------------------------------------- |
+| `DEFINE name = value`     | Tạo biến thay thế        | `DEFINE dept=10`                        |
+| `&name`                   | Gọi biến                 | `SELECT * FROM emp WHERE deptno=&dept;` |
+| `ACCEPT var PROMPT '...'` | Nhập giá trị từ bàn phím | `ACCEPT id PROMPT 'Enter ID:'`          |
+| `UNDEFINE name`           | Xóa biến                 | `UNDEFINE dept`                         |
+
+
+🖥️ Nhóm 7 – Hiển thị & định dạng
+| Lệnh                    | Mô tả                      | Ví dụ                     |
+| ----------------------- | -------------------------- | ------------------------- |
+| `SET LINESIZE n`        | Chiều dài dòng             | `SET LINESIZE 200`        |
+| `SET PAGESIZE n`        | Số dòng mỗi trang          | `SET PAGESIZE 50`         |
+| `SET HEADING ON/OFF`    | Bật/tắt tiêu đề cột        | `SET HEADING OFF`         |
+| `COLUMN col FORMAT A30` | Định dạng cột              | `COLUMN ename FORMAT A20` |
+| `SET FEEDBACK ON/OFF`   | Hiển thị “x rows selected” | `SET FEEDBACK OFF`        |
+
+💡 Nhóm 8 – Biến bind & thao tác nội bộ
+| Lệnh                | Mô tả           | Ví dụ               |
+| ------------------- | --------------- | ------------------- |
+| `VARIABLE x NUMBER` | Tạo biến bind   | `VARIABLE a NUMBER` |
+| `EXEC :x := 10;`    | Gán giá trị     | `EXEC :a := 10;`    |
+| `PRINT x`           | In giá trị biến | `PRINT a`           |
+
+⚡ Nhóm 9 – Lệnh hệ thống & tiện ích
+| Lệnh            | Mô tả           | Ví dụ                           |
+| --------------- | --------------- | ------------------------------- |
+| `HOST` hoặc `!` | Chạy lệnh shell | `HOST ls -l`                    |
+| `PROMPT text`   | In ra dòng chữ  | `PROMPT === Bắt đầu ===`        |
+| `PAUSE`         | Tạm dừng script | `PAUSE Press Enter to continue` |
+
+🚨 Nhóm 10 – Xử lý lỗi & hành vi
+| Lệnh                       | Mô tả                      | Ví dụ                      |
+| -------------------------- | -------------------------- | -------------------------- |
+| `WHENEVER SQLERROR EXIT 1` | Thoát khi có lỗi SQL       | `WHENEVER SQLERROR EXIT 1` |
+| `WHENEVER OSERROR EXIT`    | Thoát khi lỗi hệ điều hành | `WHENEVER OSERROR EXIT`    |
+
+🔍 Nhóm 11 – Thông tin hệ thống
+| Lệnh        | Mô tả                  | Ví dụ       |
+| ----------- | ---------------------- | ----------- |
+| `SHOW USER` | Hiển thị user hiện tại | `SHOW USER` |
+| `SHOW ALL`  | Xem toàn bộ cài đặt    | `SHOW ALL`  |
+| `HELP`      | Mở trợ giúp SQL*Plus   | `HELP`      |
+
+
+
