@@ -1,0 +1,63 @@
+meticulously : tỉ mỉ 
+potential : tiềm năng 
+primary : chính, sơ đẳng 
+Uncovering : khám phá  ( nso tương đương với  Discovering  à ? ) 
+comprehensive : toàn diện , hay đi với overview 
+inadvertently : vô tình 
+reveal : tiến lộ 
+insights : hiểu biết sâu sắc 
+assessing : đánh giá 
+involves = include ? 
+leveraged : được tận dụng / được khai thác / được dùng để đạt lợi thế.
+tailor : điều chỉnh / tùy biến / thiết kế
+
+
+
+
+
+
+
+Web Reconnaissance is the foundation of a thorough security assessment. This process involves systematically and meticulously collecting information about a target website or web application. Think of it as the preparatory phase before delving into deeper analysis and potential exploitation. It forms a critical part of the "Information Gathering" phase of the Penetration Testing Process.
+
+The primary goals of web reconnaissance include:
+- Identifying Assets: Uncovering all publicly accessible components of the target, such as web pages, subdomains, IP addresses, and technologies used. This step provides a comprehensive overview of the target's online presence.
+- Discovering Hidden Information: Locating sensitive information that might be inadvertently exposed, including backup files, configuration files, or internal documentation. These findings can reveal valuable insights and potential entry points for attacks.
+- Analysing the Attack Surface: Examining the target's attack surface to identify potential vulnerabilities and weaknesses. This involves assessing the technologies used, configurations, and possible entry points for exploitation.
+- Gathering Intelligence: Collecting information that can be leveraged for further exploitation or social engineering attacks. This includes identifying key personnel, email addresses, or patterns of behaviour that could be exploited.
+
+Attackers leverage this information to tailor their attacks, allowing them to target specific weaknesses and bypass security measures. Conversely, defenders use recon to proactively identify and patch vulnerabilities before malicious actors can leverage them.
+
+Types of Reconnaissance
+Web reconnaissance encompasses two fundamental methodologies: active and passive reconnaissance. Each approach offers distinct advantages and challenges, and understanding their differences is crucial for adequate information gathering.
+
+Active Reconnaissance
+In active reconnaissance, the attacker directly interacts with the target system to gather information. This interaction can take various forms:
+
+| Technique              | Description                                                                    |                                                                                    Example | Tools                                                   | Risk of Detection                                                              |
+| ---------------------- | ------------------------------------------------------------------------------ | -----------------------------------------------------------------------------------------: | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Port Scanning          | Xác định các cổng mở và dịch vụ đang chạy trên mục tiêu.                       |                 Dùng Nmap quét một web server để tìm cổng mở như 80 (HTTP) và 443 (HTTPS). | Nmap, Masscan, Unicornscan                              | **High** — Tương tác trực tiếp có thể kích hoạt IDS / firewall.                |
+| Vulnerability Scanning | Thăm dò mục tiêu tìm các lỗ hổng đã biết (phần mềm lỗi thời, cấu hình sai...). |                                    Chạy Nessus lên ứng dụng web để kiểm tra SQLi hoặc XSS. | Nessus, OpenVAS, Nikto                                  | **High** — Trình quét lỗ hổng gửi payload dễ bị phát hiện.                     |
+| Network Mapping        | Lập bản đồ topology mạng của mục tiêu, các thiết bị và mối quan hệ.            |             Dùng traceroute để xác định đường đi của gói tới server, tiết lộ các hop mạng. | Traceroute, Nmap                                        | **Medium–High** — Lưu lượng bất thường có thể gây nghi ngờ.                    |
+| Banner Grabbing        | Lấy thông tin từ banner do dịch vụ hiển thị (thường chứa tên/phien bản).       |    Kết nối tới web server port 80 và kiểm tra HTTP banner để biết web server và phiên bản. | Netcat, curl                                            | **Low** — Tương tác nhẹ, nhưng vẫn có thể bị ghi log.                          |
+| OS Fingerprinting      | Xác định hệ điều hành đang chạy trên mục tiêu.                                 |                                  Dùng Nmap với -O để biết target chạy Windows, Linux, v.v. | Nmap, Xprobe2                                           | **Low** — Thông thường thụ động; một số kỹ thuật nâng cao có thể bị phát hiện. |
+| Service Enumeration    | Xác định phiên bản cụ thể của dịch vụ trên các cổng mở.                        |                        Dùng Nmap -sV để biết web server là Apache 2.4.50 hay Nginx 1.18.0. | Nmap                                                    | **Low** — Tương tự banner grabbing; có thể bị ghi log nhưng ít gây cảnh báo.   |
+| Web Spidering          | Crawl website để tìm trang, thư mục, file ẩn.                                  | Dùng Burp Suite Spider hoặc OWASP ZAP Spider để map cấu trúc website và tìm tài nguyên ẩn. | Burp Suite Spider, OWASP ZAP Spider, Scrapy (tùy chỉnh) | **Low–Medium** — Có thể bị phát hiện nếu hành vi crawler khác thường.          |
+
+Active reconnaissance provides a direct and often more comprehensive view of the target's infrastructure and security posture. However, it also carries a higher risk of detection, as the interactions with the target can trigger alerts or raise suspicion.
+
+Passive Reconnaissance
+In contrast, passive reconnaissance involves gathering information about the target without directly interacting with it. This relies on analysing publicly available information and resources, such as:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
