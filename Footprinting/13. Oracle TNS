@@ -367,7 +367,9 @@ Một số truy vấn kiểm tra scheduler / db links:
 
 
 
+Bài tập nhảm nhí quá 
 
+select name, password from sys.user$; 
 
 
 
