@@ -1,0 +1,58 @@
+Scenario = script : kịch bản 
+urges : thúc giục 
+reveals : tiết lộ
+combination : kết hợp
+
+
+
+
+
+WHOIS is a widely used query and response protocol designed to access databases that store information about registered internet resources. Primarily associated with domain names, WHOIS can also provide details about IP address blocks and autonomous systems. Think of it as a giant phonebook for the internet, letting you look up who owns or is responsible for various online assets.
+
+naruto3co@htb[/htb]$ whois inlanefreight.com
+
+Each WHOIS record typically contains the following information:
+  Domain Name: The domain name itself (e.g., example.com)
+  Registrar: The company where the domain was registered (e.g., GoDaddy, Namecheap)
+  Registrant Contact: The person or organization that registered the domain.
+  Administrative Contact: The person responsible for managing the domain.
+  Technical Contact: The person handling technical issues related to the domain.
+  Creation and Expiration Dates: When the domain was registered and when it's set to expire.
+  Name Servers: Servers that translate the domain name into an IP address.
+
+History of WHOIS
+  The history of WHOIS is intrinsically linked to the vision and dedication of Elizabeth Feinler, a computer scientist who played a pivotal role in shaping the early internet.
+
+  In the 1970s, Feinler and her team at the Stanford Research Institute's Network Information Center (NIC) recognised the need for a system to track and manage the growing number of network resources on the ARPANET, the precursor to the modern internet. Their solution was the creation of the WHOIS directory, a rudimentary yet groundbreaking database that stored information about network users, hostnames, and domain names.
+  Formalisation and Standardization
+  As the internet expanded beyond its academic origins, the WHOIS protocol was formalised and standardized in RFC 812, published in 1982. This laid the groundwork for a more structured and scalable system to manage domain registration and technical details. Ken Harrenstien and Vic White, also at the NIC, played a crucial role in defining the WHOIS protocol and its query-response mechanisms.
+  The Rise of Distributed WHOIS and RIRs
+  With the internet's exponential growth, the centralised WHOIS model proved inadequate. The establishment of Regional Internet Registries (RIRs) in the 1990s marked a shift towards a distributed WHOIS system.
+  Key figures like Randy Bush and John Postel contributed to the development of the RIR system, which divided the responsibility of managing internet resources into regional zones. This decentralisation improved scalability and resilience, allowing WHOIS to keep pace with the internet's rapid expansion.
+  ICANN and the Modernization of WHOIS
+  The formation of the Internet Corporation for Assigned Names and Numbers (ICANN) in 1998 ushered in a new era for WHOIS. Vint Cerf, often referred to as one of the "fathers of the internet," played a crucial role in establishing ICANN, which assumed responsibility for global DNS management and WHOIS policy development.
+  This centralized oversight helped to standardize WHOIS data formats, improve accuracy, and resolve domain disputes arising from issues like cybersquatting, trademark infringement, or conflicts over unused domains. ICANN's Uniform Domain-Name Dispute-Resolution Policy (UDRP) provides a framework for resolving such conflicts through arbitration.
+  Privacy Concerns and the GDPR Era
+  The 21st century brought heightened awareness of privacy concerns related to WHOIS data. The public availability of personal information like names, addresses, and phone numbers became a growing concern. This led to the rise of privacy services that allowed domain owners to mask their personal information.
+  The implementation of the General Data Protection Regulation (GDPR) in 2018 further accelerated this trend, requiring WHOIS operators to comply with strict data protection rules.
+  Today, WHOIS continues to evolve in response to the ever-changing landscape of the internet. The tension between transparency and privacy remains a central theme. Efforts are underway to strike a balance through initiatives like the Registration Data Access Protocol (RDAP), which offers a more granular and privacy-conscious approach to accessing domain registration data.
+
+================================================== Utilising WHOIS ==================================================
+
+Scenario 1: Phishing Investigation
+An email security gateway flags a suspicious email sent to multiple employees within a company. The email claims to be from the company's bank and urges recipients to click on a link to update their account information. A security analyst investigates the email and begins by performing a WHOIS lookup on the domain linked in the email.
+The WHOIS record reveals the following:
+  Registration Date: The domain was registered just a few days ago.
+  Registrant: The registrant's information is hidden behind a privacy service.
+  Name Servers: The name servers are associated with a known bulletproof hosting provider often used for malicious activities.
+
+ 
+
+
+
+
+
+
+
+
+
