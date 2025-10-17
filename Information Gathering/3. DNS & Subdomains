@@ -242,6 +242,78 @@ If you just want the answer to the question, without any of the other informatio
     naruto3co@htb[/htb]$ dig +short hackthebox.com
 
 
+====================================================================== Subdomains ======================================================================
+====================================================================== Subdomains ======================================================================
+====================================================================== Subdomains ======================================================================
+
+Subdomain là phần mở rộng của domain chính, được dùng để phân chia các chức năng hoặc khu vực của một website (ví dụ: blog.example.com, shop.example.com, mail.example.com).
+Tầm quan trọng trong web reconnaissance:
+  Môi trường phát triển / thử nghiệm (staging): thường có bảo mật lỏng lẻo, có thể chứa lỗ hổng hoặc thông tin nhạy cảm.
+  Cổng đăng nhập ẩn: có thể chứa các trang quản trị hoặc login không được công khai, là mục tiêu tiềm năng cho kẻ tấn công.
+  Ứng dụng cũ (legacy): có thể vẫn hoạt động trên subdomain và chứa phần mềm lỗi thời dễ bị khai thác.
+  Thông tin nhạy cảm: subdomain đôi khi tiết lộ dữ liệu nội bộ, tài liệu, hoặc file cấu hình quan trọng.
+
+Định nghĩa ngắn: Subdomain enumeration là quá trình tìm và liệt kê các miền phụ (subdomains) của một domain chính — thường thể hiện qua bản ghi DNS A/AAAA (trỏ tới IP) hoặc CNAME (bí danh).
+Loại bản ghi liên quan:
+	A / AAAA: ánh xạ subdomain → địa chỉ IP.
+	CNAME: alias trỏ tới domain/subdomain khác.
+	PTR, TXT, SRV (ít phổ biến hơn) cũng có thể cung cấp thông tin bổ sung.
+Hai phương pháp chính:
+	Active (chủ động):
+		Tương tác trực tiếp với DNS server của mục tiêu.
+		Kỹ thuật: thử DNS zone transfer (AXFR) nếu server cấu hình sai; brute-force tên miền phụ bằng wordlists.
+		Công cụ mẫu: dnsenum, gobuster, ffuf, massdns, subfinder (kết hợp active checks).
+		Ưu/nhược: có khả năng đầy đủ hơn nhưng dễ bị phát hiện (log, IDS).
+	Passive (thụ động):
+		Sử dụng nguồn dữ liệu công khai, không truy vấn trực tiếp DNS mục tiêu.
+		Nguồn: Certificate Transparency (CT) logs (SAN trong certs), search engines (site:), dịch vụ tập hợp DNS (VirusTotal, SecurityTrails, Shodan, Censys...), lịch sử WHOIS, repo công khai.
+		Ưu/nhược: thầm lặng, an toàn về mặt phát hiện, nhưng có thể không đầy đủ / lỗi thời.
+Lời khuyên chiến lược:
+	Kết hợp passive → mở rộng bằng active để vừa giữ stealth vừa tối đa hóa độ bao phủ.
+	Dùng wordlists tùy chỉnh (theo nghiệp vụ/tiền tố nội bộ) để tăng hiệu quả brute-force.
+	Lưu lại kết quả, theo dõi thay đổi (subdomain takeover, expired DNS records).
+Rủi ro/giá trị:
+	hiện staging/dev, login/adm portals, ứng dụng cũ, hoặc tài liệu nhạy cảm trên subdomains — tất cả đều có giá trị cho reconnaissance hoặc để vá lỗ hổng.
+
+dnsenum — Công cụ toàn diện, hỗ trợ dictionary + brute-force.
+  Khi dùng: muốn một tool “all-in-one” dễ chạy nhanh cho reconnaissance cơ bản.
+  Lệnh mẫu: dnsenum --enum --threads 10 example.com
+
+fierce — Dễ dùng, tốt cho dò đệ quy và phát hiện wildcard DNS.
+  Khi dùng: muốn phát hiện cấu trúc subdomain theo kiểu đệ quy/kế thừa nhanh.
+  Lệnh mẫu: fierce -dns example.com
+
+dnsrecon — Linh hoạt, kết hợp nhiều kỹ thuật (brute, zone transfer, reverse) và xuất được nhiều định dạng.
+  Khi dùng: khi cần báo cáo có cấu trúc (CSV/JSON) hoặc muốn mix nhiều kỹ thuật trong 1 tool.
+  Lệnh mẫu: dnsrecon -d example.com -a (all tests)
+
+amass — Duy trì tích cực, mạnh về mức độ thu thập (passive + active) và có tích hợp nhiều nguồn/wordlists.
+  Khi dùng: khi cần coverage cao, kết hợp CT logs, API, brute, graph mapping.
+  Lệnh mẫu: amass enum -d example.com -o amass.txt
+
+assetfinder — Nhẹ, nhanh, hiệu quả cho bước thu thập nhanh từ nhiều nguồn công khai.
+  Khi dùng: lúc bắt đầu reconnaissance, muốn nhanh có danh sách ban đầu.
+  Lệnh mẫu: assetfinder --subs-only example.com
+
+puredns — Rất tốt cho brute-force + resolving hàng loạt (tốc độ cao), phù hợp khi bạn đã có wordlist lớn.
+  Khi dùng: khi chạy brute-force scale lớn, kết hợp với massresolver hoặc custom resolver.
+  Lệnh mẫu: puredns bruteforce wordlist.txt example.com --r 8.8.8.8 | puredns resolve -w results.txt
+
+Gợi ý chiến lược kết hợp (ngắn)
+    Passive first: assetfinder → amass (passive) → CT logs → dedupe.
+    Tối ưu wordlist: tổng hợp từ kết quả passive → thêm targeted words.
+    Brute/resolution: dùng puredns (hoặc massdns) trên wordlist đã tinh chỉnh.
+    Xác thực & mapping: amass + dnsrecon để kiểm tra kỹ, xuất JSON/CSV cho báo cáo.
+    Wildcard check: luôn test wildcard DNS trước (ví dụ với một tên ngẫu nhiên) để loại false-positive.
+
+https://github.com/danielmiessler/SecLists
+
+
+
+
+
+
+
 
 
 
