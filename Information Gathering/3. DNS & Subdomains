@@ -403,15 +403,214 @@ This command instructs dig to request a full zone transfer (axfr) from the DNS s
 ====================================================================== Virtual Hosts ======================================================================
 ====================================================================== Virtual Hosts ======================================================================
 
+Once the DNS directs traffic to the correct server, the web server configuration becomes crucial in determining how the incoming requests are handled. Web servers like Apache, Nginx, or IIS are designed to host multiple websites or applications on a single server. They achieve this through virtual hosting, which allows them to differentiate between domains, subdomains, or even separate websites with distinct content.
+
+How Virtual Hosts Work: Understanding VHosts and Subdomains
+At the core of virtual hosting is the ability of web servers to distinguish between multiple websites or applications sharing the same IP address. This is achieved by leveraging the HTTP Host header, a piece of information included in every HTTP request sent by a web browser.
+
+The key difference between VHosts and subdomains is their relationship to the Domain Name System (DNS) and the web server's configuration.
+	Subdomains: These are extensions of a main domain name (e.g., blog.example.com is a subdomain of example.com). Subdomains typically have their own DNS records, pointing to either the same IP address as the main domain or a different one. They can be used to organise different sections or services of a website.
+	Virtual Hosts (VHosts): Virtual hosts are configurations within a web server that allow multiple websites or applications to be hosted on a single server. They can be associated with top-level domains (e.g., example.com) or subdomains (e.g., dev.example.com). Each virtual host can have its own separate configuration, enabling precise control over how requests are handled.
+
+Subdomain (tên miền con) → là phần mở rộng của tên miền chính.
+→ Quản lý ở DNS.
+→ Ví dụ: blog.example.com hoặc shop.example.com.
+→ Mỗi subdomain có thể trỏ tới cùng hoặc khác IP so với domain chính.
+
+Virtual Host (VHost) → là cấu hình trong web server (Apache/Nginx) để phân biệt nhiều website chạy trên một máy chủ duy nhất.
+→ Quản lý ở mức web server, không phải DNS.
+→ Ví dụ: cùng một server có thể host cả example.com và shop.example.com qua 2 file cấu hình VHost riêng.
+
+Ví dụ tổng hợp:
+blog.example.com → là subdomain (được khai báo trong DNS).
+Web server có file cấu hình:
+	server {
+	    server_name blog.example.com;
+	    root /var/www/blog;
+	}
+→ đây là Virtual Host xử lý cho subdomain đó.
+👉 Tóm lại:
+	Subdomain: thuộc về DNS.
+	VHost: thuộc về cấu hình web server.
+
+If a virtual host does not have a DNS record, you can still access it by modifying the hosts file on your local machine. The hosts file allows you to map a domain name to an IP address manually, bypassing DNS resolution.
+Websites often have subdomains that are not public and won't appear in DNS records. These subdomains are only accessible internally or through specific configurations. VHost fuzzing is a technique to discover public and non-public subdomains and VHosts by testing various hostnames against a known IP address.
+Virtual hosts can also be configured to use different domains, not just subdomains. For example:
+# Example of name-based virtual host configuration in Apache
+	<VirtualHost *:80>
+	    ServerName www.example1.com
+	    DocumentRoot /var/www/example1
+	</VirtualHost>
+	<VirtualHost *:80>
+	    ServerName www.example2.org
+	    DocumentRoot /var/www/example2
+	</VirtualHost>
+	<VirtualHost *:80>
+	    ServerName www.another-example.net
+	    DocumentRoot /var/www/another-example
+	</VirtualHost>
+
+Here, example1.com, example2.org, and another-example.net are distinct domains hosted on the same server. The web server uses the Host header to serve the appropriate content based on the requested domain name.
+
+Browser                         WebServer                    VirtualHostConfig                 DocumentRoot
+   |                                 |                                |                               |
+   |-- HTTP Request (www.inlanefreight.com) -->                       |                               |
+   |                                 |                                |                               |
+   |                                 |-- Examine Host Header -------->|                               |
+   |                                 |<-- Finding Matching Config ----|                               |
+   |                                 |                                |                               |
+   |                                 |--------> Return Document Root -------------------------------> |
+   |                                 |<-------------------------------- Retrieve Files and Resources -|
+   |                                 |                                |                               |
+   |<---------------------------- HTTP Response -----------------------|                               |
+   |-- Display Content ------------->|                                |                               |
+   |                                 |                                |                               |
+
+Browser Requests a Website: When you enter a domain name (e.g., www.inlanefreight.com) into your browser, it initiates an HTTP request to the web server associated with that domain's IP address.
+Host Header Reveals the Domain: The browser includes the domain name in the request's Host header, which acts as a label to inform the web server which website is being requested.
+Web Server Determines the Virtual Host: The web server receives the request, examines the Host header, and consults its virtual host configuration to find a matching entry for the requested domain name.
+Serving the Right Content: Upon identifying the correct virtual host configuration, the web server retrieves the corresponding files and resources associated with that website from its document root and sends them back to the browser as the HTTP response.
+
+In essence, the Host header functions as a switch, enabling the web server to dynamically determine which website to serve based on the domain name requested by the browser.
+
+Types of Virtual Hosting
+There are three primary types of virtual hosting, each with its advantages and drawbacks:
+	Name-Based Virtual Hosting: This method relies solely on the HTTP Host header to distinguish between websites. It is the most common and flexible method, as it doesn't require multiple IP addresses. It’s cost-effective, easy to set up, and supports most modern web servers. However, it requires the web server to support name-based virtual hosting and can have limitations with certain protocols like SSL/TLS.
+	IP-Based Virtual Hosting: This type of hosting assigns a unique IP address to each website hosted on the server. The server determines which website to serve based on the IP address to which the request was sent. It doesn't rely on the Host header, can be used with any protocol, and offers better isolation between websites. Still, it requires multiple IP addresses, which can be expensive and less scalable.
+	Port-Based Virtual Hosting: Different websites are associated with different ports on the same IP address. For example, one website might be accessible on port 80, while another is on port 8080. Port-based virtual hosting can be used when IP addresses are limited, but it’s not as common or user-friendly as name-based virtual hosting and might require users to specify the port number in the URL.
+
+| Loại Virtual Hosting | Cách hoạt động                                                | Ưu điểm                                          | Nhược điểm                                         | Ví dụ                                                   |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------- |
+| **Name-Based**       | Phân biệt website dựa vào **Host header** trong HTTP request. | Tiết kiệm IP, dễ cấu hình, phổ biến nhất.        | Có thể gặp vấn đề với **SSL/TLS** (nếu server cũ). | `example.com` và `shop.example.com` cùng IP.            |
+| **IP-Based**         | Mỗi website có **địa chỉ IP riêng**.                          | Cách ly tốt, dùng được mọi giao thức (SSL/TLS…). | Tốn nhiều IP, khó mở rộng, chi phí cao.            | `example.com` → 192.168.1.10, `shop.com` → 192.168.1.11 |
+| **Port-Based**       | Các website dùng **cổng khác nhau** trên cùng IP.             | Không cần nhiều IP, dùng khi thiếu địa chỉ IP.   | Không thân thiện (phải gõ port), ít phổ biến.      | `example.com:80`, `example.com:8080`                    |
+👉 Tóm lại:
+	Thường dùng nhất là Name-Based (hiện đại, linh hoạt).
+	IP-Based dùng cho môi trường cần tách biệt cao hoặc SSL riêng biệt.
+	Port-Based chỉ dùng khi thực sự cần.
 
 
+Virtual Host Discovery Tools
+While manual analysis of HTTP headers and reverse DNS lookups can be effective, specialised virtual host discovery tools automate and streamline the process, making it more efficient and comprehensive. These tools employ various techniques to probe the target server and uncover potential virtual hosts.
+| Tool            | Mô tả                                                                                                        | Tính năng                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| **gobuster**    | Công cụ đa năng thường dùng để brute-force thư mục/tệp, đồng thời hiệu quả cho việc phát hiện virtual hosts. | Nhanh; hỗ trợ nhiều phương thức HTTP; dùng được wordlist tùy chỉnh. |
+| **Feroxbuster** | Tương tự Gobuster nhưng viết bằng Rust, nổi bật về tốc độ và độ linh hoạt.                                   | Hỗ trợ đệ quy; phát hiện wildcard; nhiều bộ lọc; hiệu năng cao.     |
+| **ffuf**        | Trình web fuzzer nhanh, có thể dùng để phát hiện virtual hosts bằng cách fuzz `Host` header.                 | Nhập wordlist tùy chỉnh; nhiều tùy chọn lọc và xử lý kết quả.       |
+
+	naruto3co@htb[/htb]$ gobuster vhost -u http://<target_IP_address> -w <wordlist_file> --append-domain
+	naruto3co@htb[/htb]$ gobuster vhost -u http://inlanefreight.htb:81 -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt --append-domain
+
+Remember: to brute-force vhosts, you'll need to fuzz the host header, NOT the hostname. I'm partial to using ffuf for vhost fuzzing myself. You just run it against your wordlist of choice and add the -H 'Host: FUZZ.inlanefreight.htb' flag. Good luck and happy hunting!
+
+-> bài lab câu 1 
+Câu 1
+	ffuf -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-110000.txt \
+     -u http://94.237.48.12:34589/ \
+     -H "Host: FUZZ.inlanefreight.htb" \
+     -t 50 \
+     -mc 200 \
+     -o ffuf_vhosts.json -of json
+
+		-> web17611.inlanefreight.htb
+Câu 2 : vm5.inlanefreight.htb
 
 
+====================================================================== Certificate Transparency Logs ======================================================================
+====================================================================== Certificate Transparency Logs ======================================================================
+====================================================================== Certificate Transparency Logs ======================================================================
+
+CT là sổ cái ghi chứng chỉ 
+
+In the sprawling mass of the internet, trust is a fragile commodity. One of the cornerstones of this trust is the Secure Sockets Layer/Transport Layer Security (SSL/TLS) protocol, which encrypts communication between your browser and a website. At the heart of SSL/TLS lies the digital certificate, a small file that verifies a website's identity and allows for secure, encrypted communication.
+However, the process of issuing and managing these certificates isn't foolproof. Attackers can exploit rogue or mis-issued certificates to impersonate legitimate websites, intercept sensitive data, or spread malware. This is where Certificate Transparency (CT) logs come into play.
+
+What are Certificate Transparency Logs?
+Certificate Transparency (CT) logs are public, append-only ledgers that record the issuance of SSL/TLS certificates. Whenever a Certificate Authority (CA) issues a new certificate, it must submit it to multiple CT logs. Independent organisations maintain these logs and are open for anyone to inspect.
+Think of CT logs as a global registry of certificates. They provide a transparent and verifiable record of every SSL/TLS certificate issued for a website. This transparency serves several crucial purposes:
+	Early Detection of Rogue Certificates: By monitoring CT logs, security researchers and website owners can quickly identify suspicious or misissued certificates. A rogue certificate is an unauthorized or fraudulent digital certificate issued by a trusted certificate authority. Detecting these early allows for swift action to revoke the certificates before they can be used for malicious purposes.
+	Accountability for Certificate Authorities: CT logs hold CAs accountable for their issuance practices. If a CA issues a certificate that violates the rules or standards, it will be publicly visible in the logs, leading to potential sanctions or loss of trust.
+	Strengthening the Web PKI (Public Key Infrastructure): The Web PKI is the trust system underpinning secure online communication. CT logs help to enhance the security and integrity of the Web PKI by providing a mechanism for public oversight and verification of certificates.
+
+How Certificate Transparency Logs Work
+Certificate Transparency logs rely on a clever combination of cryptographic techniques and public accountability:
+	Certificate Issuance: When a website owner requests an SSL/TLS certificate from a Certificate Authority (CA), the CA performs due diligence to verify the owner's identity and domain ownership. Once verified, the CA issues a pre-certificate, a preliminary certificate version.
+	Log Submission: The CA then submits this pre-certificate to multiple CT logs. Each log is operated by a different organisation, ensuring redundancy and decentralisation. The logs are essentially append-only, meaning that once a certificate is added, it cannot be modified or deleted, ensuring the integrity of the historical record.
+	Signed Certificate Timestamp (SCT): Upon receiving the pre-certificate, each CT log generates a Signed Certificate Timestamp (SCT). This SCT is a cryptographic proof that the certificate was submitted to the log at a specific time. The SCT is then included in the final certificate issued to the website owner.
+	Browser Verification: When a user's browser connects to a website, it checks the certificate's SCTs. These SCTs are verified against the public CT logs to confirm that the certificate was issued and logged correctly. If the SCTs are valid, the browser establishes a secure connection; if not, it may display a warning to the user.
+	Monitoring and Auditing: CT logs are continuously monitored by various entities, including security researchers, website owners, and browser vendors. These monitors look for anomalies or suspicious certificates, such as those issued for domains they don't own or certificates violating industry standards. If any issues are found, they can be reported to the relevant CA for investigation and potential revocation of the certificate.
+
+Cấp phát chứng chỉ: CA xác minh danh tính và quyền sở hữu miền, sau đó tạo pre-certificate.
+Gửi log: CA gửi pre-certificate lên nhiều Certificate Transparency (CT) logs, là hệ thống chỉ ghi thêm, đảm bảo tính toàn vẹn.
+SCT (Signed Certificate Timestamp): CT log trả về SCT – bằng chứng mã hóa cho thấy chứng chỉ đã được ghi nhận. SCT này được gắn vào chứng chỉ cuối cùng.
+Trình duyệt kiểm tra: Khi người dùng truy cập website, trình duyệt xác minh SCT trong chứng chỉ với các CT logs công khai; nếu hợp lệ thì kết nối an toàn.
+Giám sát & kiểm toán: Nhiều bên (CA, nhà nghiên cứu, trình duyệt, chủ website) theo dõi CT logs để phát hiện chứng chỉ sai phạm và yêu cầu thu hồi nếu cần.
+
+The Merkle Tree Structure
+To ensure CT logs' integrity and tamper-proof nature, they employ a Merkle tree cryptographic structure. This structure organises the certificates in a tree-like fashion, where each leaf node represents a certificate, and each non-leaf node represents a hash of its child nodes. The root of the tree, known as the Merkle root, is a single hash representing the entire log.
+	Let's visualise this with a hypothetical Merkle tree for inlanefreight.com:
+
+                    ┌───────────────────────────────┐
+                    │ Root Hash                    │
+                    │ (Hash of All Below)          │
+                    └──────────────┬────────────────┘
+                                   │
+            ┌──────────────────────┴──────────────────────┐
+            │                                             │
+ ┌───────────────────────┐                    ┌───────────────────────┐
+ │ Hash 1                │                    │ Hash 2                │
+ │ (Hash of Cert 1 & 2)  │                    │ (Hash of Cert 3 & 4)  │
+ └────────────┬──────────┘                    └────────────┬──────────┘
+              │                                            │
+     ┌────────┴────────┐                          ┌────────┴────────┐
+     │                 │                          │                 │
+┌──────────────┐  ┌──────────────┐          ┌──────────────┐  ┌──────────────┐
+│ Cert 1       │  │ Cert 2       │          │ Cert 3       │  │ Cert 4       │
+│ inlanefreight│  │ blog.inlane  │          │ dev.inlane   │  │ api.inlane   │
+│ .com         │  │ freight.com  │          │ freight.com  │  │ freight.com  │
+└──────────────┘  └──────────────┘          └──────────────┘  └──────────────┘
+
+Root Hash:
+	Root Hash: Nút gốc đại diện cho toàn bộ trạng thái log (hash tổng của tất cả chứng chỉ).
+	Hash 1 & Hash 2: Nút trung gian — mỗi cái là hash của hai nút con (các chứng chỉ hoặc hash khác).
+	Cert 1 – Cert 4: Nút lá — đại diện cho các chứng chỉ SSL/TLS của các subdomain (inlanefreight.com, blog, dev, api).
+Cách xác minh một chứng chỉ (ví dụ Cert 2 – blog.inlanefreight.com):
+	Dùng hash của Cert 2 để xác minh chứng chỉ gốc.
+	Kết hợp với Hash 1 để chứng minh rằng Cert 2 thuộc cặp với Cert 1.
+	Dùng Root Hash để xác nhận rằng Hash 1 là một phần hợp lệ của toàn bộ log.
+
+CT Logs and Web Recon
+Nguồn thông tin xác thực, không đoán mò: CT logs chứa bản ghi thực tế của các chứng chỉ đã cấp cho domain và subdomain, nên không phụ thuộc vào wordlist hay brute-force.
+Toàn diện và lịch sử: Hiển thị cả subdomain cũ/không hoạt động hoặc đã hết hạn chứng chỉ — những mục này có thể hé lộ cấu hình/phiên bản phần mềm lỗi thời.
+Hiệu quả: Tìm được nhiều subdomain mà brute-force có thể bỏ sót (những tên khó đoán hoặc không trong từ điển).
+Rủi ro hữu ích cho pentest: Subdomain từ CT có thể là điểm dễ tấn công do cấu hình cũ/thiếu vá.
+Kết luận: CT logs là công cụ nhanh, tin cậy và bổ sung rất mạnh cho thu thập thông tin (recon) so với phương pháp đoán tên truyền thống.
+
+Searching CT Logs
+There are two popular options for searching CT logs:
+| **Tool**   | **Key Features**                                                                                                     | **Use Cases**                                                                                             | **Pros**                                                    | **Cons**                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------- |
+| **crt.sh** | User-friendly web interface, simple domain search, displays certificate details and SAN entries.                     | Quick and easy searches, identifying subdomains, checking certificate issuance history.                   | Free, easy to use, no registration required.                | Limited filtering and analysis options.      |
+| **Censys** | Powerful search engine for internet-connected devices, advanced filtering by domain, IP, and certificate attributes. | In-depth analysis of certificates, identifying misconfigurations, finding related certificates and hosts. | Extensive data and filtering options, API access available. | Requires registration (free tier available). |
 
 
+crt.sh lookup
+While crt.sh offers a convenient web interface, you can also leverage its API for automated searches directly from your terminal. Let's see how to find all 'dev' subdomains on facebook.com using curl and jq:
 
+naruto3co@htb[/htb]$ curl -s "https://crt.sh/?q=facebook.com&output=json" | jq -r '.[] | select(.name_value | contains("dev")) | .name_value' | sort -u
+	*.dev.facebook.com
+	*.newdev.facebook.com
+	*.secure.dev.facebook.com
+	dev.facebook.com
+	devvm1958.ftw3.facebook.com
+	facebook-amex-dev.facebook.com
+	facebook-amex-sign-enc-dev.facebook.com
+	newdev.facebook.com
+	secure.dev.facebook.com
 
-
+		curl -s "https://crt.sh/?q=facebook.com&output=json": This command fetches the JSON output from crt.sh for certificates matching the domain facebook.com.
+		jq -r '.[] | select(.name_value | contains("dev")) | .name_value': This part filters the JSON results, selecting only entries where the name_value field (which contains the domain or subdomain) includes the string "dev". The -r flag tells jq to output raw strings.
+		sort -u: This sorts the results alphabetically and removes duplicates.
 
 
 
