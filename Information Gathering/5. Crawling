@@ -1,0 +1,243 @@
+Crawling, often called spidering, is the automated process of systematically browsing the World Wide Web. Similar to how a spider navigates its web, a web crawler follows links from one page to another, collecting information. These crawlers are essentially bots that use pre-defined algorithms to discover and index web pages, making them accessible through search engines or for other purposes like data analysis and web reconnaissance.
+
+
+How Web Crawlers Work
+The basic operation of a web crawler is straightforward yet powerful. It starts with a seed URL, which is the initial web page to crawl. The crawler fetches this page, parses its content, and extracts all its links. It then adds these links to a queue and crawls them, repeating the process iteratively. Depending on its scope and configuration, the crawler can explore an entire website or even a vast portion of the web.
+
+
+Homepage: You start with the homepage containing link1, link2, and link3.
+Homepage
+├── link1
+├── link2
+└── link3
+
+Visiting link1: Visiting link1 shows the homepage, link2, and also link4 and link5.
+link1 Page
+├── Homepage
+├── link2
+├── link4
+└── link5
+
+Continuing the Crawl: The crawler continues to follow these links systematically, gathering all accessible pages and their links.
+This example illustrates how a web crawler discovers and collects information by systematically following links, distinguishing it from fuzzing which involves guessing potential links.
+There are two primary types of crawling strategies.
+                     ┌─────────────┐
+                     │   Seed URL  │
+                     │   (Page 1)  │
+                     └──────┬──────┘
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+        ┌─────────────┐             ┌─────────────┐
+        │   Page 2    │             │   Page 3    │
+        └──────┬──────┘             └──────┬──────┘
+               │                           │
+       ┌───────┴────────┐          ┌───────┴────────┐
+       │                │          │                │
+    ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
+    │  Page 4  │  │  Page 5  │  │  Page 6  │  │  Page 7  │
+    └──────────┘  └──────────┘  └──────────┘  └──────────┘
+
+
+Breadth-first crawling prioritizes exploring a website's width before going deep. It starts by crawling all the links on the seed page, then moves on to the links on those pages, and so on. This is useful for getting a broad overview of a website's structure and content.
+
+Depth-First Crawling
+     ┌───────────────┐
+     │   Seed URL    │
+     │    (Page 1)   │
+     └──────┬────────┘
+            │
+            ▼
+     ┌───────────────┐
+     │    Page 2     │
+     └──────┬────────┘
+            │
+            ▼
+     ┌───────────────┐
+     │    Page 3     │
+     └──────┬────────┘
+            │
+            ▼
+     ┌───────────────┐
+     │    Page 4     │
+     └──────┬────────┘
+            │
+            ▼
+     ┌───────────────┐
+     │    Page 5     │
+     └───────────────┘
+            ▲
+            │
+            └───────────────(links back to Page 2)
+
+
+Extracting Valuable Information
+Crawlers can extract a diverse array of data, each serving a specific purpose in the reconnaissance process:
+
+Links (Internal and External): These are the fundamental building blocks of the web, connecting pages within a website (internal links) and to other websites (external links). Crawlers meticulously collect these links, allowing you to map out a website's structure, discover hidden pages, and identify relationships with external resources.
+Comments: Comments sections on blogs, forums, or other interactive pages can be a goldmine of information. Users often inadvertently reveal sensitive details, internal processes, or hints of vulnerabilities in their comments.
+Metadata: Metadata refers to data about data. In the context of web pages, it includes information like page titles, descriptions, keywords, author names, and dates. This metadata can provide valuable context about a page's content, purpose, and relevance to your reconnaissance goals.
+Sensitive Files: Web crawlers can be configured to actively search for sensitive files that might be inadvertently exposed on a website. This includes backup files (e.g., .bak, .old), configuration files (e.g., web.config, settings.php), log files (e.g., error_log, access_log), and other files containing passwords, API keys, or other confidential information. Carefully examining the extracted files, especially backup and configuration files, can reveal a trove of sensitive information, such as database credentials, encryption keys, or even source code snippets.
+The Importance of Context
+Understanding the context surrounding the extracted data is paramount.
+
+A single piece of information, like a comment mentioning a specific software version, might not seem significant on its own. However, when combined with other findings—such as an outdated version listed in metadata or a potentially vulnerable configuration file discovered through crawling—it can transform into a critical indicator of a potential vulnerability.
+
+The true value of extracted data lies in connecting the dots and constructing a comprehensive picture of the target's digital landscape.
+
+For instance, a list of extracted links might initially appear mundane. But upon closer examination, you notice a pattern: several URLs point to a directory named /files/. This triggers your curiosity, and you decide to manually visit the directory. To your surprise, you find that directory browsing is enabled, exposing a host of files, including backup archives, internal documents, and potentially sensitive data. This discovery wouldn't have been possible by merely looking at individual links in isolation; the contextual analysis led you to this critical finding.
+
+Similarly, seemingly innocuous comments can gain significance when correlated with other discoveries. A comment mentioning a "file server" might not raise any red flags initially. However, when combined with the aforementioned discovery of the /files/ directory, it reinforces the possibility that the file server is publicly accessible, potentially exposing sensitive information or confidential data.
+
+Therefore, it's essential to approach data analysis holistically, considering the relationships between different data points and their potential implications for your reconnaissance goals.
+
+
+=========================================================== robots.txt ===========================================================
+=========================================================== robots.txt ===========================================================
+=========================================================== robots.txt ===========================================================
+
+Chả có gì nên coppy y hệt nhé 
+
+Imagine you're a guest at a grand house party. While you're free to mingle and explore, there might be certain rooms marked "Private" that you're expected to avoid. This is akin to how robots.txt functions in the world of web crawling. It acts as a virtual "etiquette guide" for bots, outlining which areas of a website they are allowed to access and which are off-limits.
+
+What is robots.txt?
+Technically, robots.txt is a simple text file placed in the root directory of a website (e.g., www.example.com/robots.txt). It adheres to the Robots Exclusion Standard, guidelines for how web crawlers should behave when visiting a website. This file contains instructions in the form of "directives" that tell bots which parts of the website they can and cannot crawl.
+
+How robots.txt Works
+The directives in robots.txt typically target specific user-agents, which are identifiers for different types of bots. For example, a directive might look like this:
+
+Code: txt
+User-agent: *
+Disallow: /private/
+This directive tells all user-agents (* is a wildcard) that they are not allowed to access any URLs that start with /private/. Other directives can allow access to specific directories or files, set crawl delays to avoid overloading a server or provide links to sitemaps for efficient crawling.
+
+Understanding robots.txt Structure
+The robots.txt file is a plain text document that lives in the root directory of a website. It follows a straightforward structure, with each set of instructions, or "record," separated by a blank line. Each record consists of two main components:
+
+User-agent: This line specifies which crawler or bot the following rules apply to. A wildcard (*) indicates that the rules apply to all bots. Specific user agents can also be targeted, such as "Googlebot" (Google's crawler) or "Bingbot" (Microsoft's crawler).
+Directives: These lines provide specific instructions to the identified user-agent.
+Common directives include:
+
+Directive	Description	Example
+Disallow	Specifies paths or patterns that the bot should not crawl.	Disallow: /admin/ (disallow access to the admin directory)
+Allow	Explicitly permits the bot to crawl specific paths or patterns, even if they fall under a broader Disallow rule.	Allow: /public/ (allow access to the public directory)
+Crawl-delay	Sets a delay (in seconds) between successive requests from the bot to avoid overloading the server.	Crawl-delay: 10 (10-second delay between requests)
+Sitemap	Provides the URL to an XML sitemap for more efficient crawling.	Sitemap: https://www.example.com/sitemap.xml
+Why Respect robots.txt?
+While robots.txt is not strictly enforceable (a rogue bot could still ignore it), most legitimate web crawlers and search engine bots will respect its directives. This is important for several reasons:
+
+Avoiding Overburdening Servers: By limiting crawler access to certain areas, website owners can prevent excessive traffic that could slow down or even crash their servers.
+Protecting Sensitive Information: Robots.txt can shield private or confidential information from being indexed by search engines.
+Legal and Ethical Compliance: In some cases, ignoring robots.txt directives could be considered a violation of a website's terms of service or even a legal issue, especially if it involves accessing copyrighted or private data.
+robots.txt in Web Reconnaissance
+For web reconnaissance, robots.txt serves as a valuable source of intelligence. While respecting the directives outlined in this file, security professionals can glean crucial insights into the structure and potential vulnerabilities of a target website:
+
+Uncovering Hidden Directories: Disallowed paths in robots.txt often point to directories or files the website owner intentionally wants to keep out of reach from search engine crawlers. These hidden areas might house sensitive information, backup files, administrative panels, or other resources that could interest an attacker.
+Mapping Website Structure: By analyzing the allowed and disallowed paths, security professionals can create a rudimentary map of the website's structure. This can reveal sections that are not linked from the main navigation, potentially leading to undiscovered pages or functionalities.
+Detecting Crawler Traps: Some websites intentionally include "honeypot" directories in robots.txt to lure malicious bots. Identifying such traps can provide insights into the target's security awareness and defensive measures.
+Analyzing robots.txt
+Here's an example of a robots.txt file:
+
+Code: txt
+User-agent: *
+Disallow: /admin/
+Disallow: /private/
+Allow: /public/
+
+User-agent: Googlebot
+Crawl-delay: 10
+
+Sitemap: https://www.example.com/sitemap.xml
+This file contains the following directives:
+
+All user agents are disallowed from accessing the /admin/ and /private/ directories.
+All user agents are allowed to access the /public/ directory.
+The Googlebot (Google's web crawler) is specifically instructed to wait 10 seconds between requests.
+The sitemap, located at https://www.example.com/sitemap.xml, is provided for easier crawling and indexing.
+By analyzing this robots.txt, we can infer that the website likely has an admin panel located at /admin/ and some private content in the /private/ directory.
+
+
+
+=========================================================== robots.txt ===========================================================
+=========================================================== robots.txt ===========================================================
+=========================================================== robots.txt ===========================================================
+
+Cái này ít gặp
+
+https://academy.hackthebox.com/module/144/section/3078
+
+The .well-known standard, defined in RFC 8615, serves as a standardized directory within a website's root domain. This designated location, typically accessible via the /.well-known/ path on a web server, centralizes a website's critical metadata, including configuration files and information related to its services, protocols, and security mechanisms.
+
+By establishing a consistent location for such data, .well-known simplifies the discovery and access process for various stakeholders, including web browsers, applications, and security tools. This streamlined approach enables clients to automatically locate and retrieve specific configuration files by constructing the appropriate URL. For instance, to access a website's security policy, a client would request https://example.com/.well-known/security.txt.
+
+The Internet Assigned Numbers Authority (IANA) maintains a registry of .well-known URIs, each serving a specific purpose defined by various specifications and standards. Below is a table highlighting a few notable examples:
+
+| **URI Suffix**                   | **Description**                                                                              | **Status**  | **Reference**                                                                                                            |
+| -------------------------------- | -------------------------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **security.txt**                 | Contains contact information for security researchers to report vulnerabilities.             | Permanent   | [RFC 9116](https://datatracker.ietf.org/doc/html/rfc9116)                                                                |
+| **/.well-known/change-password** | Provides a standard URL for directing users to a password change page.                       | Provisional | [W3C Change Password URL](https://w3c.github.io/webappsec-change-password-url/#the-change-password-well-known-uri)       |
+| **openid-configuration**         | Defines configuration details for OpenID Connect, an identity layer on top of OAuth 2.0.     | Permanent   | [OpenID Connect Discovery 1.0](http://openid.net/specs/openid-connect-discovery-1_0.html)                                |
+| **assetlinks.json**              | Used for verifying ownership of digital assets (e.g., apps) associated with a domain.        | Permanent   | [Digital Asset Links Specification](https://github.com/google/digitalassetlinks/blob/master/well-known/specification.md) |
+| **mta-sts.txt**                  | Specifies policy for SMTP MTA Strict Transport Security (MTA-STS) to enhance email security. | Permanent   | [RFC 8461](https://datatracker.ietf.org/doc/html/rfc8461)                                                                |
+
+This is just a small sample of the many .well-known URIs registered with IANA. Each entry in the registry offers specific guidelines and requirements for implementation, ensuring a standardized approach to leveraging the .well-known mechanism for various applications.
+
+Web Recon and .well-known
+In web recon, the .well-known URIs can be invaluable for discovering endpoints and configuration details that can be further tested during a penetration test. One particularly useful URI is openid-configuration.
+
+The openid-configuration URI is part of the OpenID Connect Discovery protocol, an identity layer built on top of the OAuth 2.0 protocol. When a client application wants to use OpenID Connect for authentication, it can retrieve the OpenID Connect Provider's configuration by accessing the https://example.com/.well-known/openid-configuration endpoint. This endpoint returns a JSON document containing metadata about the provider's endpoints, supported authentication methods, token issuance, and more:
+
+    {
+      "issuer": "https://example.com",
+      "authorization_endpoint": "https://example.com/oauth2/authorize",
+      "token_endpoint": "https://example.com/oauth2/token",
+      "userinfo_endpoint": "https://example.com/oauth2/userinfo",
+      "jwks_uri": "https://example.com/oauth2/jwks",
+      "response_types_supported": ["code", "token", "id_token"],
+      "subject_types_supported": ["public"],
+      "id_token_signing_alg_values_supported": ["RS256"],
+      "scopes_supported": ["openid", "profile", "email"]
+    }
+
+The information obtained from the openid-configuration endpoint provides multiple exploration opportunities:
+
+  Endpoint Discovery:
+    Authorization Endpoint: Identifying the URL for user authorization requests.
+    Token Endpoint: Finding the URL where tokens are issued.
+    Userinfo Endpoint: Locating the endpoint that provides user information.
+  JWKS URI: The jwks_uri reveals the JSON Web Key Set (JWKS), detailing the cryptographic keys used by the server.
+  Supported Scopes and Response Types: Understanding which scopes and response types are supported helps in mapping out the functionality and limitations of the OpenID Connect implementation.
+  Algorithm Details: Information about supported signing algorithms can be crucial for understanding the security measures in place.
+Exploring the IANA Registry and experimenting with the various .well-known URIs is an invaluable approach to uncovering additional web reconnaissance opportunities. As demonstrated with the openid-configuration endpoint above, these standardized URIs provide structured access to critical metadata and configuration details, enabling security professionals to comprehensively map out a website's security landscape.
+
+
+
+
+=========================================================== Creepy Crawlies ===========================================================
+=========================================================== Creepy Crawlies ===========================================================
+=========================================================== Creepy Crawlies ===========================================================
+
+Web crawling is vast and intricate, but you don't have to embark on this journey alone. A plethora of web crawling tools are available to assist you, each with its own strengths and specialties. These tools automate the crawling process, making it faster and more efficient, allowing you to focus on analyzing the extracted data.
+Popular Web Crawlers
+  Burp Suite Spider: Burp Suite, a widely used web application testing platform, includes a powerful active crawler called Spider. Spider excels at mapping out web applications, identifying hidden content, and uncovering potential vulnerabilities.
+  OWASP ZAP (Zed Attack Proxy): ZAP is a free, open-source web application security scanner. It can be used in automated and manual modes and includes a spider component to crawl web applications and identify potential vulnerabilities.
+  Scrapy (Python Framework): Scrapy is a versatile and scalable Python framework for building custom web crawlers. It provides rich features for extracting structured data from websites, handling complex crawling scenarios, and automating data processing. Its flexibility makes it ideal for tailored reconnaissance tasks.
+  Apache Nutch (Scalable Crawler): Nutch is a highly extensible and scalable open-source web crawler written in Java. It's designed to handle massive crawls across the entire web or focus on specific domains. While it requires more technical expertise to set up and configure, its power and flexibility make it a valuable asset for large-scale reconnaissance projects.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
