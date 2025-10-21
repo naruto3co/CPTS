@@ -6,3 +6,56 @@ https://academy.hackthebox.com/module/110/section/1049 xem cai nay no lam cai gi
 
 à nó có nâng cao về burp đó . về nhà làm tiếpp 
   https://academy.hackthebox.com/module/110/section/1050
+
+
+
+Proxychains
+One very useful tool in Linux is proxychains, which routes all traffic coming from any command-line tool to any proxy we specify. Proxychains adds a proxy to any command-line tool and is hence the simplest and easiest method to route web traffic of command-line tools through our web proxies.
+
+To use proxychains, we first have to edit /etc/proxychains.conf, comment out the final line and add the following line at the end of it:
+  #socks4         127.0.0.1 9050
+  http 127.0.0.1 8080
+
+We should also make use of the -q option, which makes proxychains operate in "quiet" mode, suppressing the output of connection information to the console. This can be useful for reducing clutter in the terminal and focusing on the output of the application being proxied. For example, let's try using cURL on one of our previous exercises:
+  naruto3co@htb[/htb]$ proxychains -q curl http://SERVER_IP:PORT
+    <!DOCTYPE html>
+    <html lang="en">
+    
+    <head>
+        <meta charset="UTF-8">
+        <title>Ping IP</title>
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    ...SNIP...
+    </html> 
+
+Metasploit
+Finally, let's try to proxy web traffic made by Metasploit modules to better investigate and debug them. We should begin by starting Metasploit with msfconsole. Then, to set a proxy for any exploit within Metasploit, we can use the set PROXIES flag. Let's try the robots_txt scanner as an example and run it against one of our previous exercises:
+  naruto3co@htb[/htb]$ msfconsole
+    msf6 > use auxiliary/scanner/http/robots_txt
+    msf6 auxiliary(scanner/http/robots_txt) > set PROXIES HTTP:127.0.0.1:8080
+    
+    PROXIES => HTTP:127.0.0.1:8080
+    
+    
+    msf6 auxiliary(scanner/http/robots_txt) > set RHOST SERVER_IP
+    
+    RHOST => SERVER_IP
+    
+    
+    msf6 auxiliary(scanner/http/robots_txt) > set RPORT PORT
+    
+    RPORT => PORT
+    
+    
+    msf6 auxiliary(scanner/http/robots_txt) > run
+    
+    [*] Scanned 1 of 1 hosts (100% complete)
+    [*] Auxiliary module execution completed
+
+
+Once again, we can go back to our web proxy tool of choice and examine the proxy history to view all sent requests:
+We see that the request has indeed gone through our web proxy. The same method can be used with other scanners, exploits, and other features in Metasploit.
+
+We can similarly use our web proxies with other tools and applications, including scripts and thick clients. All we have to do is set the proxy of each tool to use our web proxy. This allows us to examine exactly what these tools are sending and receiving, and potentially repeat and modify their requests while performing web application penetration testing.
+
