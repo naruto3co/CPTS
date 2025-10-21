@@ -1,0 +1,81 @@
+Mục đích chung
+  Tự động sửa đổi tất cả request/response theo luật đã định để tiện thử nghiệm hoặc vượt lọc.
+Phân loại thay đổi tự động
+  Request modification (thay trên HTTP request).
+  Response modification (thay trên HTTP response).
+Phạm vi nội dung có thể thay đổi
+  Thay ở header (ví dụ: User-Agent).
+  Thay ở body (nội dung payload).
+Ví dụ minh họa (đề bài)
+  Thay User-Agent hiện tại bằng "HackTheBox Agent 1.0" để thử vượt bộ lọc chặn User-Agents nhất định.
+Cài đặt trong Burp (đường dẫn / hành động)
+  Vào Proxy → Proxy settings → HTTP match and replace rules (hoặc tương đương trong Burp).
+  Nhấn Add để tạo quy tắc mới.
+Các trường cấu hình quan trọng cho mỗi rule
+  Chọn Request hay Response (loại thay đổi).
+  Chọn vị trí áp dụng (Header / Body / Both).
+  Match: chuỗi hoặc regex cần tìm.
+  Replace: chuỗi sẽ dùng để thay thế.
+  Bật/tắt rule, và thứ tự (nếu có nhiều rule).
+Ứng dụng thực tế / lợi ích
+  Bypass các filter dựa trên User-Agent hoặc nội dung.
+  Tự động hóa PoC, kiểm thử bảo mật, mô phỏng client khác.
+  Tiết kiệm thời gian so với chỉnh từng request bằng tay.
+Kiểm tra & xác minh
+  Quan sát Proxy history hoặc gửi request qua Repeater để kiểm tra thay đổi đã được áp dụng.
+  Kiểm tra log/response để đảm bảo thay đổi không phá vỡ giao thức.
+Rủi ro & lưu ý đạo đức/ pháp lý
+  Thay đổi có thể gây lỗi ứng dụng hoặc làm test không phản ánh thực tế.
+  Có thể vi phạm chính sách/ luật khi dùng để vượt bảo vệ mà không được phép — luôn có sự cho phép khi pentest.
+  Nên giới hạn scope (chỉ domain/endpoint cần test), tắt rule sau khi dùng.
+Mẹo thực hành
+  Dùng regex cho match nếu cần khớp linh hoạt.
+  Hạn chế rule ở scope cụ thể để tránh ảnh hưởng lan rộng.
+  Ghi chú/đặt tên rule rõ ràng để dễ quản lý.
+
+| Trường          | Giá trị                            | Ghi chú                                                          |
+| --------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| **Type**        | Request header                     | Thay đổi áp dụng trên header của HTTP request (không phải body). |
+| **Match**       | `^User-Agent.*$`                   | Biểu thức regex khớp toàn bộ dòng chứa `User-Agent`.             |
+| **Replace**     | `User-Agent: HackTheBox Agent 1.0` | Dòng sẽ thay thế dòng đã khớp; đặt User-Agent mới.               |
+| **Regex match** | True                               | Sử dụng regex để khớp mọi giá trị User-Agent không biết trước.   |
+
+
+Once we enter the above options and click Ok, our new Match and Replace option will be added and enabled and will start automatically replacing the User-Agent header in our requests with our new User-Agent. We can verify that by visiting any website using the pre-configured Burp browser and reviewing the intercepted request. We will see that our User-Agent has indeed been automatically replaced:
+
+Nhập chỗ match là :  ^User-Agent.*$
+Nhập chỗ replace : thành cái mình muốn , ví dụ như User-Agent: HackTheBox Agent 1.0 
+
+Once we enter the above options and click Ok, our new Match and Replace option will be added and enabled and will start automatically replacing the User-Agent header in our requests with our new User-Agent. We can verify that by visiting any website using the pre-configured Burp browser and reviewing the intercepted request. We will see that our User-Agent has indeed been automatically replaced:
+
+Tương tự với ZAP 
+
+================================================================ Repeating Requests ================================================================
+================================================================ Repeating Requests ================================================================
+================================================================ Repeating Requests ================================================================
+
+In the previous sections, we successfully bypassed the input validation to use a non-numeric input to reach command injection on the remote server. If we want to repeat the same process with a different command, we would have to intercept the request again, provide a different payload, forward it again, and finally check our browser to get the final result.
+
+As you can imagine, if we would do this for each command, it would take us forever to enumerate a system, as each command would require 5-6 steps to get executed. However, for such repetitive tasks, we can utilize request repeating to make this process significantly easier.
+
+Request repeating allows us to resend any web request that has previously gone through the web proxy. This allows us to make quick changes to any request before we send it, then get the response within our tools without intercepting and modifying each request.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
