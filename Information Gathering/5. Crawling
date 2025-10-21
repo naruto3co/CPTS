@@ -231,17 +231,64 @@ Installing Scrapy
 Before we begin, ensure you have Scrapy installed on your system. If you don't, you can easily install it using pip, the Python package installer:
   naruto3co@htb[/htb]$ pip3 install scrapy
 
+This command will download and install Scrapy along with its dependencies, preparing your environment for building our spider.
 
+ReconSpider
+First, run this command in your terminal to download the custom scrapy spider, ReconSpider, and extract it to the current working directory.
+  naruto3co@htb[/htb]$ wget -O ReconSpider.zip https://academy.hackthebox.com/storage/modules/144/ReconSpider.v1.2.zip
+  naruto3co@htb[/htb]$ unzip ReconSpider.zip 
+With the files extracted, you can run ReconSpider.py using the following command:
+  naruto3co@htb[/htb]$ python3 ReconSpider.py http://inlanefreight.com
 
+Replace inlanefreight.com with the domain you want to spider. The spider will crawl the target and collect valuable information.
 
+results.json
+After running ReconSpider.py, the data will be saved in a JSON file, results.json. This file can be explored using any text editor. Below is the structure of the JSON file produced:
+    {
+        "emails": [
+            "lily.floid@inlanefreight.com",
+            "cvs@inlanefreight.com",
+            ...
+        ],
+        "links": [
+            "https://www.themeansar.com",
+            "https://www.inlanefreight.com/index.php/offices/",
+            ...
+        ],
+        "external_files": [
+            "https://www.inlanefreight.com/wp-content/uploads/2020/09/goals.pdf",
+            ...
+        ],
+        "js_files": [
+            "https://www.inlanefreight.com/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.3.2",
+            ...
+        ],
+        "form_fields": [],
+        "images": [
+            "https://www.inlanefreight.com/wp-content/uploads/2021/03/AboutUs_01-1024x810.png",
+            ...
+        ],
+        "videos": [],
+        "audio": [],
+        "comments": [
+            "<!-- #masthead -->",
+            ...
+        ]
+    }
 
+Each key in the JSON file represents a different type of data extracted from the target website:
 
+  | **JSON Key**     | **Description**                                                                     |
+  | ---------------- | ----------------------------------------------------------------------------------- |
+  | `emails`         | Liệt kê các địa chỉ email được tìm thấy trên domain.                                |
+  | `links`          | Liệt kê các URL của các liên kết được tìm thấy trong domain.                        |
+  | `external_files` | Liệt kê các URL của các tệp bên ngoài như PDF.                                      |
+  | `js_files`       | Liệt kê các URL của các tệp JavaScript được trang web sử dụng.                      |
+  | `form_fields`    | Liệt kê các trường form được tìm thấy trên domain (trong ví dụ này trống).          |
+  | `images`         | Liệt kê các URL của hình ảnh được tìm thấy trên domain.                             |
+  | `videos`         | Liệt kê các URL của video được tìm thấy trên domain (trong ví dụ này trống).        |
+  | `audio`          | Liệt kê các URL của tệp âm thanh được tìm thấy trên domain (trong ví dụ này trống). |
+  | `comments`       | Liệt kê các comment HTML được tìm thấy trong mã nguồn.                              |
 
-
-
-
-
-
-
-
+By exploring this JSON structure, you can gain valuable insights into the web application's architecture, content, and potential points of interest for further investigation.
 
