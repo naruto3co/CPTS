@@ -13,7 +13,7 @@ Proxychains
 One very useful tool in Linux is proxychains, which routes all traffic coming from any command-line tool to any proxy we specify. Proxychains adds a proxy to any command-line tool and is hence the simplest and easiest method to route web traffic of command-line tools through our web proxies.
 
 To use proxychains, we first have to edit /etc/proxychains.conf, comment out the final line and add the following line at the end of it:
-  #socks4         127.0.0.1 9050
+  #socks4         127.0.0.1 9050    ( nhớ kĩ, phải comment phần này lại nhé ) 
   http 127.0.0.1 8080
 
 We should also make use of the -q option, which makes proxychains operate in "quiet" mode, suppressing the output of connection information to the console. This can be useful for reducing clutter in the terminal and focusing on the output of the application being proxied. For example, let's try using cURL on one of our previous exercises:
