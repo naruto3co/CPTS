@@ -56,5 +56,22 @@ Danh sách mật khẩu mặc định một số thiết bị
 
   Tính : Possible Combinations = Character Set Size^Password Length
 
+| Mức độ / Ghi chú        | Độ dài mật khẩu | Bộ ký tự                                              |                       Số tổ hợp (exact) |      Số tổ hợp (khoa học) |
+| ----------------------- | --------------: | ----------------------------------------------------- | --------------------------------------: | ------------------------: |
+| Short and Simple        |               6 | Lowercase letters (a–z)                               |                      26^6 = 308,915,776 |         3.08915776 × 10^8 |
+| Longer but Still Simple |               8 | Lowercase letters (a–z)                               |                  26^8 = 208,827,064,576 |     2.08827064576 × 10^11 |
+| Adding Complexity       |               8 | Lowercase + Uppercase (a–z, A–Z)                      |               52^8 = 53,459,728,531,456 |   5.3459728531456 × 10^13 |
+| Maximum Complexity      |              12 | Lowercase + Uppercase + numbers + symbols (≈94 chars) | 94^12 = 475,920,314,814,253,376,475,136 | 4.759203148142534 × 10^23 |
+
+
+
+
+| Wordlist                                  | Description                                                                                      | Typical Use                                        | Source                 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------- |
+| rockyou.txt                               | A popular password wordlist containing millions of passwords leaked from the RockYou breach.     | Commonly used for password brute force attacks.    | RockYou breach dataset |
+| top-usernames-shortlist.txt               | A concise list of the most common usernames.                                                     | Suitable for quick brute force username attempts.  | SecLists               |
+| xato-net-10-million-usernames.txt         | A more extensive list of 10 million usernames.                                                   | Used for thorough username brute forcing.          | SecLists               |
+| 2023-200_most_used_passwords.txt          | A list of the 200 most commonly used passwords as of 2023.                                       | Effective for targeting commonly reused passwords. | SecLists               |
+| Default-Credentials/default-passwords.txt | A list of default usernames and passwords commonly used in routers, software, and other devices. | Ideal for trying default credentials.              | SecLists               |
 
 
