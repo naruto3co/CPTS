@@ -59,3 +59,29 @@ We see that the request has indeed gone through our web proxy. The same method c
 
 We can similarly use our web proxies with other tools and applications, including scripts and thick clients. All we have to do is set the proxy of each tool to use our web proxy. This allows us to examine exactly what these tools are sending and receiving, and potentially repeat and modify their requests while performing web application penetration testing.
 
+
+
+
+
+============================================================ Burp Intruder ============================================================
+============================================================ Burp Intruder ============================================================
+============================================================ Burp Intruder ============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
