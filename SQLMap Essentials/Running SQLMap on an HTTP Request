@@ -1,6 +1,0 @@
-Lưu request trong burp vào .txt 
-
-Chạy kiểm tra ( có nhiều cách nhưng chỉ nên dùng cách hiệu quả là cách này )     
-  sqlmap -r request.txt 
-
-

