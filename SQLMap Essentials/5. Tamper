@@ -1,0 +1,105 @@
+# Tóm Tắt Toàn Bộ Kiến Thức Về Tamper Trong SQLMap
+
+## 📌 Tamper là gì?
+
+**Tamper** trong sqlmap là các script dùng để **biến đổi payload SQL** để:
+
+* Bypass **WAF / Firewall / IDS / IPS**
+* Vượt qua **filter đơn giản hoặc regex chặn từ khóa**
+* Che giấu hoặc encode payload
+* Fix lỗi cú pháp (syntax) khi server yêu cầu format đặc biệt
+
+➡ **Tamper = Cách sqlmap "ngụy trang" payload để khai thác SQLi trong môi trường bị bảo vệ.**
+
+---
+
+# 📌 Các Nhóm Tamper Quan Trọng
+
+## 🟦 1. Tamper liên quan tới khoảng trắng (whitespace tampering)
+
+| Tamper                | Công dụng                                              |
+| --------------------- | ------------------------------------------------------ |
+| **space2comment**     | Đổi space thành `/**/` để bypass WAF chặn khoảng trắng |
+| **space2plus**        | Đổi space thành `+`                                    |
+| **space2dash**        | Đổi space thành `--`                                   |
+| **space2tab**         | Đổi space thành tab                                    |
+| **space2randomblank** | Dùng ký tự trắng ngẫu nhiên                            |
+| **space2mssqlblank**  | Whitespace dạng MSSQL                                  |
+
+---
+
+## 🟦 2. Tamper thay đổi cú pháp / logic SQL
+
+| Tamper                        | Công dụng                                              |
+| ----------------------------- | ------------------------------------------------------ |
+| **between**                   | Biến điều kiện thành dạng `BETWEEN` để tránh bị detect |
+| **equaltolike**               | Chuyển `=` thành `LIKE`                                |
+| **greater**                   | Dùng `>` hoặc `<` thay vì `=`                          |
+| **versionedkeywords**         | Chèn comment vào keyword (`/*!SELECT*/`)               |
+| **versionedmorekeywords**     | Biến thể mạnh hơn của versionedkeywords                |
+| **modsecurityversioned**      | Bypass ModSecurity                                     |
+| **halfversionedmorekeywords** | Ẩn keyword bằng kỹ thuật comment                       |
+
+---
+
+## 🟦 3. Tamper dạng mã hóa / obfuscation
+
+| Tamper                | Công dụng                                 |
+| --------------------- | ----------------------------------------- |
+| **randomcase**        | Viết hoa/thường ngẫu nhiên → bypass regex |
+| **charencode**        | Encode ký tự ASCII                        |
+| **charunicodeescape** | Encode Unicode → bypass WAF mạnh          |
+| **base64encode**      | Encode payload dạng Base64                |
+| **apostrophemask**    | Mã hóa dấu `'`                            |
+| **escapequotes**      | Escape dấu `'` hoặc `"`                   |
+| **doubleencode**      | URL encode 2 lần                          |
+| **urlencode**         | Encode dạng URL                           |
+| **percentage**        | Encode `%` → `%25`                        |
+| **hexencode**         | Chuyển chuỗi thành hex                    |
+
+---
+
+## 🟦 4. Tamper dành riêng cho từng DBMS
+
+| Tamper                | DBMS                 | Công dụng                     |
+| --------------------- | -------------------- | ----------------------------- |
+| **charunicodeescape** | MySQL/PostgreSQL     | Encode Unicode                |
+| **commaless**         | MySQL                | Payload không dùng dấu `,`    |
+| **ifnull2ifisnull**   | MySQL                | Chuyển IFNULL → IF(ISNULL())  |
+| **ord2ascii**         | PostgreSQL           | Đổi `ORD()` → `ASCII()`       |
+| **sp_password**       | MSSQL                | Bypass từ khóa nhạy cảm       |
+| **bluecoat**          | MSSQL & BlueCoat WAF | Che giấu keyword              |
+| **overlongutf8**      | MySQL                | Bypass WAF bằng UTF-8 kéo dài |
+
+---
+
+# 📌 Tình Huống Nên Dùng Tamper
+
+* Khi bị **WAF block** payload bình thường
+* Khi payload có từ khóa nhạy: `AND`, `UNION`, `SELECT`, `SLEEP`, ...
+* Khi filter chỉ chấp nhận vài ký tự nhất định
+* Khi server tự động sửa payload → cần làm payload "dị"
+* Khi muốn né signature của IDS/IPS
+
+---
+
+# 📌 Các Combo Tamper Mạnh Trong Pentest
+
+| Mục đích                   | Combo khuyến nghị                        |
+| -------------------------- | ---------------------------------------- |
+| Bypass WAF trung bình      | `space2comment, between, randomcase`     |
+| Bypass WAF mạnh            | `charunicodeescape, randomcase, between` |
+| Bypass filter khoảng trắng | `space2plus` hoặc `space2comment`        |
+| Blind SQLi khó             | `equaltolike, greater, between`          |
+
+---
+
+# 📌 Kết luận
+
+* Sqlmap có **hơn 40 tamper scripts** → không cần dùng hết, chỉ dùng tùy tình huống.
+* Tamper **không tạo lỗ hổng**, chỉ giúp **payload không bị chặn**.
+* Kết hợp tamper đúng cách giúp **bypass WAF hiệu quả** và **dò nhanh hơn**.
+
+---
+
+**File này tổng hợp toàn bộ kiến thức thể hiện trong dự án HackTheBox CPTS về tamper trong sqlmap – gọn, đủ, dễ nhớ.**
