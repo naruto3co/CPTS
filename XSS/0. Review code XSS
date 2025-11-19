@@ -1,0 +1,153 @@
+# XSS Code Review — Tổng hợp dấu hiệu nhận biết lỗ hổng XSS
+
+## 1. Giới thiệu
+Cross-Site Scripting (XSS) xảy ra khi ứng dụng đưa **dữ liệu không tin cậy** vào HTML/JS trên trình duyệt mà **không encode hoặc sanitize đúng cách**.  
+Để review code hiệu quả, ta cần nắm rõ mọi **pattern**, **API nguy hiểm**, **nguồn dữ liệu (source)** và **điểm chèn dữ liệu (sink)**.
+
+---
+
+## 2. Các pattern nguy hiểm trong code dễ dẫn đến XSS
+
+### ❌ 2.1 Chèn trực tiếp dữ liệu user vào HTML mà không encode
+```php
+echo "<p>Xin chào " . $_GET['name'] . "</p>";
+```
+
+### ❌ 2.2 Nối chuỗi tạo HTML
+```java
+response.getWriter().println("<h1>" + username + "</h1>");
+```
+
+### ❌ 2.3 Dữ liệu user trong thuộc tính HTML
+```php
+echo "<div title='$title'>";
+```
+
+### ❌ 2.4 Lọc blacklist
+```php
+$input = str_replace("<script>", "", $input);
+```
+
+### ❌ 2.5 Tắt auto-escape trong template
+- `|safe` (Django/Jinja2)  
+- `@Html.Raw` (.NET)  
+- `{{{ var }}}` (Handlebars)
+
+---
+
+## 3. API Frontend & Backend dễ gây XSS
+
+| API/Hàm | Ngữ cảnh | Mô tả nguy cơ |
+|--------|----------|---------------|
+| **innerHTML** | JS | Parse HTML → thực thi script |
+| **document.write** | JS | Chèn HTML thô |
+| **eval()** | JS | Thực thi chuỗi như JS |
+| **insertAdjacentHTML** | JS | Sink nguy hiểm |
+| **dangerouslySetInnerHTML** | React | Chèn HTML không kiểm soát |
+| **echo/print** | PHP | Xuất thẳng ra HTML |
+| **Response.Write** | ASP/.NET | Xuất HTML raw |
+| **out.print** | Java | Render chuỗi thô |
+
+---
+
+## 4. Source → Sink: Cách truy vết XSS
+
+### **4.1 Source (nguồn dữ liệu)**
+- `$_GET`, `$_POST`, `$_COOKIE`
+- `request.getParameter()`
+- `req.query`, `req.body`
+- `location.search`, `location.hash`
+- Dữ liệu lưu trong DB
+
+### **4.2 Sink (điểm render)**
+- HTML output (echo/print)
+- Template engine
+- DOM APIs: `innerHTML`, `outerHTML`, `insertAdjacentHTML`
+- JS execution: `eval`, `setTimeout(str)`
+
+### **4.3 Công thức tạo XSS**
+```
+Source → (không sanitize/encode) → Sink
+```
+
+---
+
+## 5. DOM XSS — Dấu hiệu nhận biết
+
+### 🔍 5.1 Nguồn DOM nguy hiểm
+- `location.hash`
+- `location.search`
+- `document.referrer`
+- `window.name`
+
+### 🔍 5.2 Sink DOM nguy hiểm
+```js
+box.innerHTML = location.hash.substring(1);
+```
+
+---
+
+## 6. XSS phản hồi (Reflected XSS)
+
+### 🔥 Dấu hiệu:
+- In lại tham số trong URL  
+- Hiển thị lỗi kèm dữ liệu nhập  
+- Trang search / form trả lại nội dung
+
+Ví dụ:
+```php
+echo "Search: " . $_GET['q'];
+```
+
+---
+
+## 7. XSS lưu trữ (Stored XSS)
+
+### 🔥 Dấu hiệu:
+- Nội dung user được lưu DB rồi hiển thị lại  
+- Comment, profile, chat, bài post
+
+Ví dụ:
+```php
+save($_POST['comment']);
+echo $commentFromDB;
+```
+
+---
+
+## 8. Checklist Audit XSS Toàn diện
+
+### 🧩 Kiểm tra Input Sources
+- [ ] URL params
+- [ ] POST body
+- [ ] Cookies / User-Agent
+- [ ] DB fields do user tạo
+
+### 🧩 Kiểm tra Output Sinks
+- [ ] innerHTML / outerHTML
+- [ ] insertAdjacentHTML
+- [ ] eval / Function
+- [ ] echo / print
+- [ ] tắt auto-escape
+
+### 🧩 Kiểm tra Encode/Sanitize
+- [ ] HTML encode?
+- [ ] JS encode?
+- [ ] URL encode?
+- [ ] textContent thay vì innerHTML?
+
+### 🧩 Bypass & Điểm yếu phổ biến
+- [ ] Code dùng raw HTML?
+- [ ] Filter blacklist?
+- [ ] “safe/raw/trustAsHtml”?
+
+---
+
+## 9. Kết luận
+Khi review code tìm XSS, luôn nhớ:
+
+> **Dữ liệu không tin cậy → phải được encode hoặc sanitize trước khi đưa vào HTML/JS.**
+
+---
+
+*File tổng hợp audit XSS cho CPTS / HackTheBox.*
