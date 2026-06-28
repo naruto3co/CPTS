@@ -1,0 +1,281 @@
+# Command Injection Prevention (Hack The Box Academy) - Ghi chú
+
+## Tổng quan
+
+Đây là chương cuối của module **Command Injection**. Sau khi học cách
+khai thác và bypass filter, chương này tập trung vào **cách phòng chống
+Command Injection** từ góc nhìn lập trình viên và quản trị hệ thống.
+
+------------------------------------------------------------------------
+
+# 1. Hạn chế sử dụng System Commands
+
+Nguyên tắc quan trọng nhất:
+
+> **Đừng gọi lệnh hệ điều hành nếu có thể dùng API hoặc hàm có sẵn của
+> ngôn ngữ lập trình.**
+
+Ví dụ:
+
+❌ Không nên
+
+``` php
+system("ping " . $_GET["ip"]);
+```
+
+✅ Nên dùng
+
+-   `fsockopen()`
+-   thư viện mạng
+-   API của ngôn ngữ
+
+Lý do:
+
+-   Không tạo shell
+-   Không có khả năng chèn command
+-   An toàn hơn rất nhiều
+
+Nếu bắt buộc phải gọi command:
+
+-   Không nối trực tiếp user input
+-   Validate trước
+-   Sanitize sau
+-   Chỉ dùng khi không còn lựa chọn khác
+
+------------------------------------------------------------------------
+
+# 2. Input Validation
+
+Validation trả lời câu hỏi:
+
+> **Input có đúng định dạng mong muốn không?**
+
+Ví dụ:
+
+-   IP
+-   URL
+-   Email
+-   UUID
+
+Nếu sai định dạng → từ chối request ngay.
+
+Lưu ý:
+
+-   Validation phải thực hiện ở **Frontend** và **Backend**.
+-   Không bao giờ tin tưởng JavaScript phía client.
+
+Ví dụ PHP:
+
+``` php
+if (filter_var($_GET["ip"], FILTER_VALIDATE_IP)) {
+    // OK
+}
+```
+
+Nếu không có validator sẵn:
+
+-   Regex (`preg_match`)
+-   NodeJS: Regex hoặc thư viện như `is-ip`
+
+------------------------------------------------------------------------
+
+# 3. Input Sanitization
+
+Validation chỉ kiểm tra đúng định dạng.
+
+Sanitization mới là bước loại bỏ ký tự nguy hiểm.
+
+Ví dụ chỉ cho phép:
+
+-   A-Z
+-   a-z
+-   0-9
+-   dấu chấm
+
+PHP:
+
+``` php
+$ip = preg_replace('/[^A-Za-z0-9.]/', '', $_GET['ip']);
+```
+
+JavaScript:
+
+``` javascript
+ip = ip.replace(/[^A-Za-z0-9.]/g, "");
+```
+
+NodeJS:
+
+``` javascript
+DOMPurify.sanitize(ip);
+```
+
+## Validation vs Sanitization
+
+  Validation          Sanitization
+  ------------------- -------------------------
+  Kiểm tra hợp lệ     Loại bỏ ký tự nguy hiểm
+  Từ chối input sai   Làm sạch input
+  Thực hiện trước     Thực hiện sau
+
+------------------------------------------------------------------------
+
+# 4. Escaping không phải giải pháp hoàn hảo
+
+Có thể dùng:
+
+-   `escapeshellcmd()`
+-   `escape()`
+
+Tuy nhiên:
+
+> Escaping **không được xem là biện pháp bảo mật đủ mạnh**, vì nhiều kỹ
+> thuật bypass vẫn có thể vượt qua.
+
+Thứ tự ưu tiên:
+
+1.  Không dùng system()
+2.  Validation
+3.  Sanitization
+4.  Escaping (nếu cần)
+
+------------------------------------------------------------------------
+
+# 5. Server Hardening
+
+Ngay cả khi code an toàn, server vẫn cần được cấu hình đúng.
+
+## Web Application Firewall
+
+-   Apache mod_security
+-   Cloudflare
+-   Fortinet
+-   Imperva
+
+## Principle of Least Privilege (PoLP)
+
+Web server chỉ nên chạy với quyền tối thiểu.
+
+Ví dụ:
+
+    www-data
+
+Không chạy bằng root.
+
+## Disable hàm nguy hiểm
+
+Ví dụ PHP:
+
+``` ini
+disable_functions=system,exec,shell_exec,passthru
+```
+
+## Giới hạn phạm vi truy cập
+
+Ví dụ:
+
+``` ini
+open_basedir=/var/www/html
+```
+
+Ứng dụng không được đọc file ngoài thư mục cho phép.
+
+## Từ chối
+
+-   Double Encoding
+-   URL chứa ký tự bất thường
+-   Non-ASCII khi không cần
+
+## Cập nhật phần mềm
+
+Không dùng:
+
+-   PHP CGI cũ
+-   Module lỗi thời
+-   Library hết hỗ trợ
+
+------------------------------------------------------------------------
+
+# 6. Pentest vẫn luôn cần thiết
+
+Dù đã:
+
+-   Validate
+-   Sanitize
+-   Hardening
+-   WAF
+
+vẫn phải kiểm thử bảo mật.
+
+Một lỗi nhỏ trong hàng triệu dòng code vẫn có thể dẫn đến Command
+Injection.
+
+------------------------------------------------------------------------
+
+# Checklist phòng chống Command Injection
+
+## Coding
+
+-   [ ] Không dùng `system()`
+-   [ ] Không nối chuỗi với user input
+-   [ ] Dùng API thay thế
+
+## Validation
+
+-   [ ] Validate backend
+-   [ ] Validate frontend
+-   [ ] Regex hoặc validator chuẩn
+
+## Sanitization
+
+-   [ ] Loại bỏ ký tự đặc biệt
+-   [ ] Chỉ whitelist ký tự cần thiết
+
+## Escaping
+
+-   [ ] Chỉ dùng như lớp bảo vệ bổ sung
+
+## Server
+
+-   [ ] WAF
+-   [ ] Least Privilege
+-   [ ] Disable hàm nguy hiểm
+-   [ ] open_basedir
+-   [ ] Cập nhật phần mềm
+
+## Testing
+
+-   [ ] Pentest định kỳ
+-   [ ] Kiểm tra mọi nơi gọi shell
+
+------------------------------------------------------------------------
+
+# Tóm tắt
+
+    Không dùng system()
+            │
+            ▼
+    Input Validation
+            │
+            ▼
+    Input Sanitization
+            │
+            ▼
+    Escaping (bổ sung)
+            │
+            ▼
+    Server Hardening
+            │
+            ▼
+    Pentest thường xuyên
+
+## Kết luận
+
+Phòng chống Command Injection không dựa vào một kỹ thuật duy nhất mà là
+**Defense in Depth**:
+
+-   Viết code an toàn.
+-   Kiểm tra và làm sạch dữ liệu đầu vào.
+-   Hạn chế quyền của ứng dụng.
+-   Cấu hình máy chủ đúng cách.
+-   Kiểm thử bảo mật thường xuyên.
