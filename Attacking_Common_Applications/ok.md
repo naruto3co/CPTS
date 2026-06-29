@@ -83,6 +83,64 @@ http://app-dev.inlanefreight.local/: screenshot successful
 http://jenkins.inlanefreight.local/: screenshot successful
 ```
 
-# Interpreting the Results
+
+# WordPress - Discovery & Enumeration
+
+Enumeration
+```
+curl -s http://blog.inlanefreight.local | grep WordPress
+
+<meta name="generator" content="WordPress 5.8" /
+```
+
+Looking at the page source, we can see that the Business Gravity theme is in use. We can go further and attempt to fingerprint the theme version number and look for any known vulnerabilities that affect it.
+```
+naruto3co@htb[/htb]$ curl -s http://blog.inlanefreight.local/ | grep themes
+
+<link rel='stylesheet' id='bootstrap-css'  href='http://blog.inlanefreight.local/wp-content/themes/business-gravity/assets/vendors/bootstrap/css/bootstrap.min.css' type='text/css' media='all' />
+```
+
+Next, let's take a look at which plugins we can uncover.
+```
+naruto3co@htb[/htb]$ curl -s http://blog.inlanefreight.local/ | grep plugins
+
+<link rel='stylesheet' id='contact-form-7-css'  href='http://blog.inlanefreight.local/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=5.4.2' type='text/css' media='all' />
+<script type='text/javascript' src='http://blog.inlanefreight.local/wp-content/plugins/mail-masta/lib/subscriber.js?ver=5.8' id='subscriber-js-js'></script>
+<script type='text/javascript' src='http://blog.inlanefreight.local/wp-content/plugins/mail-masta/lib/jquery.validationEngine-en.js?ver=5.8' id='validation-engine-en-js'></script>
+<script type='text/javascript' src='http://blog.inlanefreight.local/wp-content/plugins/mail-masta/lib/jquery.validationEngine.js?ver=5.8' id='validation-engine-js'></script>
+        <link rel='stylesheet' id='mm_frontend-css'  href='http://blog.inlanefreight.local/wp-content/plugins/mail-masta/lib/css/mm_frontend.css?ver=5.8' type='text/css' media='all' />
+<script type='text/javascript' src='http://blog.inlanefreight.local/wp-content/plugins/contact-form-7/includes/js/index.js?ver=5.4.2' id='contact-form-7-js'></script>
+```
+
+```
+naruto3co@htb[/htb]$ curl -s http://blog.inlanefreight.local/?p=1 | grep plugins
+
+<link rel='stylesheet' id='contact-form-7-css'  href='http://blog.inlanefreight.local/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=5.4.2' type='text/css' media='all' />
+<link rel='stylesheet' id='wpdiscuz-frontend-css-css'  href='http://blog.inlanefreight.local/wp-content/plugins/wpdiscuz/themes/default/style.css?ver=7.0.4' type='text/css' media='all' />
+```
+
+WPScan
+WPScan is an automated WordPress scanner and enumeration tool. It determines if the various themes and plugins used by a blog are outdated or vulnerable. It’s installed by default on Parrot OS but can also be installed manually with gem.
+```
+naruto3co@htb[/htb]$ sudo gem install wpscan
+```
+WPScan is also able to pull in vulnerability information from external sources. We can obtain an API token from WPVulnDB, which is used by WPScan to scan for PoC and reports. The free plan allows up to 25 requests per day. To use the WPVulnDB database, just create an account and copy the API token from the users page. This token can then be supplied to wpscan using the --api-token parameter.
+
+```
+naruto3co@htb[/htb]$ sudo wpscan --url http://blog.inlanefreight.local --enumerate --api-token dEOFB<SNIP>
+
+<SNIP>
+
+[+] URL: http://blog.inlanefreight.local/ [10.129.42.195]
+[+] Started: Thu Sep 16 23:11:43 2021
+
+Interesting Finding(s):
+
+[+] Headers
+ | Interesting Entry: Server: Apache/2.4.41 (Ubuntu)
+ | Found By: Headers (Passive Det......
+```
+
+
 
 
