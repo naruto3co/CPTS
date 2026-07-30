@@ -6,7 +6,8 @@ Trong phần này, chúng ta sẽ tập trung chủ yếu vào cách trích xu�
 
 Giống như nhiều cuộc tấn công đã đề cập từ trước đến giờ, mục tiêu của chúng ta phải tiếp cận được qua mạng. Điều này có nghĩa là rất có khả năng chúng ta cần có một chỗ đứng (foothold) đã được thiết lập trên mạng nội bộ mà mục tiêu đang kết nối tới. Tuy vậy, cũng có những tình huống một tổ chức sử dụng port forwarding để chuyển tiếp giao thức remote desktop (`3389`) hoặc các giao thức khác dùng cho truy cập từ xa trên router biên (edge router) tới một hệ thống trong mạng nội bộ của họ. Xin lưu ý rằng hầu hết các phương pháp trong module này mô phỏng các bước **sau** khi đã xâm nhập ban đầu và đã thiết lập được foothold trên mạng nội bộ. Trước khi bắt tay vào thực hành các phương pháp tấn công, hãy cùng xem xét quá trình xác thực (authentication) sau khi một hệ thống Windows đã được join vào domain. Cách tiếp cận này sẽ giúp chúng ta hiểu rõ hơn tầm quan trọng của Active Directory và những kiểu tấn công mật khẩu mà nó dễ bị tổn thương.
 
-![Sơ đồ luồng xác thực khi máy Windows đã join domain: lsass.exe, Authentication Packages, NTLM, Kerberos, Netlogon và AD Directory Services](images/so-do-xac-thuc-ad.png)
+<img width="2040" height="732" alt="so-do-xac-thuc-ad" src="https://github.com/user-attachments/assets/1cfb2d25-d421-4642-9c32-f0c419bbe141" />
+
 
 Khi một hệ thống Windows đã được join vào một domain, nó sẽ **không còn mặc định tham chiếu đến cơ sở dữ liệu SAM để xác thực các yêu cầu đăng nhập** (`no longer default to referencing the SAM database to validate logon requests`). Hệ thống đã join domain đó giờ sẽ gửi các yêu cầu xác thực để được domain controller kiểm chứng trước khi cho phép người dùng đăng nhập. Điều này không có nghĩa là cơ sở dữ liệu SAM không còn dùng được nữa. Người muốn đăng nhập bằng tài khoản cục bộ (local account) trong cơ sở dữ liệu SAM vẫn có thể làm được bằng cách chỉ định `hostname` của thiết bị theo sau bởi `Username` (ví dụ: `WS01\nameofuser`) hoặc khi có quyền truy cập trực tiếp vào thiết bị thì gõ `.\` ở giao diện đăng nhập trong ô `Username`. Điều này đáng lưu tâm vì chúng ta cần để ý xem những thành phần hệ thống nào bị ảnh hưởng bởi các cuộc tấn công mà mình thực hiện. Nó cũng có thể mở ra thêm những hướng tấn công để cân nhắc khi nhắm vào hệ điều hành Windows desktop hay Windows server, dù là truy cập vật lý trực tiếp hay qua mạng. Hãy nhớ rằng chúng ta cũng có thể nghiên cứu các cuộc tấn công NTDS bằng cách theo dõi kỹ thuật này.
 
@@ -187,7 +188,8 @@ Trong ví dụ này, NetExec đang dùng SMB để thử đăng nhập với tư
 
 ### Nhật ký sự kiện (event logs) từ cuộc tấn công
 
-![Event Viewer hiển thị các sự kiện Security được ghi lại trong cuộc tấn công, bao gồm Event ID 4776 và 4624](images/event-viewer.png)
+<img width="1024" height="506" alt="event-viewer" src="https://github.com/user-attachments/assets/cf7dc850-127e-4b99-ae4f-b56a83cb56a3" />
+
 
 Việc biết được cuộc tấn công có thể để lại những dấu vết gì là rất hữu ích. Biết điều này có thể giúp cho các khuyến nghị khắc phục (remediation) của chúng ta trở nên có tác động và giá trị hơn đối với khách hàng mà ta đang làm việc cùng. Trên bất kỳ hệ điều hành Windows nào, quản trị viên có thể mở `Event Viewer` và xem các sự kiện Security để thấy chính xác các hành động đã được ghi lại. Điều này có thể giúp đưa ra quyết định triển khai các biện pháp kiểm soát an ninh nghiêm ngặt hơn và hỗ trợ cho bất kỳ cuộc điều tra tiềm năng nào có thể xảy ra sau một vụ vi phạm.
 
