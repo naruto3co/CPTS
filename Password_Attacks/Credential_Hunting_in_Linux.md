@@ -310,6 +310,7 @@ naruto3co@htb[/htb]$ for i in $(ls /var/log/* 2>/dev/null);do GREP=$(grep "accep
 ## Memory and cache (Bộ nhớ và cache)
 
 ### Mimipenguin
+https://github.com/huntergregal/mimipenguin
 
 Nhiều ứng dụng và tiến trình làm việc với credential cần thiết cho việc xác thực và lưu chúng lại — trong bộ nhớ hoặc trong file — để có thể tái sử dụng. Ví dụ, đó có thể là credential mà hệ thống yêu cầu cho các user đang đăng nhập. Một ví dụ khác là credential được lưu trong trình duyệt, cũng có thể đọc được. Để lấy loại thông tin này từ các bản phân phối Linux, có một công cụ tên là **mimipenguin** giúp toàn bộ quá trình này trở nên dễ dàng hơn. Tuy nhiên, công cụ này yêu cầu quyền quản trị/root.
 
@@ -320,6 +321,7 @@ naruto3co@htb[/htb]$ sudo python3 mimipenguin.py
 ```
 
 ### LaZagne
+https://github.com/alessandroz/lazagne
 
 Một công cụ mạnh mẽ hơn nữa mà ta có thể sử dụng, đã được đề cập trước đó trong phần Credential Hunting in Windows, là **LaZagne**. Công cụ này cho phép ta truy cập vào nhiều nguồn tài nguyên hơn và trích xuất credential. Mật khẩu và hash mà ta có thể lấy được đến từ các nguồn sau, nhưng không giới hạn ở:
 
@@ -386,6 +388,7 @@ elapsed time = 3.50091600418
 ### Browser credentials (Credential trình duyệt)
 
 Trình duyệt lưu lại mật khẩu mà user đã lưu ở dạng mã hóa cục bộ trên hệ thống để có thể tái sử dụng. Ví dụ, trình duyệt **Mozilla Firefox** lưu credential đã mã hóa trong một thư mục ẩn dành riêng cho từng user. Những thông tin này thường bao gồm cả tên trường liên quan, URL và các thông tin giá trị khác.
+https://github.com/unode/firefox_decrypt
 
 Ví dụ, khi ta lưu credential cho một trang web trong trình duyệt Firefox, chúng được mã hóa và lưu trong file `logins.json` trên hệ thống. Tuy nhiên, điều này không có nghĩa là chúng an toàn ở đó. Nhiều nhân viên lưu dữ liệu đăng nhập kiểu này trong trình duyệt mà không ngờ rằng nó có thể dễ dàng bị giải mã và sử dụng để chống lại chính công ty.
 
