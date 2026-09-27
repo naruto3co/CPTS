@@ -125,6 +125,9 @@ INFO: Found 652 users
 
 Tester sử dụng công cụ này để kiểm tra quyền hạn của từng tài khoản SPN đã liệt kê ở các bước trước và nhận thấy chỉ có tài khoản `mssqlsvc` có quyền hạn cao hơn một người dùng domain thông thường. Tài khoản này có quyền local administrator trên host `SQL01`. Các SQL server thường là mục tiêu giá trị cao trong domain vì chúng chứa thông tin đăng nhập đặc quyền, dữ liệu nhạy cảm, hoặc thậm chí có thể có một người dùng đặc quyền cao hơn đang đăng nhập.
 
+<img width="1105" height="273" alt="image" src="https://github.com/user-attachments/assets/dba75290-55e4-4d68-b82e-dc4ccefa7bb5" />
+
+
 Tester sau đó thực hiện tấn công Kerberoasting nhắm mục tiêu để lấy vé TGS Kerberos cho tài khoản dịch vụ `mssqlsvc`.
 
 **GetUserSPNs**
@@ -189,6 +192,9 @@ C:\htb> query user
 ```
 
 Tester kiểm tra công cụ BloodHound và nhận thấy người dùng này có thể thực hiện tấn công DCSync, một kỹ thuật đánh cắp cơ sở dữ liệu mật khẩu Active Directory bằng cách lợi dụng giao thức mà các domain controller dùng để đồng bộ dữ liệu domain. Tấn công này có thể được dùng để lấy password hash NTLM của bất kỳ người dùng nào trong domain.
+
+<img width="1242" height="403" alt="image" src="https://github.com/user-attachments/assets/d4215d39-6e19-458c-b584-96f4f03eef90" />
+
 
 Sau khi kết nối, tester sử dụng công cụ Rubeus để xem tất cả các vé Kerberos hiện có trên hệ thống và nhận thấy có các vé của người dùng `pramirez`.
 
