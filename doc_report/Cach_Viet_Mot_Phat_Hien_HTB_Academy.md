@@ -90,6 +90,7 @@ Dictionary cache hit:
 BSMITH::INLANEFREIGHT:7eccd965c4b98ebc:73d1b2c8c5f9861eefd31bb45085a651:01...
 <REDACTED>
 ```
+<img width="957" height="979" alt="image" src="https://github.com/user-attachments/assets/8b23c792-6518-47b7-9f28-8ce2b4f5fabe" />
 
 ## Các Khuyến Nghị Khắc Phục Hiệu Quả
 
@@ -149,10 +150,12 @@ Dưới đây là một vài ví dụ về phát hiện. Hai ví dụ đầu là
 | **Domain bị ảnh hưởng** | INLANEFREIGHT.LOCAL |
 | **Khắc phục** | Khi có thể, loại bỏ SPN trong môi trường để chuyển sang sử dụng Group Managed Service Accounts (gMSA), vốn không bị ảnh hưởng bởi kiểu tấn công này. Nếu không thể chuyển sang gMSA, các bước sau sẽ giúp giảm thiểu rủi ro của cuộc tấn công này: Bật mã hóa Kerberos AES thay vì RC4; Sử dụng mật khẩu mạnh với 25+ ký tự cho các tài khoản dịch vụ và xoay vòng định kỳ; Giới hạn đặc quyền của các tài khoản dịch vụ và tránh tạo SPN gắn với các tài khoản có đặc quyền cao như Domain Administrator. |
 | **Tham khảo bên ngoài** | https://attack.mitre.org/techniques/T1558/003/ |
+<img width="883" height="704" alt="image" src="https://github.com/user-attachments/assets/7833ef09-f1e6-4ded-b3db-47d2acc46d43" />
 
 ### Ví dụ phát hiện: Tomcat Manager Weak/Default Credentials
 
 **2. Tomcat Manager Weak/Default Credentials - Mức độ: Cao (High)**
+<img width="876" height="590" alt="image" src="https://github.com/user-attachments/assets/141f60e5-990b-4eca-a07b-08518b6c0961" />
 
 | Trường thông tin | Nội dung |
 |---|---|
@@ -165,6 +168,7 @@ Dưới đây là một vài ví dụ về phát hiện. Hai ví dụ đầu là
 | **Tham khảo bên ngoài** | https://attack.mitre.org/techniques/T1078/001/ |
 
 ## Phát Hiện Viết Kém (Poorly Written Finding)
+<img width="946" height="444" alt="image" src="https://github.com/user-attachments/assets/ff1a6794-d99d-4e6c-9cac-de95e52c48e8" />
 
 Dưới đây là ví dụ về một phát hiện được viết kém, có một số vấn đề:
 
@@ -175,6 +179,7 @@ Dưới đây là ví dụ về một phát hiện được viết kém, có m�
 - Phần Remediation không rõ ràng và không thể hành động được
 
 Nếu tôi là người đọc báo cáo này, tôi có thể thấy phát hiện này "xấu" (vì nó màu đỏ), nhưng tại sao tôi phải quan tâm? Tôi cần làm gì với nó? Mỗi phát hiện nên trình bày vấn đề một cách chi tiết và giáo dục người đọc về vấn đề đang gặp phải (rất có thể họ chưa từng nghe về Kerberoasting hay một kiểu tấn công nào khác). Cần trình bày rõ ràng rủi ro an ninh và **tại sao** vấn đề này cần được khắc phục, cùng với một số khuyến nghị khắc phục có thể hành động được.
+<img width="946" height="444" alt="image" src="https://github.com/user-attachments/assets/a7945067-3064-45aa-84c1-6726c0b32cfa" />
 
 **2. Kerberoasting - Mức độ: Cao (High)**
 
@@ -195,6 +200,7 @@ Nếu tôi là người đọc báo cáo này, tôi có thể thấy phát hiệ
 VM mục tiêu có thể được khởi tạo trong phần này có sẵn một bản sao đang chạy của công cụ viết báo cáo WriteHat, được phát triển bởi Black Lantern Security. Đây là công cụ hữu ích để xây dựng cơ sở dữ liệu các phát hiện và tạo ra các báo cáo tùy chỉnh. Dù ta không xác nhận (endorse) bất kỳ công cụ cụ thể nào trong module này, nhiều công cụ báo cáo có cách hoạt động tương tự nhau, nên việc thử nghiệm với WriteHat sẽ giúp bạn có ý tưởng tốt về cách các công cụ loại này hoạt động. Hãy thực hành thêm các phát hiện vào cơ sở dữ liệu, xây dựng và tạo ra một báo cáo, v.v. Ta đã điền sẵn vào cơ sở dữ liệu phát hiện một số danh mục phát hiện phổ biến, cùng một số phát hiện có trong báo cáo mẫu đính kèm module này. Hãy thử nghiệm thoải mái và luyện tập các kỹ năng được dạy trong phần này. Lưu ý rằng bất kỳ điều gì bạn nhập vào công cụ sẽ không được lưu lại sau khi target hết hạn, nên nếu bạn viết bất kỳ phát hiện thực hành nào, hãy nhớ lưu một bản sao cục bộ. Công cụ này cũng sẽ hữu ích cho bài lab thực hành có hướng dẫn ở cuối module.
 
 Sau khi target được khởi tạo, truy cập vào `https://<IP mục tiêu>` và đăng nhập với thông tin đăng nhập `htb-student:HTB_@cademy_stdnt!`.
+<img width="1246" height="655" alt="image" src="https://github.com/user-attachments/assets/e5f4a1b8-6501-454b-b66b-04124af09ffb" />
 
 Hãy luyện tập viết các phát hiện và khám phá công cụ. Bạn thậm chí có thể thấy thích công cụ này đến mức muốn dùng nó như một phần trong quy trình làm việc của mình. Một ý tưởng là cài đặt một bản sao cục bộ và luyện tập viết các phát hiện cho các vấn đề bạn phát hiện được trong các lab của module Academy hoặc các box/lab trên nền tảng chính của HTB.
 
