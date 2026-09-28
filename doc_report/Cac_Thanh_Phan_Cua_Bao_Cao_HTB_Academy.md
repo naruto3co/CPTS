@@ -86,6 +86,7 @@ Dictionary cache hit:
 BSMITH::INLANEFREIGHT:7eccd965c4b98ebc:73d1b2c8c5f9861eefd31bb45085a651:01
 <REDACTED>
 ```
+<img width="1105" height="273" alt="image" src="https://github.com/user-attachments/assets/c9ffb43f-da72-4448-9bf6-9b50de182323" />
 
 Tester tiếp tục liệt kê các tài khoản người dùng được cấu hình với Service Principal Name (SPN) có thể bị tấn công Kerberoasting. Kỹ thuật di chuyển ngang/leo thang đặc quyền này nhắm vào các SPN (định danh duy nhất mà Kerberos dùng để ánh xạ một instance dịch vụ với một tài khoản dịch vụ). Bất kỳ người dùng domain nào cũng có thể yêu cầu vé Kerberos cho bất kỳ tài khoản dịch vụ nào trong domain, và vé đó được mã hóa bằng password hash NTLM của tài khoản dịch vụ — có thể "crack" offline để lộ ra giá trị mật khẩu cleartext của tài khoản.
 
